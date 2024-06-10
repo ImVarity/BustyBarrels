@@ -19,8 +19,6 @@ def transform(a, b, origin):
             (a[0] - origin[0]) * b[0][1] + (a[1] - origin[1]) * b[1][1] + origin[1]]
 
 
-
-
 def add3dvector(a, b):
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 
@@ -160,11 +158,12 @@ input = {
 
 box = Square([400, 400], 100, 100)
 normals = box.normals()
+box.rotationspeed = 0.009
 
 boxtwo = Square([250, 350], 100, 100)
 normalstwo = boxtwo.normals()
 
-testnormals = box.testnormals()
+
 
 
 # Main loop
@@ -229,25 +228,25 @@ while running:
     box.rotate()
     box.transform()
     normals = box.normals()
-    testnormals = box.testnormals()
     box.draw(screen)
 
     
     # box.rotate
+    # boxtwo.transform()
     normalstwo = boxtwo.normals()
     boxtwo.draw(screen)
 
     boxtwo.move(input)
 
-    one = normalize([400, 400], box.vertices[0])
-    two = normalize([400, 400], box.vertices[1])
-    three = normalize([400, 400], box.vertices[2])
-    four = normalize([400, 400], box.vertices[3])
+    
 
-    vOne = Vector((box.vertices[0][0] - 400, box.vertices[0][1] - 400), position=[400, 400])
-    vTwo = Vector((box.vertices[1][0] - 400, box.vertices[1][1] - 400), position=[400, 400])
-    vThree = Vector((box.vertices[2][0] - 400, box.vertices[2][1] - 400), position=[400, 400])
-    vFour = Vector((box.vertices[3][0] - 400, box.vertices[3][1] - 400), position=[400, 400])
+    vOne = box.vertices[0] - Vector((400, 400))
+    vTwo = box.vertices[1] - Vector((400, 400))
+    vThree = box.vertices[2] - Vector((400, 400))
+    vFour = box.vertices[3] - Vector((400, 400))
+    
+
+
     nOne = vOne.normalize()
     nTwo = vTwo.normalize()
     nThree = vThree.normalize()
@@ -257,36 +256,36 @@ while running:
     # normal of top projected to the left
     pygame.draw.line(screen, indigo, vOne.position, (nOne * 40).tail)
     # draws one line in one direction
-    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (testnormals[0] * 1000)).tail)
+    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (normals[0] * 1000)).tail)
     # draws another line in the other direction
-    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (testnormals[0] * -1000)).tail)
+    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (normals[0] * -1000)).tail)
     
 
     # normal of the right projected to the top
     pygame.draw.line(screen , indigo, vTwo.position, (nTwo * 40).tail)
-    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (testnormals[1] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (testnormals[1] * -1000)).tail)
+    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (normals[1] * 1000)).tail)
+    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (normals[1] * -1000)).tail)
 
     # normal of the bottom projected to the right
     pygame.draw.line(screen, indigo, vThree.position, (nThree * 40).tail)
-    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (testnormals[2] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (testnormals[2] * -1000)).tail)
+    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (normals[2] * 1000)).tail)
+    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (normals[2] * -1000)).tail)
 
     # normal of the left projected to the bottom
     pygame.draw.line(screen, indigo, vFour.position, (nFour * 40).tail)
-    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (testnormals[3] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (testnormals[3] * -1000)).tail)
+    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (normals[3] * 1000)).tail)
+    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (normals[3] * -1000)).tail)
 
 
     projections = []
     projectionstwo = []
 
 
-
     for i in range(len(box.vertices)):
         edgeProjection = [999999, -999999]
         for j in range(len(normals)):
-            projection = dotproduct(box.vertices[j], normalize([0, 0], normals[i]))
+            n = normals[i].normalize()
+            projection = n.dotproduct(box.vertices[j])
             edgeProjection[0] = min(projection, edgeProjection[0])
             edgeProjection[1] = max(projection, edgeProjection[1])
         projections.append(edgeProjection)
@@ -294,7 +293,8 @@ while running:
     for i in range(len(box.vertices)):
         edgeProjection = [999999, -999999]
         for j in range(len(normalstwo)):
-            projection = dotproduct(box.vertices[j], normalize([0, 0], normalstwo[i]))
+            n = normalstwo[i].normalize()
+            projection = n.dotproduct(box.vertices[j])
             edgeProjection[0] = min(projection, edgeProjection[0])
             edgeProjection[1] = max(projection, edgeProjection[1])
         projections.append(edgeProjection)
@@ -303,7 +303,8 @@ while running:
     for i in range(len(boxtwo.vertices)):
         edgeProjection = [999999, -999999]
         for j in range(len(normals)):
-            projection = dotproduct(boxtwo.vertices[j], normalize([0, 0], normals[i]))
+            n = normals[i].normalize()
+            projection = n.dotproduct(boxtwo.vertices[j])
             edgeProjection[0] = min(projection, edgeProjection[0])
             edgeProjection[1] = max(projection, edgeProjection[1])
         projectionstwo.append(edgeProjection)
@@ -311,7 +312,8 @@ while running:
     for i in range(len(boxtwo.vertices)):
         edgeProjection = [999999, -999999]
         for j in range(len(normalstwo)):
-            projection = dotproduct(boxtwo.vertices[j], normalize([0, 0], normalstwo[i]))
+            n = normalstwo[i].normalize()
+            projection = n.dotproduct(boxtwo.vertices[j])
             edgeProjection[0] = min(projection, edgeProjection[0])
             edgeProjection[1] = max(projection, edgeProjection[1])
         projectionstwo.append(edgeProjection)

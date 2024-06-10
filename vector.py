@@ -1,4 +1,6 @@
 import math
+# Vector class that allows to choose origin point to make things easier
+
 
 class Vector:
     def __init__(self, tail, position=[0, 0]) -> None:
@@ -7,20 +9,31 @@ class Vector:
         self.y = tail[1]
 
 
+    def dotproduct(self, other):
+        return self.x * other.x + self.y * other.y
+
     def __mul__(self, other):
-        if isinstance(other, int):
+        if isinstance(other, int) or isinstance(other, float):
             new_x = self.position[0] + (self.x * other)
             new_y = self.position[1] + (self.y * other)
             return Vector((new_x, new_y), position=self.position)
         return NotImplemented
 
     def __add__(self, other):
-        if isinstance(other, Vector):
+        if isinstance(other, Vector) or isinstance(other, float):
             new_x = self.x + other.x
             new_y = self.y + other.y
             return Vector((new_x, new_y), position=self.position)
-            
+        return NotImplemented
 
+            
+    def __sub__(self, other):
+        if isinstance(other, Vector):
+            new_x = self.x - other.x
+            new_y = self.y - other.y
+            return Vector((new_x, new_y), position=self.position)
+        return NotImplemented
+            
     def normalize(self):
         # Calculate the vector components from p1 to p2
         vx = self.x
