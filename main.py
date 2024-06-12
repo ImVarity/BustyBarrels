@@ -152,9 +152,12 @@ input = {
     "left" : False,
     "down" : False,
     "up": False,
-    "clockwise" : False,
-    "counterclockwise": False,
     "reset": False
+}
+
+rotation_input = {
+    "clockwise" : False,
+    "counterclockwise" : False
 }
 
 
@@ -185,8 +188,8 @@ while running:
             if event.key == pygame.K_t:
                 pass
 
-    input["counterclockwise"] = keys[pygame.K_e]
-    input["clockwise"] = keys[pygame.K_q]
+    rotation_input["counterclockwise"] = keys[pygame.K_e]
+    rotation_input["clockwise"] = keys[pygame.K_q]
 
     input["up"] = keys[pygame.K_w]
     input["down"] = keys[pygame.K_s]
@@ -212,6 +215,8 @@ while running:
 
     # box.move(input)
     boxtwo.move(input)
+    boxtwo.handle_rotation(rotation_input)
+    box.handle_rotation(rotation_input)
     
 
 

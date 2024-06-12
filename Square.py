@@ -66,8 +66,6 @@ class Square:
     
 
     def move(self, input):
-
-
         # input = self.check_collision(input)
 
         if input["up"] and input["right"]:
@@ -88,14 +86,14 @@ class Square:
         elif input["down"]:
             self.translate(Vector((0, 1)))
 
-        if input["counterclockwise"] or input["clockwise"]:
-            if input["counterclockwise"]:
+    def handle_rotation(self, rotation_input):
+        if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
+            if rotation_input["counterclockwise"]:
                 self.angle = self.rotationspeed
-            if input["clockwise"]:
+            if rotation_input["clockwise"]:
                 self.angle = -self.rotationspeed
             self.rotation()
 
-        
         
 
 
