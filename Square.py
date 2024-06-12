@@ -23,7 +23,8 @@ class Square:
         self.angle = 0
         self.rotationspeed_degress = 6
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
-        self.velocity = 5
+        self.velocity = 2
+        self.direction = Vector((0, 0))
 
         self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
 
@@ -61,30 +62,37 @@ class Square:
 
 
         return normalVectors
-
-
     
+    def get_direction(self, input):
 
-    def move(self, input):
-        # input = self.check_collision(input)
+        direction = Vector((0, 0))
 
         if input["up"] and input["right"]:
-            self.translate(Vector((cos_45, -sin_45)))
+            direction = (Vector((cos_45, -sin_45)))
         elif input["up"] and input["left"]:
-            self.translate(Vector((-cos_45, -sin_45)))
+            direction = (Vector((-cos_45, -sin_45)))
         elif input["down"] and input["right"]:
-            self.translate(Vector((cos_45, sin_45)))
+            direction = (Vector((cos_45, sin_45)))
         elif input["down"] and input["left"]:
-            self.translate(Vector((-cos_45, sin_45)))
+            direction = (Vector((-cos_45, sin_45)))
 
         elif input["right"]:
-            self.translate(Vector((1, 0)))
+            direction = (Vector((1, 0)))
         elif input["left"]:
-            self.translate(Vector((-1, 0)))
+            direction = (Vector((-1, 0)))
         elif input["up"]:
-            self.translate(Vector((0, -1)))
+            direction = (Vector((0, -1)))
         elif input["down"]:
-            self.translate(Vector((0, 1)))
+            direction = (Vector((0, 1)))
+
+        return direction
+        
+
+    def move(self, direction):
+        self.translate(direction)
+
+
+
 
     def handle_rotation(self, rotation_input):
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
@@ -92,15 +100,14 @@ class Square:
                 self.angle = self.rotationspeed
             if rotation_input["clockwise"]:
                 self.angle = -self.rotationspeed
-            self.rotation()
+            self.self_rotation()
 
-        
+    
 
 
     def translate(self, direction):
         self.center += direction * self.velocity
         self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
-        print("distnace from center", self.distance_from_center)
         for i in range(len(self.vertices)):
             self.vertices[i] += direction * self.velocity
 
@@ -108,6 +115,10 @@ class Square:
         self.center.x, self.center.y = (self.center.x - 400) * math.cos(self.angle) + (self.center.y - 400) * -math.sin(self.angle) + 400, (self.center.x - 400) * math.sin(self.angle) + (self.center.y - 400) * math.cos(self.angle) + 400
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - 400) * math.cos(self.angle) + (self.vertices[i].y - 400) * -math.sin(self.angle) + 400, (self.vertices[i].x - 400) * math.sin(self.angle) + (self.vertices[i].y - 400) * math.cos(self.angle) + 400
+
+    def self_rotation(self):
+        for i in range(len(self.vertices)):
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.angle) + (self.vertices[i].y - self.center.y) * -math.sin(self.angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.angle) + (self.vertices[i].y - self.center.y) * math.cos(self.angle) + self.center.y
 
 
 
@@ -140,86 +151,86 @@ class Square:
         pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (-length / 2)).tail)
 
 
-    def handle_collision(self, normals, normalstwo, boxtwo, screen):
+    # SAT collision
+    def handle_collision(self, normals, normalstwo, boxtwo):
 
-        # print("box vertices", self.vertices)
-        # print("boxtwo vertices", boxtwo.vertices)
+        normal = normals[0]
+        depth = float('inf')
+        collided = True
 
-        projections = []
-        projectionstwo = []
-
-        # projecting self vertices onto self normals
         for i in range(len(self.vertices)):
-            edgeProjection = [float('inf'), float('-inf')]
-            for j in range(len(normals)):
-                n = normals[i]
-                projection = n.dotproduct(self.vertices[j])
-                edgeProjection[0] = min(projection, edgeProjection[0])
-                edgeProjection[1] = max(projection, edgeProjection[1])
-            projections.append(edgeProjection)
 
-        # projecting self vertices onto another box normals
-        for i in range(len(self.vertices)):
-            edgeProjection = [float('inf'), float('-inf')]
-            for j in range(len(normalstwo)):
-                n = normalstwo[i]
-                projection = n.dotproduct(self.vertices[j])
-                edgeProjection[0] = min(projection, edgeProjection[0])
-                edgeProjection[1] = max(projection, edgeProjection[1])
-            projections.append(edgeProjection)
+            # projecting self vertices onto self normals
+            minA, maxA = self.project_vertices(self.vertices, normals[i])
+            # projecting another box vertices onto self normals
+            minB, maxB = self.project_vertices(boxtwo.vertices, normals[i])
 
-        # projecting another box vertices onto self normals
-        for i in range(len(boxtwo.vertices)):
-            edgeProjection = [float('inf'), float('-inf')]
-            for j in range(len(normals)):
-                n = normals[i]
-                projection = n.dotproduct(boxtwo.vertices[j])
-                edgeProjection[0] = min(projection, edgeProjection[0])
-                edgeProjection[1] = max(projection, edgeProjection[1])
-            projectionstwo.append(edgeProjection)
-
-        # projecting another box vertices onto another box normals
-        for i in range(len(boxtwo.vertices)):
-            edgeProjection = [float('inf'), float('-inf')]
-            for j in range(len(normalstwo)):
-                n = normalstwo[i]
-                projection = n.dotproduct(boxtwo.vertices[j])
-                edgeProjection[0] = min(projection, edgeProjection[0])
-                edgeProjection[1] = max(projection, edgeProjection[1])
-            projectionstwo.append(edgeProjection)
-
-        # print("projections", projections)
-        # print("projectionstwo", projectionstwo)
-
-        collision = False
-        hits = 0
-        hitpoints = []
-
-
-        for i in range(len(projections)):
-            # if i < 4:
-            #     self.draw_projection_intervals(screen, normals[i], abs(projections[i][0] - projections[i][1]))
+            # checking overlap
+            if (minA >= maxB or minB >= maxA):
+                collided = False
             
-            if self.intervals_overlap(projections[i], projectionstwo[i]):
-                hits += 1
-                hitpoints.append((projections[i], projectionstwo[i]))
-            else:
-                hits -= 1
+            axisDepth = min(maxB - minA, maxA - minB)
 
+            if axisDepth < depth:
+                depth = axisDepth
+                normal = normals[i]
 
-        # intervals are overlapping in all 8 normals
-        if hits == 8:
-            collision = True
-            print("collided")
-        else:
-            print("not")
+                
+        for i in range(len(boxtwo.vertices)):
+
+            # projecting self vertices onto another box normals
+            minA, maxA = self.project_vertices(self.vertices, normalstwo[i])
+            # projecting another box vertices onto another box normals
+            minB, maxB = self.project_vertices(boxtwo.vertices, normalstwo[i])
+
+            # checking overlap
+            if (minA >= maxB or minB >= maxA):
+                collided = False
+            
+            axisDepth = min(maxB - minA, maxA - minB)
+
+            if axisDepth < depth:
+                depth = axisDepth
+                normal = normalstwo[i]
+
         
+        # centerA = self.find_arithmetic_mean(self.vertices)
+        # centerB = self.find_arithmetic_mean(boxtwo.vertices)
+
+        centerA = self.center
+        centerB = boxtwo.center
+
+        direction = centerA - centerB
+        
+        if direction.dotproduct(normal) < 0:
+            normal = normal * -1
+        
+        return (collided, depth, normal)
+
+
+    def project_vertices(self, vertices, axis):
+        edgeProjection = [float('inf'), float('-inf')]
+        for j in range(len(vertices)):
+            projection = axis.dotproduct(vertices[j])
+            edgeProjection[0] = min(projection, edgeProjection[0])
+            edgeProjection[1] = max(projection, edgeProjection[1])
+        return edgeProjection
+
+
+    def find_arithmetic_mean(self, vertices):
+        sumX = 0
+        sumY = 0
+
+        for i in range(len(vertices)):
+            sumX += vertices[i].x + vertices[i].origin[0]
+            sumY += vertices[i].y + vertices[i].origin[1]
+
+        return Vector((sumX / len(vertices), sumY / len(vertices)))
 
 
     def intervals_overlap(self, interval1, interval2):
         a1, b1 = interval1
         a2, b2 = interval2
-
 
         return not (b1 < a2 or b2 < a1)
     

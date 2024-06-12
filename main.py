@@ -65,26 +65,6 @@ def dotproduct(a, b):
     return a[0] * b[0] + a[1] * b[1]
 
 
-def intervals_overlap(interval1, interval2):
-    a1, b1 = interval1
-    a2, b2 = interval2
-    # if not (b1 < a2 or b2 < a1):
-    #     print(interval1, interval2)
-
-    return not (b1 < a2 or b2 < a1)
-
-
-def project_onto_normal(vertices, normal):
-    for i in range(len(vertices)):
-        edgeProjection = [999999, -999999]
-        for j in range(len(normal)):
-            projection = dotproduct(box.vertices[j], normalize([0, 0], normal[i]))
-            edgeProjection[0] = min(projection, edgeProjection[0])
-            edgeProjection[1] = max(projection, edgeProjection[1])
-        projections.append(edgeProjection)
-
-
-rotation = .01
 
 
 
@@ -165,11 +145,22 @@ rotation_input = {
 box = Square([400, 400], 100, 100, blue)
 normals = box.normals()
 
-boxtwo = Square([400, 400], 100, 100, pink)
+boxtwo = Square([250, 250], 100, 100, pink)
 normalstwo = boxtwo.normals()
+
+boxthree = Square([550, 550], 100, 100, heather)
+normalsthree = boxthree.normals()
 
 circle = Circle((400, 200), 30, indigo)
 
+
+boxes = [
+    box, boxtwo, boxthree
+]
+
+box_normals = [
+    normals, normalstwo, normalsthree
+]
 
 
 # Main loop
@@ -198,33 +189,42 @@ while running:
 
     input["reset"] = keys[pygame.K_z]
 
-    
-    
 
-
-    # box.rotate()
-    # box.transform()
-    normals = box.normals()
     box.draw(screen)
-
-    
-    # box.rotate
-    # boxtwo.transform()
-    normalstwo = boxtwo.normals()
     boxtwo.draw(screen)
+    boxthree.draw(screen)
+
+    normals = box.normals()
+    normalstwo = boxtwo.normals()
+    normalsthree = boxthree.normals()
 
     # box.move(input)
-    boxtwo.move(input)
+
+    direction = boxtwo.get_direction(input)
+    boxtwo.move(direction)
+
     boxtwo.handle_rotation(rotation_input)
-    box.handle_rotation(rotation_input)
-    
+    # box.handle_rotation(rotation_input)
 
+    # boxtwo.draw_projection(screen, normalstwo)
+    # box.draw_projection(screen, normals)
 
-    boxtwo.draw_projection(screen, normalstwo)
-    box.draw_projection(screen, normals)
-    box.handle_collision(normals, normalstwo, boxtwo, screen)
+    # for i in range(len(boxes)):
+        
+    #     boxA = boxes[i]
+        
+    #     for j in range(len(boxes)):
+    #         boxB = boxes[j]
+    #         collided, depth, normal = boxA.handle_collision(box_normals[i], box_normals[j], boxB)
 
+    #         if collided:
+    #             boxA.move(normal * (depth / 1.5))
+    #             boxB.move(normal * -1 * (depth / 1.5))
 
+    collided, depth, normal = boxtwo.handle_collision(normals, normalstwo, box)
+    if collided:
+        boxtwo.move(normal * (depth / 1.5))
+        box.move(normal * -1 * (depth / 1.5))
 
 
 
