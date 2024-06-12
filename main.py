@@ -10,6 +10,8 @@ screen_height = 800
 heather = (210, 145, 255)
 indigo = (75, 0, 130)
 origin = [screen_width / 2, screen_height / 2]
+pink = (255, 182, 193)
+blue = (30, 144, 255)
 
 # -3 * [0, 1] + 2 * [-1, 0]
 # [0, -3] + [-2, 0]
@@ -156,11 +158,11 @@ input = {
 
 
 
-box = Square([400, 400], 100, 100)
+box = Square([400, 400], 100, 100, blue)
 normals = box.normals()
 box.rotationspeed = 0.009
 
-boxtwo = Square([250, 350], 100, 100)
+boxtwo = Square([250, 350], 100, 100, pink)
 normalstwo = boxtwo.normals()
 
 
@@ -181,43 +183,19 @@ while running:
             if event.key == pygame.K_t:
                 pass
 
-            
-
-    if (keys[pygame.K_e]):
-        input["counterclockwise"] = True
-    else:
-        input["counterclockwise"] = False
-    if (keys[pygame.K_q]):
-        input["clockwise"] = True
-    else:
-        input["clockwise"] = False
-
-    if (keys[pygame.K_d]):
-        input["right"] = True
-    else:
-        input["right"] = False
-    if (keys[pygame.K_a]):
-        input["left"] = True
-    else:
-        input["left"] = False
-    if (keys[pygame.K_w]):
-        input["up"] = True
-    else:
-        input["up"] = False
-    if (keys[pygame.K_s]):
-        input["down"] = True
-    else:
-        input["down"] = False
-
-    if (keys[pygame.K_z]):
-        input["reset"] = True
+        
     
 
-    if (keys[pygame.K_y]):
-        pass
+    input["counterclockwise"] = keys[pygame.K_e]
+    input["clockwise"] = keys[pygame.K_q]
 
+    input["up"] = keys[pygame.K_w]
+    input["down"] = keys[pygame.K_s]
+    input["left"] = keys[pygame.K_a]
+    input["right"] = keys[pygame.K_d]
 
-
+    input["reset"] = keys[pygame.K_z]
+    
 
 
     mousePos = pygame.mouse.get_pos()
@@ -225,8 +203,8 @@ while running:
     screen.fill(white)
 
 
-    box.rotate()
-    box.transform()
+    # box.rotate()
+    # box.transform()
     normals = box.normals()
     box.draw(screen)
 
@@ -236,111 +214,17 @@ while running:
     normalstwo = boxtwo.normals()
     boxtwo.draw(screen)
 
-    boxtwo.move(input)
-
-    
-
-    vOne = box.vertices[0] - Vector((400, 400))
-    vTwo = box.vertices[1] - Vector((400, 400))
-    vThree = box.vertices[2] - Vector((400, 400))
-    vFour = box.vertices[3] - Vector((400, 400))
+    box.move(input)
+    # boxtwo.move(input)
     
 
 
-    nOne = vOne.normalize()
-    nTwo = vTwo.normalize()
-    nThree = vThree.normalize()
-    nFour = vFour.normalize()
-    
-
-    # normal of top projected to the left
-    pygame.draw.line(screen, indigo, vOne.position, (nOne * 40).tail)
-    # draws one line in one direction
-    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (normals[0] * 1000)).tail)
-    # draws another line in the other direction
-    pygame.draw.line(screen, heather, (nOne * 350).tail, ((nOne * 350) + (normals[0] * -1000)).tail)
-    
-
-    # normal of the right projected to the top
-    pygame.draw.line(screen , indigo, vTwo.position, (nTwo * 40).tail)
-    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (normals[1] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nTwo * 350).tail, ((nTwo * 350) + (normals[1] * -1000)).tail)
-
-    # normal of the bottom projected to the right
-    pygame.draw.line(screen, indigo, vThree.position, (nThree * 40).tail)
-    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (normals[2] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nThree * 350).tail, ((nThree * 350) + (normals[2] * -1000)).tail)
-
-    # normal of the left projected to the bottom
-    pygame.draw.line(screen, indigo, vFour.position, (nFour * 40).tail)
-    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (normals[3] * 1000)).tail)
-    pygame.draw.line(screen, heather, (nFour * 350).tail, ((nFour * 350) + (normals[3] * -1000)).tail)
+    boxtwo.draw_projection(screen, normalstwo)
+    box.draw_projection(screen, normals)
 
 
-    projections = []
-    projectionstwo = []
+    box.handle_collision(normals, normalstwo, boxtwo, screen)
 
-
-    for i in range(len(box.vertices)):
-        edgeProjection = [999999, -999999]
-        for j in range(len(normals)):
-            n = normals[i].normalize()
-            projection = n.dotproduct(box.vertices[j])
-            edgeProjection[0] = min(projection, edgeProjection[0])
-            edgeProjection[1] = max(projection, edgeProjection[1])
-        projections.append(edgeProjection)
-
-    for i in range(len(box.vertices)):
-        edgeProjection = [999999, -999999]
-        for j in range(len(normalstwo)):
-            n = normalstwo[i].normalize()
-            projection = n.dotproduct(box.vertices[j])
-            edgeProjection[0] = min(projection, edgeProjection[0])
-            edgeProjection[1] = max(projection, edgeProjection[1])
-        projections.append(edgeProjection)
-
-
-    for i in range(len(boxtwo.vertices)):
-        edgeProjection = [999999, -999999]
-        for j in range(len(normals)):
-            n = normals[i].normalize()
-            projection = n.dotproduct(boxtwo.vertices[j])
-            edgeProjection[0] = min(projection, edgeProjection[0])
-            edgeProjection[1] = max(projection, edgeProjection[1])
-        projectionstwo.append(edgeProjection)
-
-    for i in range(len(boxtwo.vertices)):
-        edgeProjection = [999999, -999999]
-        for j in range(len(normalstwo)):
-            n = normalstwo[i].normalize()
-            projection = n.dotproduct(boxtwo.vertices[j])
-            edgeProjection[0] = min(projection, edgeProjection[0])
-            edgeProjection[1] = max(projection, edgeProjection[1])
-        projectionstwo.append(edgeProjection)
-
-
-
-    # print("projections", projections)
-    # print("projectionstwo", projectionstwo)
-
-    collision = False
-    hits = 0
-    hitpoints = []
-
-    for i in range(len(projections)):
-        if intervals_overlap(projections[i], projectionstwo[i]):
-            hits += 1
-            hitpoints.append((projections[i], projectionstwo[i]))
-        else:
-            hits -= 1
-
-
-    # intervals are overlapping in all 8 normals
-    if hits == 8:
-        collision = True
-        print("collided")
-    else:
-        print("not")
 
 
 
@@ -370,3 +254,25 @@ sys.exit()
 
 # [1, -2, 0]
 
+    # # normal of top projected to the left
+    # pygame.draw.line(screen, indigo, box.center.tail, (nOne * 40).tail)
+    # # draws one line in one direction
+    # pygame.draw.line(screen, heather, ((nOne * 350 + box.center) - Vector((400, 400))).tail, ((nOne * 350) + (normals[0] * 1000)).tail)
+    # # draws another line in the other direction
+    # pygame.draw.line(screen, heather, ((nOne * 350 + box.center) - Vector((400, 400))).tail, ((nOne * 350) + (normals[0] * -1000)).tail)
+    
+
+    # # normal of the right projected to the top
+    # pygame.draw.line(screen , indigo, box.center.tail, (nTwo * 40).tail)
+    # pygame.draw.line(screen, heather, ((nTwo * 350 + box.center) - Vector((400, 400))).tail, ((nTwo * 350) + (normals[1] * 1000)).tail)
+    # pygame.draw.line(screen, heather, ((nTwo * 350 + box.center) - Vector((400, 400))).tail, ((nTwo * 350) + (normals[1] * -1000)).tail)
+
+    # # normal of the bottom projected to the right
+    # pygame.draw.line(screen, indigo, box.center.tail, (nThree * 40).tail)
+    # pygame.draw.line(screen, heather, ((nThree * 350 + box.center) - Vector((400, 400))).tail, ((nThree * 350) + (normals[2] * 1000)).tail)
+    # pygame.draw.line(screen, heather, ((nThree * 350 + box.center) - Vector((400, 400))).tail, ((nThree * 350) + (normals[2] * -1000)).tail)
+
+    # # normal of the left projected to the bottom
+    # pygame.draw.line(screen, indigo, box.center.tail, (nFour * 40).tail)
+    # pygame.draw.line(screen, heather, ((nFour * 350 + box.center) - Vector((400, 400))).tail, ((nFour * 350) + (normals[3] * 1000)).tail)
+    # pygame.draw.line(screen, heather, ((nFour * 350 + box.center) - Vector((400, 400))).tail, ((nFour * 350) + (normals[3] * -1000)).tail)

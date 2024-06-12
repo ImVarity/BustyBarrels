@@ -2,20 +2,23 @@ import pygame
 import math
 from vector import Vector
 
+heather = (210, 145, 255)
+indigo = (75, 0, 130)
 
 cos_45 = math.cos(45 * math.pi / 180)
 sin_45 = math.sin(45 * math.pi / 180)
 
 class Square:
-    def __init__(self, center, width, height):
+    def __init__(self, center, width, height, color):
+        self.color = color
         self.width = width
         self.height = height
         self.center = Vector((center[0], center[1]))
         
-        self.vertices = [Vector((self.center.x - width / 2, self.center.y - height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x + width / 2, self.center.y - height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x + width / 2, self.center.y + height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x - width / 2, self.center.y + height / 2), position=[self.center.x, self.center.y])]
+        self.vertices = [Vector((self.center.x - width / 2, self.center.y - height / 2), origin=[self.center.x, self.center.y]),
+                         Vector((self.center.x + width / 2, self.center.y - height / 2), origin=[self.center.x, self.center.y]),
+                         Vector((self.center.x + width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y]),
+                         Vector((self.center.x - width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y])]
         
     
 
@@ -25,10 +28,10 @@ class Square:
         self.velocity = 5
         
     def draw(self, screen):
-        pygame.draw.line(screen, (255,69,0), self.vertices[0].tail, self.vertices[1].tail)
-        pygame.draw.line(screen, (255,69,0), self.vertices[1].tail, self.vertices[2].tail)
-        pygame.draw.line(screen, (255,69,0), self.vertices[2].tail, self.vertices[3].tail)
-        pygame.draw.line(screen, (255,69,0), self.vertices[3].tail, self.vertices[0].tail)
+        pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 4)
+        pygame.draw.line(screen, self.color, self.vertices[1].tail, self.vertices[2].tail, 4)
+        pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 4)
+        pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 4)
 
     
     def normals(self):
@@ -42,6 +45,7 @@ class Square:
                 q = v - z
                 edgeVectors.append(q)
                 break
+
             v = self.vertices[i + 1]
             z = self.vertices[i]
             q = v - z
@@ -60,11 +64,7 @@ class Square:
         return normalVectors
 
 
-    def transform(self):
-        for i in range(len(self.vertices)):
-            
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.angle) + (self.vertices[i].y - self.center.y) * -math.sin(self.angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.angle) + (self.vertices[i].y - self.center.y) * math.cos(self.angle) + self.center.y
-
+    
 
     def move(self, input):
 
@@ -72,82 +72,154 @@ class Square:
         # input = self.check_collision(input)
 
         if input["up"] and input["right"]:
-            self.center = self.center + Vector((cos_45, -sin_45)) * self.velocity
+            self.translate(Vector((cos_45, -sin_45)))
         elif input["up"] and input["left"]:
-            self.center += Vector((-cos_45, -sin_45)) * self.velocity
+            self.translate(Vector((-cos_45, -sin_45)))
         elif input["down"] and input["right"]:
-            self.center += Vector((cos_45, sin_45)) * self.velocity
+            self.translate(Vector((cos_45, sin_45)))
         elif input["down"] and input["left"]:
-            self.center += Vector((-cos_45, sin_45)) * self.velocity
+            self.translate(Vector((-cos_45, sin_45)))
 
         elif input["right"]:
-            self.center += Vector((self.velocity, 0))
+            self.translate(Vector((1, 0)))
         elif input["left"]:
-            self.center -= Vector((self.velocity, 0))
+            self.translate(Vector((-1, 0)))
         elif input["up"]:
-            self.center -= Vector((0, self.velocity))
+            self.translate(Vector((0, -1)))
         elif input["down"]:
-            self.center += Vector((0, self.velocity))
+            self.translate(Vector((0, 1)))
 
-
-        if input["counterclockwise"]:
-            self.angle += self.rotationspeed
-        if input["clockwise"]:
-            self.angle -= self.rotationspeed
+        if input["counterclockwise"] or input["clockwise"]:
+            if input["counterclockwise"]:
+                self.angle = self.rotationspeed
+            if input["clockwise"]:
+                self.angle = -self.rotationspeed
+            self.rotation()
+        
         
 
-        self.vertices = [Vector((self.center.x - self.width / 2, self.center.y - self.height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x + self.width / 2, self.center.y - self.height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x + self.width / 2, self.center.y + self.height / 2), position=[self.center.x, self.center.y]),
-                         Vector((self.center.x - self.width / 2, self.center.y + self.height / 2), position=[self.center.x, self.center.y])]
+
+    def translate(self, direction):
+        self.center += direction * self.velocity
+        for i in range(len(self.vertices)):
+            self.vertices[i] += direction * self.velocity
+
+    def rotation(self):
+        for i in range(len(self.vertices)):
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.angle) + (self.vertices[i].y - self.center.y) * -math.sin(self.angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.angle) + (self.vertices[i].y - self.center.y) * math.cos(self.angle) + self.center.y
+
+            
+
+    def draw_projection(self, screen, normals):
+        push_out_0 = Vector((-normals[0].y, normals[0].x))
+        push_out_1 = Vector((-normals[1].y, normals[1].x))
+        push_out_2 = Vector((-normals[2].y, normals[2].x))
+        push_out_3 = Vector((-normals[3].y, normals[3].x))
         
+        pygame.draw.line(screen, heather, (self.center + (push_out_0 * 250)).tail, (self.center + (push_out_0 * 250) + normals[0] * 500).tail)
+        pygame.draw.line(screen, heather, (self.center + (push_out_0 * 250)).tail, (self.center + (push_out_0 * 250) + normals[0] * -500).tail)
 
-        self.transform()
+        pygame.draw.line(screen, heather, (self.center + (push_out_1 * 250)).tail, (self.center + (push_out_1 * 250) + normals[1] * 500).tail)
+        pygame.draw.line(screen, heather, (self.center + (push_out_1 * 250)).tail, (self.center + (push_out_1 * 250) + normals[1] * -500).tail)
 
-    # def check_collision(self, input, b1, b2):   
-    #     pass
-    #     v1 = b1.vertices
-    #     v2 = b2.vertices
+        pygame.draw.line(screen, heather, (self.center + (push_out_2 * 250)).tail, (self.center + (push_out_2 * 250) + normals[2] * 500).tail)
+        pygame.draw.line(screen, heather, (self.center + (push_out_2 * 250)).tail, (self.center + (push_out_2 * 250) + normals[2] * -500).tail)
 
-
-    #     projections = []
-    #     projectionstwo = []
-
-
-    #     for i in range(len(v1)):
-    #         edgeProjection = [999999, -999999]
-    #         for j in range(len(normals)):
-    #             projection = dotproduct(v1[j], normalize([0, 0], normals[i]))
-    #             edgeProjection[0] = min(projection, edgeProjection[0])
-    #             edgeProjection[1] = max(projection, edgeProjection[1])
-    #         projections.append(edgeProjection)
-
-    #     for i in range(len(v1)):
-    #         edgeProjection = [999999, -999999]
-    #         for j in range(len(normalstwo)):
-    #             projection = dotproduct(v1[j], normalize([0, 0], normalstwo[i]))
-    #             edgeProjection[0] = min(projection, edgeProjection[0])
-    #             edgeProjection[1] = max(projection, edgeProjection[1])
-    #         projections.append(edgeProjection)
+        pygame.draw.line(screen, heather, (self.center + (push_out_3 * 250)).tail, (self.center + (push_out_3 * 250) + normals[3] * 500).tail)
+        pygame.draw.line(screen, heather, (self.center + (push_out_3 * 250)).tail, (self.center + (push_out_3 * 250) + normals[3] * -500).tail)
 
 
-    #     for i in range(len(v2)):
-    #         edgeProjection = [999999, -999999]
-    #         for j in range(len(normals)):
-    #             projection = dotproduct(v2[j], normalize([0, 0], normals[i]))
-    #             edgeProjection[0] = min(projection, edgeProjection[0])
-    #             edgeProjection[1] = max(projection, edgeProjection[1])
-    #         projectionstwo.append(edgeProjection)
 
-    #     for i in range(len(v2)):
-    #         edgeProjection = [999999, -999999]
-    #         for j in range(len(normalstwo)):
-    #             projection = dotproduct(v2[j], normalize([0, 0], normalstwo[i]))
-    #             edgeProjection[0] = min(projection, edgeProjection[0])
-    #             edgeProjection[1] = max(projection, edgeProjection[1])
-    #         projectionstwo.append(edgeProjection)
+    def draw_projection_intervals(self, screen, normal, length):
 
 
+        push_out_0 = Vector((-normal.y, normal.x))
+        
+        pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (length / 2)).tail)
+        pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (-length / 2)).tail)
+
+
+    def handle_collision(self, normals, normalstwo, boxtwo, screen):
+        projections = []
+        projectionstwo = []
+
+
+        for i in range(len(self.vertices)):
+            edgeProjection = [float('inf'), float('-inf')]
+            for j in range(len(normals)):
+                n = normals[i].normalize()
+                projection = n.dotproduct(self.vertices[j])
+                edgeProjection[0] = min(projection, edgeProjection[0])
+                edgeProjection[1] = max(projection, edgeProjection[1])
+            projections.append(edgeProjection)
+
+        for i in range(len(self.vertices)):
+            edgeProjection = [float('inf'), float('-inf')]
+            for j in range(len(normalstwo)):
+                n = normalstwo[i].normalize()
+                projection = n.dotproduct(self.vertices[j])
+                edgeProjection[0] = min(projection, edgeProjection[0])
+                edgeProjection[1] = max(projection, edgeProjection[1])
+            projections.append(edgeProjection)
+
+
+        for i in range(len(boxtwo.vertices)):
+            edgeProjection = [float('inf'), float('-inf')]
+            for j in range(len(normals)):
+                n = normals[i].normalize()
+                projection = n.dotproduct(boxtwo.vertices[j])
+                edgeProjection[0] = min(projection, edgeProjection[0])
+                edgeProjection[1] = max(projection, edgeProjection[1])
+            projectionstwo.append(edgeProjection)
+
+        for i in range(len(boxtwo.vertices)):
+            edgeProjection = [float('inf'), float('-inf')]
+            for j in range(len(normalstwo)):
+                n = normalstwo[i].normalize()
+                projection = n.dotproduct(boxtwo.vertices[j])
+                edgeProjection[0] = min(projection, edgeProjection[0])
+                edgeProjection[1] = max(projection, edgeProjection[1])
+            projectionstwo.append(edgeProjection)
+
+
+
+
+        # print("projections", projections)
+        # print("projectionstwo", projectionstwo)
+
+        collision = False
+        hits = 0
+        hitpoints = []
+
+        # print(projections)
+
+        for i in range(len(projections)):
+            self.draw_projection_intervals(screen, normals[1], abs(projections[1][0] - projections[1][1]))
+            self.draw_projection_intervals(screen, normals[1], abs(projectionstwo[1][0] - projectionstwo[1][1]))
+            
+            if self.intervals_overlap(projections[i], projectionstwo[i]):
+                hits += 1
+                hitpoints.append((projections[i], projectionstwo[i]))
+            else:
+                hits -= 1
+
+
+        # intervals are overlapping in all 8 normals
+        if hits == 8:
+            collision = True
+            print("collided")
+        else:
+            print("not")
+
+    def intervals_overlap(self, interval1, interval2):
+        a1, b1 = interval1
+        a2, b2 = interval2
+
+
+        return not (b1 < a2 or b2 < a1)
+    
+    def draw_intervals(self, interval, screen):
+        pass
 
 
 
