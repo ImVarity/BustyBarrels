@@ -3,6 +3,7 @@ import sys
 from Square import Square
 import math
 from vector import Vector
+from Circle import Circle
 
 screen_width = 800
 screen_height = 800
@@ -160,19 +161,20 @@ input = {
 
 box = Square([400, 400], 100, 100, blue)
 normals = box.normals()
-box.rotationspeed = 0.009
 
-boxtwo = Square([250, 350], 100, 100, pink)
+boxtwo = Square([400, 400], 100, 100, pink)
 normalstwo = boxtwo.normals()
 
+circle = Circle((400, 200), 30, indigo)
 
 
 
 # Main loop
 running = True
 while running:
-    
+    screen.fill(white)
     keys = pygame.key.get_pressed()
+    mousePos = pygame.mouse.get_pos()
 
     # Handle events
     for event in pygame.event.get():
@@ -183,9 +185,6 @@ while running:
             if event.key == pygame.K_t:
                 pass
 
-        
-    
-
     input["counterclockwise"] = keys[pygame.K_e]
     input["clockwise"] = keys[pygame.K_q]
 
@@ -195,12 +194,9 @@ while running:
     input["right"] = keys[pygame.K_d]
 
     input["reset"] = keys[pygame.K_z]
+
     
-
-
-    mousePos = pygame.mouse.get_pos()
-
-    screen.fill(white)
+    
 
 
     # box.rotate()
@@ -214,15 +210,13 @@ while running:
     normalstwo = boxtwo.normals()
     boxtwo.draw(screen)
 
-    box.move(input)
-    # boxtwo.move(input)
+    # box.move(input)
+    boxtwo.move(input)
     
 
 
     boxtwo.draw_projection(screen, normalstwo)
     box.draw_projection(screen, normals)
-
-
     box.handle_collision(normals, normalstwo, boxtwo, screen)
 
 

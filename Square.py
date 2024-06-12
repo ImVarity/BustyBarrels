@@ -19,13 +19,15 @@ class Square:
                          Vector((self.center.x + width / 2, self.center.y - height / 2), origin=[self.center.x, self.center.y]),
                          Vector((self.center.x + width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y]),
                          Vector((self.center.x - width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y])]
-        
-    
-
 
         self.angle = 0
-        self.rotationspeed = 0.05
+        self.rotationspeed_degress = 6
+        self.rotationspeed = self.rotationspeed_degress * math.pi / 180
         self.velocity = 5
+
+        self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
+
+
         
     def draw(self, screen):
         pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 4)
@@ -56,9 +58,6 @@ class Square:
             v = Vector((-edge.y, edge.x))
             v = v.normalize()
             normalVectors.append(v)
-
-        
-
 
 
         return normalVectors
@@ -95,20 +94,24 @@ class Square:
             if input["clockwise"]:
                 self.angle = -self.rotationspeed
             self.rotation()
+
         
         
 
 
     def translate(self, direction):
         self.center += direction * self.velocity
+        self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
+        print("distnace from center", self.distance_from_center)
         for i in range(len(self.vertices)):
             self.vertices[i] += direction * self.velocity
 
     def rotation(self):
+        self.center.x, self.center.y = (self.center.x - 400) * math.cos(self.angle) + (self.center.y - 400) * -math.sin(self.angle) + 400, (self.center.x - 400) * math.sin(self.angle) + (self.center.y - 400) * math.cos(self.angle) + 400
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.angle) + (self.vertices[i].y - self.center.y) * -math.sin(self.angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.angle) + (self.vertices[i].y - self.center.y) * math.cos(self.angle) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - 400) * math.cos(self.angle) + (self.vertices[i].y - 400) * -math.sin(self.angle) + 400, (self.vertices[i].x - 400) * math.sin(self.angle) + (self.vertices[i].y - 400) * math.cos(self.angle) + 400
 
-            
+
 
     def draw_projection(self, screen, normals):
         push_out_0 = Vector((-normals[0].y, normals[0].x))
@@ -140,49 +143,52 @@ class Square:
 
 
     def handle_collision(self, normals, normalstwo, boxtwo, screen):
+
+        # print("box vertices", self.vertices)
+        # print("boxtwo vertices", boxtwo.vertices)
+
         projections = []
         projectionstwo = []
 
-
+        # projecting self vertices onto self normals
         for i in range(len(self.vertices)):
             edgeProjection = [float('inf'), float('-inf')]
             for j in range(len(normals)):
-                n = normals[i].normalize()
+                n = normals[i]
                 projection = n.dotproduct(self.vertices[j])
                 edgeProjection[0] = min(projection, edgeProjection[0])
                 edgeProjection[1] = max(projection, edgeProjection[1])
             projections.append(edgeProjection)
 
+        # projecting self vertices onto another box normals
         for i in range(len(self.vertices)):
             edgeProjection = [float('inf'), float('-inf')]
             for j in range(len(normalstwo)):
-                n = normalstwo[i].normalize()
+                n = normalstwo[i]
                 projection = n.dotproduct(self.vertices[j])
                 edgeProjection[0] = min(projection, edgeProjection[0])
                 edgeProjection[1] = max(projection, edgeProjection[1])
             projections.append(edgeProjection)
 
-
+        # projecting another box vertices onto self normals
         for i in range(len(boxtwo.vertices)):
             edgeProjection = [float('inf'), float('-inf')]
             for j in range(len(normals)):
-                n = normals[i].normalize()
+                n = normals[i]
                 projection = n.dotproduct(boxtwo.vertices[j])
                 edgeProjection[0] = min(projection, edgeProjection[0])
                 edgeProjection[1] = max(projection, edgeProjection[1])
             projectionstwo.append(edgeProjection)
 
+        # projecting another box vertices onto another box normals
         for i in range(len(boxtwo.vertices)):
             edgeProjection = [float('inf'), float('-inf')]
             for j in range(len(normalstwo)):
-                n = normalstwo[i].normalize()
+                n = normalstwo[i]
                 projection = n.dotproduct(boxtwo.vertices[j])
                 edgeProjection[0] = min(projection, edgeProjection[0])
                 edgeProjection[1] = max(projection, edgeProjection[1])
             projectionstwo.append(edgeProjection)
-
-
-
 
         # print("projections", projections)
         # print("projectionstwo", projectionstwo)
@@ -191,11 +197,10 @@ class Square:
         hits = 0
         hitpoints = []
 
-        # print(projections)
 
         for i in range(len(projections)):
-            self.draw_projection_intervals(screen, normals[1], abs(projections[1][0] - projections[1][1]))
-            self.draw_projection_intervals(screen, normals[1], abs(projectionstwo[1][0] - projectionstwo[1][1]))
+            # if i < 4:
+            #     self.draw_projection_intervals(screen, normals[i], abs(projections[i][0] - projections[i][1]))
             
             if self.intervals_overlap(projections[i], projectionstwo[i]):
                 hits += 1
@@ -210,6 +215,8 @@ class Square:
             print("collided")
         else:
             print("not")
+        
+
 
     def intervals_overlap(self, interval1, interval2):
         a1, b1 = interval1
