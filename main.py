@@ -4,6 +4,7 @@ from Square import Square
 import math
 from vector import Vector
 from Circle import Circle
+import os
 
 screen_width = 800
 screen_height = 800
@@ -75,6 +76,9 @@ pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Collision')
 
+display_width, display_height = 400, 400
+display = pygame.Surface((display_width, display_height))
+
 white = (255, 255, 255)
 
 # squareOne = Square(x=150, y=200, width=100, height=100)
@@ -132,23 +136,23 @@ input = {
     "left" : False,
     "down" : False,
     "up": False,
-    "reset": False
 }
 
 rotation_input = {
+    "reset": False,
     "clockwise" : False,
     "counterclockwise" : False
 }
 
 
 
-box = Square([400, 400], 100, 100, blue)
+box = Square([display_width / 2, display_height / 2], 8, 8, blue)
 normals = box.normals()
 
-boxtwo = Square([250, 250], 100, 100, pink)
+boxtwo = Square([250, 250], 16, 16, pink)
 normalstwo = boxtwo.normals()
 
-boxthree = Square([550, 550], 100, 100, heather)
+boxthree = Square([300, 300], 16, 16, heather)
 normalsthree = boxthree.normals()
 
 circle = Circle((400, 200), 30, indigo)
@@ -162,11 +166,38 @@ box_normals = [
     normals, normalstwo, normalsthree
 ]
 
+player_directory = 'imgs/box'
+player_files = [img for img in os.listdir(player_directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+player_images = [pygame.image.load(os.path.join(player_directory, img)) for img in player_files]
+
+barrel_directory = 'imgs/barrel'
+barrel_files = [img for img in os.listdir(barrel_directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+barrel_files = sorted(barrel_files, reverse=True)
+barrel_images = [pygame.image.load(os.path.join(barrel_directory, img)) for img in barrel_files]
+
+
+
+holder_directory = 'imgs/holder'
+holder_files = [img for img in os.listdir(holder_directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+holder_images = [pygame.image.load(os.path.join(holder_directory, img)) for img in holder_files]
+
+def render_stack(surf, images, pos, rotation, spread):
+    middle_rotated = []
+    for i, img in enumerate(images):
+        rotated_img = pygame.transform.rotate(img, rotation)
+        surf.blit(rotated_img, (pos[0] - rotated_img.get_width() // 2 , pos[1] - rotated_img.get_height() // 2 - i * spread))
+        if i == 0:
+            middle_rotated.append(rotated_img)
+            middle_rotated.append(pos[0] - rotated_img.get_width() // 2)
+            middle_rotated.append(pos[1] - rotated_img.get_height() // 2)
+    return middle_rotated
+
 
 # Main loop
 running = True
 while running:
     screen.fill(white)
+    display.fill(white)
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
@@ -181,18 +212,27 @@ while running:
 
     rotation_input["counterclockwise"] = keys[pygame.K_e]
     rotation_input["clockwise"] = keys[pygame.K_q]
+    rotation_input["reset"] = keys[pygame.K_z]
 
     input["up"] = keys[pygame.K_w]
     input["down"] = keys[pygame.K_s]
     input["left"] = keys[pygame.K_a]
     input["right"] = keys[pygame.K_d]
 
-    input["reset"] = keys[pygame.K_z]
 
 
-    box.draw(screen)
-    boxtwo.draw(screen)
-    boxthree.draw(screen)
+    
+    render_stack(display, barrel_images, (boxtwo.center.x, boxtwo.center.y), boxtwo.angle, 1.5)
+    render_stack(display, barrel_images, (boxthree.center.x, boxthree.center.y), boxthree.angle, 1.5)
+    render_stack(display, player_images, (box.center.x, box.center.y), box.angle, 1)
+
+
+    # render_stack(display, holder_images, (boxtwo.center.x, boxtwo.center.y), boxtwo.angle, 15)
+
+
+    # box.draw(display)
+    # boxtwo.draw(display)
+    # boxthree.draw(display)
 
     normals = box.normals()
     normalstwo = boxtwo.normals()
@@ -201,10 +241,14 @@ while running:
     # box.move(input)
 
     direction = boxtwo.get_direction(input)
-    boxtwo.move(direction)
+    # box.move(direction)
 
+    box.handle_rotation(rotation_input, player=True)
     boxtwo.handle_rotation(rotation_input)
-    # box.handle_rotation(rotation_input)
+    boxthree.handle_rotation(rotation_input)
+    boxtwo.move(direction * -1)
+    boxthree.move(direction * -1)
+
 
     # boxtwo.draw_projection(screen, normalstwo)
     # box.draw_projection(screen, normals)
@@ -221,14 +265,16 @@ while running:
     #             boxA.move(normal * (depth / 1.5))
     #             boxB.move(normal * -1 * (depth / 1.5))
 
-    collided, depth, normal = boxtwo.handle_collision(normals, normalstwo, box)
+    collided, depth, normal = box.handle_collision(normalstwo, normals, boxtwo)
     if collided:
-        boxtwo.move(normal * (depth / 1.5))
-        box.move(normal * -1 * (depth / 1.5))
+        # box.move(normal * (depth / 1.5))
+        boxtwo.move(normal * -1 * (depth / 1.5))
 
 
 
     # Update the display
+
+    screen.blit(pygame.transform.scale(display, screen.get_size()), (0, 0))
     pygame.display.flip()
 
     pygame.time.Clock().tick(60)

@@ -8,6 +8,10 @@ indigo = (75, 0, 130)
 cos_45 = math.cos(45 * math.pi / 180)
 sin_45 = math.sin(45 * math.pi / 180)
 
+
+display_center_x = 200
+display_center_y = 200
+
 class Square:
     def __init__(self, center, width, height, color):
         self.color = color
@@ -20,21 +24,23 @@ class Square:
                          Vector((self.center.x + width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y]),
                          Vector((self.center.x - width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y])]
 
-        self.angle = 0
-        self.rotationspeed_degress = 6
+        self.rotation_speed = 0
+        self.rotationspeed_degress = 2
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
+        self.rotation_speed = 0
         self.velocity = 2
         self.direction = Vector((0, 0))
+        self.angle = 0
 
-        self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
+        self.distance_from_center = math.sqrt((display_center_x - self.center.x) ** 2 + (display_center_x - self.center.y) ** 2)
 
 
         
     def draw(self, screen):
-        pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 4)
-        pygame.draw.line(screen, self.color, self.vertices[1].tail, self.vertices[2].tail, 4)
-        pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 4)
-        pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 4)
+        pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 1)
+        pygame.draw.line(screen, self.color, self.vertices[1].tail, self.vertices[2].tail, 1)
+        pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 1)
+        pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 1)
 
     
     def normals(self):
@@ -85,6 +91,7 @@ class Square:
         elif input["down"]:
             direction = (Vector((0, 1)))
 
+
         return direction
         
 
@@ -94,31 +101,38 @@ class Square:
 
 
 
-    def handle_rotation(self, rotation_input):
+    def handle_rotation(self, rotation_input, player=False):
+        if rotation_input["reset"]:
+            self.angle = 0
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
             if rotation_input["counterclockwise"]:
-                self.angle = self.rotationspeed
-            if rotation_input["clockwise"]:
-                self.angle = -self.rotationspeed
-            self.self_rotation()
+                self.rotation_speed = self.rotationspeed
+                self.angle -= self.rotationspeed_degress
+            elif rotation_input["clockwise"]:
+                self.rotation_speed = -self.rotationspeed
+                self.angle += self.rotationspeed_degress
+            if player:
+                self.self_rotation()
+            else:
+                self.rotation()
 
     
 
 
     def translate(self, direction):
         self.center += direction * self.velocity
-        self.distance_from_center = math.sqrt((400 - self.center.x) ** 2 + (400 - self.center.y) ** 2)
+        self.distance_from_center = math.sqrt((display_center_x - self.center.x) ** 2 + (display_center_x - self.center.y) ** 2)
         for i in range(len(self.vertices)):
             self.vertices[i] += direction * self.velocity
 
     def rotation(self):
-        self.center.x, self.center.y = (self.center.x - 400) * math.cos(self.angle) + (self.center.y - 400) * -math.sin(self.angle) + 400, (self.center.x - 400) * math.sin(self.angle) + (self.center.y - 400) * math.cos(self.angle) + 400
+        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(self.rotation_speed) + (self.center.y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.center.x - display_center_x) * math.sin(self.rotation_speed) + (self.center.y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - 400) * math.cos(self.angle) + (self.vertices[i].y - 400) * -math.sin(self.angle) + 400, (self.vertices[i].x - 400) * math.sin(self.angle) + (self.vertices[i].y - 400) * math.cos(self.angle) + 400
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(self.rotation_speed) + (self.vertices[i].y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(self.rotation_speed) + (self.vertices[i].y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
 
     def self_rotation(self):
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.angle) + (self.vertices[i].y - self.center.y) * -math.sin(self.angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.angle) + (self.vertices[i].y - self.center.y) * math.cos(self.angle) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed) + self.center.y
 
 
 
@@ -240,7 +254,7 @@ class Square:
 
 
     def rotate(self):
-        self.angle = self.rotationspeed
+        self.rotation_speed = self.rotationspeed
 
 
     def normalize(self, p1, p2):
