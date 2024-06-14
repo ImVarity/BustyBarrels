@@ -29,7 +29,8 @@ class Hitbox:
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
         self.rotation_speed = 0
         self.velocity = 2
-        # self.direction = Vector((0, 0))
+        self.direction = Vector((0, 0))
+        self.last_looked = Vector((0, 0))
         self.angle = 0
 
 
@@ -70,38 +71,47 @@ class Hitbox:
     
     def get_direction(self, input):
 
-        direction = Vector((0, 0))
-
         if input["up"] and input["right"]:
-            direction = (Vector((cos_45, -sin_45)))
+            self.direction = Vector((cos_45, -sin_45))
+            self.last_looked = self.direction
         elif input["up"] and input["left"]:
-            direction = (Vector((-cos_45, -sin_45)))
+            self.direction = Vector((-cos_45, -sin_45))
+            self.last_looked = self.direction
         elif input["down"] and input["right"]:
-            direction = (Vector((cos_45, sin_45)))
+            self.direction = Vector((cos_45, sin_45))
+            self.last_looked = self.direction
         elif input["down"] and input["left"]:
-            direction = (Vector((-cos_45, sin_45)))
+            self.direction = Vector((-cos_45, sin_45))
+            self.last_looked = self.direction
 
         elif input["right"]:
-            direction = (Vector((1, 0)))
+            self.direction = Vector((1, 0))
+            self.last_looked = self.direction
         elif input["left"]:
-            direction = (Vector((-1, 0)))
+            self.direction = Vector((-1, 0))
+            self.last_looked = self.direction
         elif input["up"]:
-            direction = (Vector((0, -1)))
+            self.direction = Vector((0, -1))
+            self.last_looked = self.direction
         elif input["down"]:
-            direction = (Vector((0, 1)))
-
-
-        return direction
+            self.direction = Vector((0, 1))
+            self.last_looked = self.direction
+        else:
+            self.direction = Vector((0, 0))
         
+
+        return self.direction
 
     def move(self, direction):
         self.translate(direction)
 
 
-
+    # moves everything opposite direction to simulate movement of a static player
     def handle_rotation(self, rotation_input, player=False):
         if rotation_input["reset"]:
-            self.angle = 0
+            if self.angle != 0:
+                self.reset_rotation()
+                self.angle = 0
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
             if rotation_input["counterclockwise"]:
                 self.rotation_speed = -self.rotationspeed
@@ -136,7 +146,10 @@ class Hitbox:
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed) + self.center.y
 
-  
+    def reset_rotation(self):
+        back = self.angle * math.pi / 180
+        for i in range(len(self.vertices)):
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(back) + (self.vertices[i].y - self.center.y) * -math.sin(back) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(back) + (self.vertices[i].y - self.center.y) * math.cos(back) + self.center.y
         
     def draw_projection(self, screen, normals):
         push_out_0 = Vector((-normals[0].y, normals[0].x))
