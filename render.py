@@ -19,6 +19,7 @@ player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
 
 
+
 class Render:
     def __init__(self, images, loc, angle, spread):
         self.images = images

@@ -12,7 +12,7 @@ sin_45 = math.sin(45 * math.pi / 180)
 display_center_x = 200
 display_center_y = 200
 
-class Square:
+class Hitbox:
     def __init__(self, center, width, height, color):
         self.color = color
         self.width = width
@@ -29,23 +29,12 @@ class Square:
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
         self.rotation_speed = 0
         self.velocity = 2
-        self.arrow_velocity = 3
-        self.direction = Vector((0, 0))
+        # self.direction = Vector((0, 0))
         self.angle = 0
-        self.arrow_angle = 0
-
-        self.distance_from_center = math.sqrt((display_center_x - self.center.x) ** 2 + (display_center_x - self.center.y) ** 2)
-
-
-
-
-    def move_arrow(self, direction):
-        self.arrow_translate(direction)
-
 
 
         
-    def draw(self, screen):
+    def draw_hitbox(self, screen):
         pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 1)
         pygame.draw.line(screen, self.color, self.vertices[1].tail, self.vertices[2].tail, 1)
         pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 1)
@@ -110,7 +99,6 @@ class Square:
 
 
 
-
     def handle_rotation(self, rotation_input, player=False):
         if rotation_input["reset"]:
             self.angle = 0
@@ -120,45 +108,23 @@ class Square:
                 self.angle += self.rotationspeed_degress
 
                 
-                self.arrow_angle -= self.rotationspeed
-                self.direction = Vector((math.cos(self.arrow_angle), math.sin(self.arrow_angle)))
 
             elif rotation_input["clockwise"]:
                 self.rotation_speed = self.rotationspeed
                 self.angle -= self.rotationspeed_degress
-
-                self.arrow_angle += self.rotationspeed
-                self.direction = Vector((math.cos(self.arrow_angle), math.sin(self.arrow_angle)))
 
             if player:
                 self.self_rotation()
             else:
                 self.rotation()
 
-    def handle_projectile_rotation(self, rotation_input):
-        if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
-            if rotation_input["counterclockwise"]:
-                self.arrow_angle -= self.rotationspeed
-                self.direction = Vector((math.cos(self.arrow_angle), math.sin(self.arrow_angle)))
-            elif rotation_input["clockwise"]:
-                self.arrow_angle += self.rotationspeed
-                self.direction = Vector((math.cos(self.arrow_angle), math.sin(self.arrow_angle)))
-            self.projectile_rotation()
-
-
+    def get_arrow_angle(self):
+        return self.arrow_angle
 
     def translate(self, direction):
         self.center += direction * self.velocity
-        self.distance_from_center = math.sqrt((display_center_x - self.center.x) ** 2 + (display_center_x - self.center.y) ** 2)
         for i in range(len(self.vertices)):
             self.vertices[i] += direction * self.velocity
-
-
-    def arrow_translate(self, direction):
-        self.center += direction * self.arrow_velocity
-        self.distance_from_center = math.sqrt((display_center_x - self.center.x) ** 2 + (display_center_x - self.center.y) ** 2)
-        for i in range(len(self.vertices)):
-            self.vertices[i] += direction * self.arrow_velocity
 
 
     def rotation(self):
@@ -170,15 +136,7 @@ class Square:
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed) + self.center.y
 
-    def self_rotate_arrow(self, angle):
-        for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(angle) + (self.vertices[i].y - self.center.y) * -math.sin(angle) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(angle) + (self.vertices[i].y - self.center.y) * math.cos(angle) + self.center.y
-
-    def projectile_rotation(self):
-
-        # self.direction.x, self.direction.y = (self.direction.x - display_center_x) * math.cos(self.rotation_speed) + (self.direction.y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.direction.x - display_center_x) * math.sin(self.rotation_speed) + (self.direction.y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
-        # self.direction = self.direction * -1
-        self.self_rotation()
+  
         
     def draw_projection(self, screen, normals):
         push_out_0 = Vector((-normals[0].y, normals[0].x))
@@ -278,9 +236,6 @@ class Square:
         return not (b1 < a2 or b2 < a1)
     
 
-    def rotate(self):
-        self.rotation_speed = self.rotationspeed
-
 
     def normalize(self, p1, p2):
         # Calculate the vector components from p1 to p2
@@ -297,5 +252,6 @@ class Square:
             return [vx / magnitude, vy / magnitude]
 
 
-
+    def get_angle(self):
+        return self.angle
 
