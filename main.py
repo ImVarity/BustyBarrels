@@ -57,7 +57,7 @@ action_input = {
 
 box = Square([display_width / 2, display_height / 2], 8, 8, blue)
 boxtwo = Square([250, 250], 16, 16, pink)
-boxthree = Square([300, 300], 16, 16, heather)
+boxthree = Square([300, 300], 8, 8, heather)
 
 
 player_hitbox = box
@@ -116,13 +116,6 @@ while running:
     input["right"] = keys[pygame.K_d]
 
     action_input["shoot"] = keys[pygame.K_j]
-
-
-
-
-
-
-
     
 
 
@@ -155,21 +148,37 @@ while running:
 
 
     if action_input["shoot"]:
-        shot = Square([display_width / 2, display_height / 2], 8, 8, black)
+        shot = Square([display_width / 2, display_height / 2], 16, 1, black)
         shot.direction = direction
         if direction.x == 0 and direction.y == 0:
             shot.direction = Vector((1, 0))
         shot.arrow_angle = math.atan2(direction.y, direction.x)
         shot.self_rotate_arrow(shot.arrow_angle)
 
-        print(direction)
+        # print(direction)
         arrows.append(shot)
-        
-        arrows_to_render.append(Render(arrow_images, [shot.center.x, shot.center.y], shot.angle + (shot.arrow_angle * 180 / math.pi), 1.5))
+        arrows_to_render.append(Render(arrow_images, [shot.center.x, shot.center.y], shot.angle, 1))
 
     if len(arrows) > 0:
         print(arrows[0].direction)
         print(arrows[0].arrow_angle * 180 / math.pi)
+
+
+
+    for i in range(len(arrows)):
+        arrows[i].draw(display)
+        # arrow.move_arrow()
+        # arrows[i].move(arrows[i].direction + (direction * -1 * arrows[i].arrow_velocity * boxes[0].velocity)) # works somewhat
+        arrows_to_render[i].loc = [arrows[i].center.x, arrows[i].center.y]
+        arrows[i].handle_rotation(rotation_input)
+        arrows[i].move_arrow(Vector((math.cos(arrows[i].arrow_angle), math.sin(arrows[i].arrow_angle))))
+        arrows[i].move(direction * -1)
+        arrows_to_render[i].angle = -arrows[i].arrow_angle * 180 / math.pi
+        arrows_to_render[i].render_stack(display)
+        # # arrows_to_render[i].loc[1] = arrows[i].center.y
+        # arrows_to_render[i].angle = -arrows[i].arrow_angle * 180 / math.pi
+
+        # arrows_to_render[i].render_stack(display)
 
 
 
@@ -178,19 +187,6 @@ while running:
         boxes[i].handle_rotation(rotation_input)
         boxes[i].move(direction * -1)
 
-
-    for i in range(len(arrows)):
-        arrows[i].draw(display)
-        # arrow.move_arrow()
-        arrows[i].move(arrows[i].direction + (direction * -1 * arrows[i].arrow_velocity * boxes[0].velocity))
-        arrows[i].handle_rotation(rotation_input)
-        arrows_to_render[i].loc = [arrows[i].center.x, arrows[i].center.y]
-        arrows_to_render[i].angle = -arrows[i].arrow_angle * 180 / math.pi
-
-        arrows_to_render[i].render_stack(display)
-
-
-    
 
 
         # arrow.move_arrow()

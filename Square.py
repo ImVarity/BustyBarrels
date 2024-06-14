@@ -29,7 +29,7 @@ class Square:
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
         self.rotation_speed = 0
         self.velocity = 2
-        self.arrow_velocity = .5
+        self.arrow_velocity = 3
         self.direction = Vector((0, 0))
         self.angle = 0
         self.arrow_angle = 0
