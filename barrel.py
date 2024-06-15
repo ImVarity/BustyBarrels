@@ -15,6 +15,10 @@ class Barrel(Hitbox):
     def render(self, surface):
         self.to_render.render_stack(surface)
 
+    def draw_healthbar(self, surface):
+        self.health_bar.draw(surface, self.center, self.height)
+
+
 
     def update(self, rotation_input, direction):
         self.handle_rotation(rotation_input)

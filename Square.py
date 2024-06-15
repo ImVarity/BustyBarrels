@@ -42,6 +42,7 @@ class Hitbox:
         pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 1)
 
     
+
     def normals(self):
         edgeVectors = []
         normalVectors = []
@@ -146,8 +147,9 @@ class Hitbox:
 
     def reset_rotation(self):
         back = self.angle * math.pi / 180
+        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(back) + (self.center.y - display_center_x) * -math.sin(back) + display_center_x, (self.center.x - display_center_x) * math.sin(back) + (self.center.y - display_center_x) * math.cos(back) + display_center_x
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(back) + (self.vertices[i].y - self.center.y) * -math.sin(back) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(back) + (self.vertices[i].y - self.center.y) * math.cos(back) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(back) + (self.vertices[i].y - display_center_x) * -math.sin(back) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(back) + (self.vertices[i].y - display_center_x) * math.cos(back) + display_center_x
         
     def draw_projection(self, screen, normals):
         push_out_0 = Vector((-normals[0].y, normals[0].x))

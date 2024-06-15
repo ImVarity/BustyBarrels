@@ -14,6 +14,7 @@ def convert_to_imgs(directory):
     return images
 
 
+paused_img = pygame.image.load('imgs/paused_screen/paused.png')
 barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')

@@ -1,5 +1,4 @@
 import pygame
-import sys
 import math
 import bisect
 import random
@@ -24,6 +23,7 @@ blue = (30, 144, 255)
 white = (255, 255, 255)
 black = (0, 0, 0)
 green = (0, 161, 82)
+linen = (250, 240, 230)
 
 # Initialize Pygame
 pygame.init()
@@ -38,6 +38,12 @@ display = pygame.Surface((display_width, display_height))
 pause_color = (169, 169, 169, 128)
 pause_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 pause_surface.fill(pause_color)
+
+overlay_color = (250, 240, 230, 45)
+overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+overlay_surface.fill(overlay_color)
+
+
 
 mousePos = pygame.mouse.get_pos()
 
@@ -61,7 +67,9 @@ rotation_input = {
 
 action_input = {
     "ultimate" : False,
-    "shoot" : False
+    "shoot" : False,
+    "shootlock": False,
+    "dash": False
 }
 
 
@@ -77,19 +85,22 @@ watermelons = [
 
 ]
 
+random_barrel_count = 50
 
 barrels = [
-    Barrel([50, 50], 16, 16, pink),
-    Barrel([100, 100], 16, 16, pink, health=500)
+    Barrel([150, 150], 16, 16, pink, health=500),
+    Barrel([250, 150], 16, 16, pink, health=500),
+    Barrel([150, 250], 16, 16, pink, health=500),
+    Barrel([250, 250], 16, 16, pink, health=500)
 ]
 
 
-for i in range(10):
+for i in range(random_barrel_count):
     barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health = 100))
 
 
-for i in range(10):
-    watermelons.append(Watermelon([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, green))
+# for i in range(10):
+#     watermelons.append(Watermelon([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, green))
 
 
 
@@ -105,15 +116,30 @@ paused = False
 font = pygame.font.SysFont("khmersangammn", 10)
 
 
+dash_speed = 3
+
+dash_friction = .03
+dash_start = 0
+dash_end = 12
+dash_increment = 1
+
+
+knock_start = 0
+knock_end = 6
+knock_increment = 1
+
+
 def delete_arrow(arrows, arrow_to_delete):
     for i in range(len(arrows)):
         if arrows[i] == arrow_to_delete:
+            # could draw like arrow in the ground
             del arrows[i]
             break
 
 def delete_barrel(barrels, barrel_to_delete, watermelons):
     for i in range(len(barrels)):
         if barrels[i] == barrel_to_delete:
+            # watermelons appear after breaking barrel
             watermelons.append(Watermelon((barrels[i].center.x, barrels[i].center.y), 12, 12, green, 20))
             del barrels[i]
             break
@@ -122,7 +148,7 @@ def delete_barrel(barrels, barrel_to_delete, watermelons):
 
 while running:
     screen.fill(white)
-    display.fill(white)
+    display.fill(linen)
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
@@ -135,6 +161,8 @@ while running:
     watermelon_count_text = "Watermelons: " + str(len(watermelons))
     watermelon_count_text_surface = font.render(watermelon_count_text, True, (0, 0, 0))
     # Handle events
+    action_input["shoot"] = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -142,6 +170,16 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 paused = not paused
+            if event.key == pygame.K_k:
+                action_input["dash"] = True
+
+
+        if event.type == pygame.KEYUP:
+            # if event.key == pygame.K_j:
+            #     action_input["shoot"] = True
+            if event.key == pygame.K_i:
+                action_input["shootlock"] = not action_input["shootlock"]
+
 
 
     rotation_input["counterclockwise"] = keys[pygame.K_e]
@@ -156,20 +194,65 @@ while running:
     action_input["shoot"] = keys[pygame.K_j]
 
 
+
+
+    if dash_start == dash_end:
+        dash_start = 0
+        dash_speed = 3
+        action_input["dash"] = False
+
+
+    
     direction = player.get_direction(input)
-    last_looked = player.last_looked
+
+    # print(Vector((mid_x - player.center.x, mid_y - player.center.y)))
+    
+    # so player will catch up when leaving the center
+    difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
+    player.move(difference_vec * player.scroll_speed)
+    direction -= difference_vec * player.scroll_speed
+
+
+    if action_input["shootlock"]:
+        player.looking = player.looking
+    else:
+        player.looking = player.last_looked
+
+    if action_input["shoot"] and not paused:
+        player.knockback = True
+        shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
+        arrows.append(shot)
+    
+    if knock_start < knock_end:
+        knock_start += knock_increment
+    else:
+        knock_start = 0
+        player.knockback = False
+
+    if player.knockback == True:
+        knock_start += knock_increment
+        player.move(player.looking * -1 * player.knockback)
+
+        
+        
+
 
     if not paused:
         player.update(rotation_input)
 
 
-    if action_input["shoot"] and not paused:
-        shot = Arrow((mid_x, mid_y), 16, 1, blue, last_looked)
-        arrows.append(shot)
+    if action_input["dash"]:
+        dash_start += dash_increment
+        dash_speed -= dash_friction
+        if direction.x == 0 and direction.y == 0:
+            direction = player.looking * dash_speed
+        else:
+            direction *= dash_speed
+    
 
     
-    health_bar.draw(display, player.center, player.height)
 
+    # just put player in here immediately, it will be sorted in place anyway
     to_render_sorted = [player]
     collidables = []
 
@@ -188,7 +271,7 @@ while running:
                     collidables.append(barrels[i])
 
             # split these into two ifs and it becomes a t
-            if barrels[i].center.x  <= mid_x + collision_radius and barrels[i].center.x >= mid_x - collision_radius and barrels[i].center.y <= mid_y + collision_radius and barrels[i].center.y >= mid_y - collision_radius:
+            if barrels[i].center.x  <= player.center.x + collision_radius and barrels[i].center.x >= player.center.x - collision_radius and barrels[i].center.y <= player.center.y + collision_radius and barrels[i].center.y >= player.center.y - collision_radius:
                 collidables.append(barrels[i])
 
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], barrels[i].center.y)
@@ -223,26 +306,24 @@ while running:
         to_render_sorted.insert(index, watermelons[i])
 
 
-
-
-    for arrow in arrows:
-        # arrow.draw_hitbox(display)
-        arrow.render(display)
-
-
     # every item including player
     for object in to_render_sorted:
         if isinstance(object, Barrel):
             object.render(display)
+            object.draw_healthbar(display)
         
-        if isinstance(object, Player):
+        elif isinstance(object, Player):
+            object.render(display)
+            object.draw_hitbox(display)
+            object.draw_healthbar(display)
+
+        elif isinstance(object, Arrow):
             object.render(display)
 
-        if isinstance(object, Arrow):
+        elif isinstance(object, Watermelon):
             object.render(display)
-
-        if isinstance(object, Watermelon):
-            object.render(display)
+            
+        # object.draw_hitbox(display)
 
 
 
@@ -271,6 +352,7 @@ while running:
             if collided:
                 # so that the player doesnt move
                 if bodyA == player:
+                    bodyA.move(direction * -1)
                     bodyB.move(normal * -1 * (depth / 2)) # if you divide depth by more, can be treated like slime
                     continue
                 # so that the player doesnt move
@@ -291,7 +373,8 @@ while running:
                 bodyB.move(normal * -1 * (depth / 2))
             
 
-
+    if paused:
+        display.blit(paused_img, (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2))
 
     # Update the display
     FPS_text_rect = FPS_text_surface.get_rect(center=(28, 12))
@@ -304,6 +387,7 @@ while running:
     display.blit(watermelon_count_text_surface, watermelon_count_text_rect)
     if paused:
         display.blit(pause_surface, (0, 0))
+    display.blit(overlay_surface, (0, 0))
     screen.blit(pygame.transform.scale(display, screen.get_size()), (0, 0))
     pygame.display.flip()
     clock.tick(60)
