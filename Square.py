@@ -117,8 +117,6 @@ class Hitbox:
                 self.rotation_speed = -self.rotationspeed
                 self.angle += self.rotationspeed_degress
 
-                
-
             elif rotation_input["clockwise"]:
                 self.rotation_speed = self.rotationspeed
                 self.angle -= self.rotationspeed_degress

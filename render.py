@@ -17,6 +17,7 @@ def convert_to_imgs(directory):
 barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
+watermelon_images = convert_to_imgs('imgs/watermelon')
 
 
 
@@ -27,8 +28,15 @@ class Render:
         self.angle = angle
         self.spread = spread
 
-    def render_stack(self, surf):
-        for i, img in enumerate(self.images):
-            img.convert_alpha()
-            rotated_img = pygame.transform.rotate(img, self.angle)
-            surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))
+    def render_stack(self, surf, hover=False):
+        if not hover:
+            for i, img in enumerate(self.images):
+                img.convert_alpha()
+                rotated_img = pygame.transform.rotate(img, self.angle)
+                surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))
+
+        if hover:
+            for i, img in enumerate(self.images):
+                img.convert_alpha()
+                rotated_img = pygame.transform.rotate(img, self.angle)
+                surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))

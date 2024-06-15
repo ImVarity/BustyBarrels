@@ -10,6 +10,7 @@ from arrow import Arrow
 from barrel import Barrel
 from player import Player
 from health import HealthBar
+from watermelon import Watermelon
 from render import *
 
 
@@ -22,6 +23,7 @@ pink = (255, 182, 193)
 blue = (30, 144, 255)
 white = (255, 255, 255)
 black = (0, 0, 0)
+green = (0, 161, 82)
 
 # Initialize Pygame
 pygame.init()
@@ -71,7 +73,9 @@ collision_radius = 20
 boxes = []
 arrows = []
 to_render = []
+watermelons = [
 
+]
 
 
 barrels = [
@@ -80,12 +84,15 @@ barrels = [
 ]
 
 
-for i in range(100):
-    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health = 500))
+for i in range(10):
+    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health = 100))
 
 
-# for i in range(50):
-#     barrels.append(Barrel([150, 150], 16, 16, pink))
+for i in range(10):
+    watermelons.append(Watermelon([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, green))
+
+
+
 
 
 health_bar = HealthBar(10, blue)
@@ -104,9 +111,10 @@ def delete_arrow(arrows, arrow_to_delete):
             del arrows[i]
             break
 
-def delete_barrel(barrels, barrel_to_delete):
+def delete_barrel(barrels, barrel_to_delete, watermelons):
     for i in range(len(barrels)):
         if barrels[i] == barrel_to_delete:
+            watermelons.append(Watermelon((barrels[i].center.x, barrels[i].center.y), 12, 12, green, 20))
             del barrels[i]
             break
 
@@ -124,6 +132,8 @@ while running:
     barrel_count_text = "Barrels: " + str(len(barrels))
     barrel_count_text_surface = font.render(barrel_count_text, True, (0, 0, 0))
 
+    watermelon_count_text = "Watermelons: " + str(len(watermelons))
+    watermelon_count_text_surface = font.render(watermelon_count_text, True, (0, 0, 0))
     # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -152,10 +162,6 @@ while running:
     if not paused:
         player.update(rotation_input)
 
-    player.render(display)
-    player.draw_hitbox(display)
-
-
 
     if action_input["shoot"] and not paused:
         shot = Arrow((mid_x, mid_y), 16, 1, blue, last_looked)
@@ -164,7 +170,7 @@ while running:
     
     health_bar.draw(display, player.center, player.height)
 
-    to_render_sorted = []
+    to_render_sorted = [player]
     collidables = []
 
     # fixes z position
@@ -176,6 +182,7 @@ while running:
                 continue
             if barrels[i].center.y > mid_y + render_radius or barrels[i].center.y < mid_y - render_radius:
                 continue
+
             for arrow in arrows:
                 if barrels[i].center.x  <= arrow.center.x + barrels[i].width / 2 and barrels[i].center.x >= arrow.center.x - barrels[i].width / 2 and barrels[i].center.y <= arrow.center.y + barrels[i].height / 2 and barrels[i].center.y >= arrow.center.y - barrels[i].height / 2:
                     collidables.append(barrels[i])
@@ -197,27 +204,53 @@ while running:
         to_render_sorted.insert(index, arrows[i])
 
 
+    for i in range(len(watermelons)):
+        if not paused:
+            watermelons[i].update(rotation_input, direction)
+
+            # 1 limits render distance
+            if watermelons[i].center.x  > mid_x + render_radius or watermelons[i].center.x < mid_x - render_radius:
+                continue
+            if watermelons[i].center.y > mid_y + render_radius or watermelons[i].center.y < mid_y - render_radius:
+                continue
+
+        for arrow in arrows: # 2 add to collidables if near arrow
+            if watermelons[i].center.x  <= arrow.center.x + watermelons[i].width / 2 and watermelons[i].center.x >= arrow.center.x - watermelons[i].width / 2 and watermelons[i].center.y <= arrow.center.y + watermelons[i].height / 2 and watermelons[i].center.y >= arrow.center.y - watermelons[i].height / 2:
+                collidables.append(watermelons[i])
+
+        # 3 add to to-be-rendered
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], watermelons[i].center.y)
+        to_render_sorted.insert(index, watermelons[i])
+
+
+
 
     for arrow in arrows:
         # arrow.draw_hitbox(display)
         arrow.render(display)
 
 
-    for barrel in to_render_sorted:
-        # barrel.draw_hitbox(display)
-        if isinstance(barrel, Barrel):
-            barrel.health_bar.draw(display, barrel.center, barrel.height)
-        barrel.render(display)
+    # every item including player
+    for object in to_render_sorted:
+        if isinstance(object, Barrel):
+            object.render(display)
+        
+        if isinstance(object, Player):
+            object.render(display)
 
-    
-    
+        if isinstance(object, Arrow):
+            object.render(display)
+
+        if isinstance(object, Watermelon):
+            object.render(display)
+
+
+
 
     # deletes arrows that are off the screen
     for i in range(len(arrows) -1, -1, -1):
         if arrows[i].center.x < 0 or arrows[i].center.x > display_width or arrows[i].center.y < 0 or arrows[i].center.y > display_height:
             del arrows[i]
-
-
 
 
 
@@ -250,7 +283,7 @@ while running:
                     bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
                     delete_arrow(arrows, bodyA)
                     if bodyB.health_bar.health <= 0:
-                        delete_barrel(barrels, bodyB)
+                        delete_barrel(barrels, bodyB, watermelons)
                         continue
                     continue
 
@@ -263,10 +296,12 @@ while running:
     # Update the display
     FPS_text_rect = FPS_text_surface.get_rect(center=(28, 12))
     barrel_count_text_rect = barrel_count_text_surface.get_rect(center=(28, 24))
+    watermelon_count_text_rect = watermelon_count_text_surface.get_rect(center=(40, 36))
 
 
     display.blit(FPS_text_surface, FPS_text_rect)
     display.blit(barrel_count_text_surface, barrel_count_text_rect)
+    display.blit(watermelon_count_text_surface, watermelon_count_text_rect)
     if paused:
         display.blit(pause_surface, (0, 0))
     screen.blit(pygame.transform.scale(display, screen.get_size()), (0, 0))
