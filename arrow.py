@@ -11,6 +11,7 @@ class Arrow(Hitbox):
         self.arrow_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates arrow to point that direction
         self.set_angle(self.arrow_angle) # sets the direction of all the vertices to face the right way
         self.spread = 1
+        self.damage = 5
         self.to_render = Render(self.images, center, self.arrow_angle, self.spread)
         # self.direction = Vector((1, 0))
 
