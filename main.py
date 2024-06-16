@@ -8,6 +8,7 @@ from Circle import Circle
 from arrow import Arrow
 from barrel import Barrel
 from player import Player
+from player import PlayerArrow
 from health import HealthBar
 from watermelon import Watermelon
 from render import *
@@ -35,7 +36,7 @@ display_width, display_height = 400, 400
 mid_x, mid_y = display_width / 2, display_height /2
 display = pygame.Surface((display_width, display_height))
 
-pause_color = (169, 169, 169, 128)
+pause_color = (169, 169, 169, 100)
 pause_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 pause_surface.fill(pause_color)
 
@@ -69,14 +70,20 @@ action_input = {
     "ultimate" : False,
     "shoot" : False,
     "shootlock": False,
+    "autofire": False,
     "dash": False
 }
 
 
 player = Player([mid_x, mid_y], 8, 8, blue)
+player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
+test = Barrel([mid_x + 12, mid_y], 16, 16, blue)
+
+ 
+print(player.center.x, player.center.y)
 
 render_radius = 200
-collision_radius = 20
+collision_radius = 33
 
 boxes = []
 arrows = []
@@ -96,7 +103,7 @@ barrels = [
 
 
 for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health = 100))
+    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=random.randrange(250, 500)))
 
 
 # for i in range(10):
@@ -160,6 +167,8 @@ while running:
 
     watermelon_count_text = "Watermelons: " + str(len(watermelons))
     watermelon_count_text_surface = font.render(watermelon_count_text, True, (0, 0, 0))
+
+
     # Handle events
     action_input["shoot"] = False
 
@@ -178,7 +187,7 @@ while running:
             # if event.key == pygame.K_j:
             #     action_input["shoot"] = True
             if event.key == pygame.K_i:
-                action_input["shootlock"] = not action_input["shootlock"]
+                action_input["autofire"] = not action_input["autofire"]
 
 
 
@@ -190,8 +199,12 @@ while running:
     input["down"] = keys[pygame.K_s]
     input["left"] = keys[pygame.K_a]
     input["right"] = keys[pygame.K_d]
-
-    action_input["shoot"] = keys[pygame.K_j]
+    
+    if action_input["autofire"]:
+        action_input["shoot"] = True
+    else:
+        action_input["shoot"] = keys[pygame.K_j]
+    action_input["shootlock"] = keys[pygame.K_l]
 
 
 
@@ -205,12 +218,15 @@ while running:
     
     direction = player.get_direction(input)
 
-    # print(Vector((mid_x - player.center.x, mid_y - player.center.y)))
+
+
     
     # so player will catch up when leaving the center
     difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
     player.move(difference_vec * player.scroll_speed)
     direction -= difference_vec * player.scroll_speed
+
+
 
 
     if action_input["shootlock"]:
@@ -233,9 +249,12 @@ while running:
         knock_start += knock_increment
         player.move(player.looking * -1 * player.knockback)
 
-        
-        
 
+
+
+    player_arrow.update(player.looking, player.center)
+    player_arrow.render(display)
+    # player_arrow.draw_hitbox(display)
 
     if not paused:
         player.update(rotation_input)
@@ -268,10 +287,14 @@ while running:
 
             for arrow in arrows:
                 if barrels[i].center.x  <= arrow.center.x + barrels[i].width / 2 and barrels[i].center.x >= arrow.center.x - barrels[i].width / 2 and barrels[i].center.y <= arrow.center.y + barrels[i].height / 2 and barrels[i].center.y >= arrow.center.y - barrels[i].height / 2:
+                    collidables.append(arrow)
                     collidables.append(barrels[i])
 
             # split these into two ifs and it becomes a t
-            if barrels[i].center.x  <= player.center.x + collision_radius and barrels[i].center.x >= player.center.x - collision_radius and barrels[i].center.y <= player.center.y + collision_radius and barrels[i].center.y >= player.center.y - collision_radius:
+            # if you combine them, becomes a square
+            if barrels[i].center.x  <= player.center.x + collision_radius and barrels[i].center.x >= player.center.x - collision_radius:
+                collidables.append(barrels[i])
+            if barrels[i].center.y <= player.center.y + collision_radius and barrels[i].center.y >= player.center.y - collision_radius:
                 collidables.append(barrels[i])
 
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], barrels[i].center.y)
@@ -282,7 +305,7 @@ while running:
         if not paused:
             arrows[i].update(rotation_input, direction)
         
-        collidables.append(arrows[i])
+        # collidables.append(arrows[i])
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], arrows[i].center.y)
         to_render_sorted.insert(index, arrows[i])
 
@@ -314,8 +337,8 @@ while running:
         
         elif isinstance(object, Player):
             object.render(display)
-            object.draw_hitbox(display)
-            object.draw_healthbar(display)
+            # object.draw_hitbox(display)
+            # object.draw_healthbar(display)
 
         elif isinstance(object, Arrow):
             object.render(display)
@@ -352,7 +375,7 @@ while running:
             if collided:
                 # so that the player doesnt move
                 if bodyA == player:
-                    bodyA.move(direction * -1)
+                    bodyA.move(normal * (depth / 2))
                     bodyB.move(normal * -1 * (depth / 2)) # if you divide depth by more, can be treated like slime
                     continue
                 # so that the player doesnt move
@@ -373,9 +396,6 @@ while running:
                 bodyB.move(normal * -1 * (depth / 2))
             
 
-    if paused:
-        display.blit(paused_img, (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2))
-
     # Update the display
     FPS_text_rect = FPS_text_surface.get_rect(center=(28, 12))
     barrel_count_text_rect = barrel_count_text_surface.get_rect(center=(28, 24))
@@ -385,9 +405,14 @@ while running:
     display.blit(FPS_text_surface, FPS_text_rect)
     display.blit(barrel_count_text_surface, barrel_count_text_rect)
     display.blit(watermelon_count_text_surface, watermelon_count_text_rect)
+
+
     if paused:
+        display.blit(paused_controls_img, (mid_x - paused_controls_img.get_width() // 2, mid_y - paused_controls_img.get_height() // 2))
+        display.blit(paused_img, (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2 - 100))
         display.blit(pause_surface, (0, 0))
-    display.blit(overlay_surface, (0, 0))
+    if not paused:
+        display.blit(overlay_surface, (0, 0))
     screen.blit(pygame.transform.scale(display, screen.get_size()), (0, 0))
     pygame.display.flip()
     clock.tick(60)
