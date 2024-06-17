@@ -11,6 +11,7 @@ from player import Player
 from player import PlayerArrow
 from health import HealthBar
 from watermelon import Watermelon
+from collectable import Collectable
 from render import *
 
 
@@ -75,7 +76,7 @@ action_input = {
 }
 
 
-player = Player([mid_x, mid_y], 8, 8, blue)
+player = Player([100, 100], 8, 8, blue)
 player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
 test = Barrel([mid_x + 12, mid_y], 16, 16, blue)
 
@@ -88,9 +89,10 @@ collision_radius = 33
 boxes = []
 arrows = []
 to_render = []
-watermelons = [
-
-]
+watermelons = []
+collectables = {
+    "Arrows" : []
+}
 
 random_barrel_count = 50
 
@@ -102,11 +104,15 @@ barrels = [
 ]
 
 
-for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=random.randrange(250, 500)))
+for i in range(100):
+    collectables["Arrows"].append(Collectable([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, black, arrow_images))
 
 
-# for i in range(10):
+# for i in range(random_barrel_count):
+#     barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=random.randrange(250, 500)))
+
+
+# for i in range(100):
 #     watermelons.append(Watermelon([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, green))
 
 
@@ -131,9 +137,7 @@ dash_end = 12
 dash_increment = 1
 
 
-knock_start = 0
-knock_end = 6
-knock_increment = 1
+
 
 
 def delete_arrow(arrows, arrow_to_delete):
@@ -219,7 +223,6 @@ while running:
     direction = player.get_direction(input)
 
 
-
     
     # so player will catch up when leaving the center
     difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
@@ -228,27 +231,24 @@ while running:
 
 
 
+    player.update_actions(action_input)
 
-    if action_input["shootlock"]:
-        player.looking = player.looking
-    else:
-        player.looking = player.last_looked
 
-    if action_input["shoot"] and not paused:
+    if action_input["shoot"] and len(player.inventory["Arrows"]) > 0 and not paused:
+        player.inventory["Arrows"].pop()
+        player.knockback_power = 1
         player.knockback = True
         shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
         arrows.append(shot)
+
+    for i in range(len(player.inventory["Arrows"])):
+        if not paused:
+            diff_vec = Vector((player.center.x - player.inventory["Arrows"][i].center.x, player.center.y - player.inventory["Arrows"][i].center.y))
+            player.inventory["Arrows"][i].move(diff_vec * player.inventory["Arrows"][i].follow_speed)
+            player.inventory["Arrows"][i].update(rotation_input, direction)
+
+    player.check_knockback()
     
-    if knock_start < knock_end:
-        knock_start += knock_increment
-    else:
-        knock_start = 0
-        player.knockback = False
-
-    if player.knockback == True:
-        knock_start += knock_increment
-        player.move(player.looking * -1 * player.knockback)
-
 
 
 
@@ -300,6 +300,27 @@ while running:
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], barrels[i].center.y)
         to_render_sorted.insert(index, barrels[i])
 
+
+    for i in range(len(collectables["Arrows"]) - 1, -1, -1):
+        if not paused:
+            
+
+            if collectables["Arrows"][i].center.x < player.center.x + 8 and collectables["Arrows"][i].center.x > player.center.x - 8 and collectables["Arrows"][i].center.y < player.center.y + 8 and collectables["Arrows"][i].center.y > player.center.y - 8:
+                collectables["Arrows"][i].follow_player = True
+                collectables["Arrows"][i].follow_speed = random.randrange(50, 200) / 10000
+                player.inventory["Arrows"].append(collectables["Arrows"][i])
+                del collectables["Arrows"][i]
+                continue
+                    
+
+            collectables["Arrows"][i].update(rotation_input, direction)
+
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], collectables["Arrows"][i].center.y)
+        to_render_sorted.insert(index, collectables["Arrows"][i])
+
+
+
+
     # fixes z position
     for i in range(len(arrows)):
         if not paused:
@@ -309,9 +330,21 @@ while running:
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], arrows[i].center.y)
         to_render_sorted.insert(index, arrows[i])
 
+    
 
     for i in range(len(watermelons)):
         if not paused:
+
+            if watermelons[i].follow_player:
+                diff_vec = Vector((player.center.x - watermelons[i].center.x, player.center.y - watermelons[i].center.y))
+                watermelons[i].move(diff_vec * watermelons[i].follow_speed)
+            
+            if not watermelons[i].follow_player:
+                if watermelons[i].center.x < player.center.x + 8 and watermelons[i].center.x > player.center.x - 8 and watermelons[i].center.y < player.center.y + 8 and watermelons[i].center.y > player.center.y - 8:
+                    watermelons[i].follow_player = True
+                    watermelons[i].follow_speed = random.randrange(50, 200) / 10000
+
+        
             watermelons[i].update(rotation_input, direction)
 
             # 1 limits render distance
@@ -320,13 +353,20 @@ while running:
             if watermelons[i].center.y > mid_y + render_radius or watermelons[i].center.y < mid_y - render_radius:
                 continue
 
-        for arrow in arrows: # 2 add to collidables if near arrow
-            if watermelons[i].center.x  <= arrow.center.x + watermelons[i].width / 2 and watermelons[i].center.x >= arrow.center.x - watermelons[i].width / 2 and watermelons[i].center.y <= arrow.center.y + watermelons[i].height / 2 and watermelons[i].center.y >= arrow.center.y - watermelons[i].height / 2:
-                collidables.append(watermelons[i])
+        # for arrow in arrows: # 2 add to collidables if near arrow
+        #     if watermelons[i].center.x  <= arrow.center.x + watermelons[i].width / 2 and watermelons[i].center.x >= arrow.center.x - watermelons[i].width / 2 and watermelons[i].center.y <= arrow.center.y + watermelons[i].height / 2 and watermelons[i].center.y >= arrow.center.y - watermelons[i].height / 2:
+        #         collidables.append(watermelons[i])
 
         # 3 add to to-be-rendered
+        
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], watermelons[i].center.y)
         to_render_sorted.insert(index, watermelons[i])
+
+
+
+    # difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
+    # player.move(difference_vec * player.scroll_speed)
+    # direction -= difference_vec * player.scroll_speed
 
 
     # every item including player
@@ -345,10 +385,15 @@ while running:
 
         elif isinstance(object, Watermelon):
             object.render(display)
-            
+
+        elif isinstance(object, Collectable):
+            object.render(display) 
+            # object.draw_hitbox(display)
         # object.draw_hitbox(display)
 
 
+    for arrow in player.inventory["Arrows"]:
+        arrow.render(display)
 
 
     # deletes arrows that are off the screen

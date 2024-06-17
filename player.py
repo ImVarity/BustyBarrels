@@ -20,11 +20,20 @@ class Player(Hitbox):
 
         self.health_bar = HealthBar(100, color)
         self.looking = Vector((0, 0))
+
+        # how fast the camera returns to the player
         self.scroll_speed = 0.02
-        self.knockback = 10
-        self.isknockback = False
+
+        self.knockback_power = 5
+        self.knockback = False
+        self.knock_start = 0
+        self.knock_end = 6
+        self.knock_increment = 1
 
 
+        self.inventory = {
+            "Arrows" : []
+        }
 
 
 
@@ -35,10 +44,26 @@ class Player(Hitbox):
         self.health_bar.draw(surface, self.center, self.height)
 
     def update(self, rotation_input): # order matters here so images dont move first
-        # self.handle_scroll()
         self.handle_rotation(rotation_input, player=True)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
+
+    def update_actions(self, action_input):
+        if action_input["shootlock"]:
+            self.looking = self.looking
+        else:
+            self.looking = self.last_looked
+
+    def check_knockback(self):
+        if self.knock_start < self.knock_end:
+            self.knock_start += self.knock_increment
+        else:
+            self.knock_start = 0
+            self.knockback = False
+
+        if self.knockback == True:
+            self.knock_start += self.knock_increment
+            self.move(self.looking * -1 * self.knockback_power)
 
 
 
@@ -59,7 +84,6 @@ class PlayerArrow(Hitbox):
         self.arrow_difference = -self.arrow_angle
 
         
-
 
     def render(self, surface):
         rotated_img = pygame.transform.rotate(self.image, self.arrow_angle_degrees)
