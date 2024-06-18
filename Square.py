@@ -32,6 +32,7 @@ class Hitbox:
         self.direction = Vector((0, 0))
         self.last_looked = Vector((0, 0))
         self.angle = 0
+        self.angle_looking = 0
 
 
         
@@ -72,6 +73,7 @@ class Hitbox:
     
     def get_direction(self, input):
 
+        
         if input["up"] and input["right"]:
             self.direction = Vector((cos_45, -sin_45))
             self.last_looked = self.direction
@@ -99,7 +101,8 @@ class Hitbox:
             self.last_looked = self.direction
         else:
             self.direction = Vector((0, 0))
-            # self.last_looked = (math.atan2(self.last_looked.y, self.last_looked.x) * 180 / math.pi + self.angle) * math.pi / 180
+            
+        self.angle_looking = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
         
 
 

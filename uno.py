@@ -47,12 +47,14 @@ class Uno(Hitbox):
         self.to_render.angle = self.angle
 
     
-    def attack_one(self):
+    def attack_one(self, player_looking_angle):
         
         print(self.center)
         for i in range(8):
             # print(self.shoot_angle_radians * 180 / math.pi)
-            self.shurikens.append(Shuriken((self.center.x, self.center.y), 16, 16, self.color, Vector((math.cos(self.shoot_angle_radians + self.boss_angle_radians), math.sin(self.shoot_angle_radians + self.boss_angle_radians)))))
+            shuri = Shuriken((self.center.x, self.center.y), 16, 16, self.color, Vector((math.cos(self.shoot_angle_radians + self.boss_angle_radians), math.sin(self.shoot_angle_radians + self.boss_angle_radians))))
+            # shuri.shuriken_angle_start = player_looking_angle
+            self.shurikens.append(shuri)
             self.shoot_angle_radians += self.shoot_angle_degrees * math.pi / 180
         
         # give different start

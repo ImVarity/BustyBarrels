@@ -233,7 +233,8 @@ while running:
 
     
     direction = player.get_direction(input)
-
+    if not paused:
+        player.update(rotation_input)
 
     
     # so player will catch up when leaving the center
@@ -246,17 +247,13 @@ while running:
     player.update_actions(action_input)
     player.check_knockback()
 
-    # print(player.angle, math.atan2(player.looking.y, player.looking.x) * 180 / math.pi)
-    print(math.atan2(player.looking.y, player.looking.x) * 180 / math.pi + player.angle)
-    test = math.atan2(player.looking.y, player.looking.x) * 180 / math.pi + player.angle
-    test = test * math.pi / 180
-    # Vector((math.cos(test), math.sin(test)))
+
     if action_input["shoot"] and not paused:
         # player.inventory["Arrows"].pop()
         player.knockback_power = 1
         player.knockback = True
         shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
-        shot.arrow_angle_start = test
+        shot.arrow_angle_start = player.angle_looking
         arrows.append(shot)
 
         
@@ -273,7 +270,7 @@ while running:
     attack_start += attack_inc
     if attack_start == attack_end:
         attack_start = 0
-        # boss.attack_one()
+        boss.attack_one(player.angle_looking)
     
 
     player_arrow.update(player.looking, player.center)
@@ -284,8 +281,7 @@ while running:
 
 
 
-    if not paused:
-        player.update(rotation_input)
+
 
 
 
