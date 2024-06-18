@@ -12,6 +12,8 @@ from player import PlayerArrow
 from health import HealthBar
 from watermelon import Watermelon
 from collectable import Collectable
+from uno import Uno
+from uno import Shuriken
 from render import *
 
 
@@ -76,19 +78,20 @@ action_input = {
 }
 
 
-player = Player([100, 100], 8, 8, blue)
+player = Player([0, 0], 8, 8, blue, health=500)
 player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
 test = Barrel([mid_x + 12, mid_y], 16, 16, blue)
 
  
-print(player.center.x, player.center.y)
+# print(player.center.x, player.center.y)
 
 render_radius = 200
 collision_radius = 33
 
+to_render = []
+
 boxes = []
 arrows = []
-to_render = []
 watermelons = []
 collectables = {
     "Arrows" : []
@@ -136,8 +139,11 @@ dash_start = 0
 dash_end = 12
 dash_increment = 1
 
+boss = Uno([mid_x, mid_y], 32, 32, black)
 
-
+bosses = [
+    boss
+]
 
 
 def delete_arrow(arrows, arrow_to_delete):
@@ -155,6 +161,12 @@ def delete_barrel(barrels, barrel_to_delete, watermelons):
             del barrels[i]
             break
 
+
+attack = False
+
+attack_end = 60
+attack_start = 0
+attack_inc = 1
 
 
 while running:
@@ -232,14 +244,25 @@ while running:
 
 
     player.update_actions(action_input)
+    player.check_knockback()
 
-
-    if action_input["shoot"] and len(player.inventory["Arrows"]) > 0 and not paused:
-        player.inventory["Arrows"].pop()
+    # print(player.angle, math.atan2(player.looking.y, player.looking.x) * 180 / math.pi)
+    print(math.atan2(player.looking.y, player.looking.x) * 180 / math.pi + player.angle)
+    test = math.atan2(player.looking.y, player.looking.x) * 180 / math.pi + player.angle
+    test = test * math.pi / 180
+    # Vector((math.cos(test), math.sin(test)))
+    if action_input["shoot"] and not paused:
+        # player.inventory["Arrows"].pop()
         player.knockback_power = 1
         player.knockback = True
         shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
+        shot.arrow_angle_start = test
         arrows.append(shot)
+
+        
+        # shuri = Shuriken((player.center.x, player.center.y), 16, 1, blue, player.looking)
+        # shuri.shuriken_velocity = 2
+        # boss.shurikens.append(shuri)
 
     for i in range(len(player.inventory["Arrows"])):
         if not paused:
@@ -247,19 +270,27 @@ while running:
             player.inventory["Arrows"][i].move(diff_vec * player.inventory["Arrows"][i].follow_speed)
             player.inventory["Arrows"][i].update(rotation_input, direction)
 
-    player.check_knockback()
+    attack_start += attack_inc
+    if attack_start == attack_end:
+        attack_start = 0
+        # boss.attack_one()
     
-
-
 
     player_arrow.update(player.looking, player.center)
     player_arrow.render(display)
-    # player_arrow.draw_hitbox(display)
+
+
+
+
+
 
     if not paused:
         player.update(rotation_input)
 
 
+
+
+    # print(player.angle)
     if action_input["dash"]:
         dash_start += dash_increment
         dash_speed -= dash_friction
@@ -274,6 +305,43 @@ while running:
     # just put player in here immediately, it will be sorted in place anyway
     to_render_sorted = [player]
     collidables = []
+
+
+
+    for i in range(len(collectables["Arrows"]) - 1, -1, -1):
+        if not paused:
+        
+            if collectables["Arrows"][i].center.x < player.center.x + 8 and collectables["Arrows"][i].center.x > player.center.x - 8 and collectables["Arrows"][i].center.y < player.center.y + 8 and collectables["Arrows"][i].center.y > player.center.y - 8:
+                collectables["Arrows"][i].follow_player = True
+                collectables["Arrows"][i].follow_speed = random.randrange(50, 200) / 10000
+                player.inventory["Arrows"].append(collectables["Arrows"][i])
+                del collectables["Arrows"][i]
+                continue
+                    
+            
+            collectables["Arrows"][i].update(rotation_input, direction)
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], collectables["Arrows"][i].center.y)
+        to_render_sorted.insert(index, collectables["Arrows"][i])
+
+
+    # UNO sorting
+    for b in bosses:
+        if not paused:
+
+            b.update(rotation_input, direction)
+            for arrow in arrows:
+                if b.center.x  <= arrow.center.x + b.width / 2 and b.center.x >= arrow.center.x - b.width / 2 and b.center.y <= arrow.center.y + b.height / 2 and b.center.y >= arrow.center.y - b.height / 2:
+                    collidables.append(arrow)
+                    collidables.append(b)
+
+
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], b.center.y)
+        to_render_sorted.insert(index, b)
+
+
+
+
+
 
     # fixes z position
     for i in range(len(barrels)):
@@ -301,24 +369,6 @@ while running:
         to_render_sorted.insert(index, barrels[i])
 
 
-    for i in range(len(collectables["Arrows"]) - 1, -1, -1):
-        if not paused:
-            
-
-            if collectables["Arrows"][i].center.x < player.center.x + 8 and collectables["Arrows"][i].center.x > player.center.x - 8 and collectables["Arrows"][i].center.y < player.center.y + 8 and collectables["Arrows"][i].center.y > player.center.y - 8:
-                collectables["Arrows"][i].follow_player = True
-                collectables["Arrows"][i].follow_speed = random.randrange(50, 200) / 10000
-                player.inventory["Arrows"].append(collectables["Arrows"][i])
-                del collectables["Arrows"][i]
-                continue
-                    
-
-            collectables["Arrows"][i].update(rotation_input, direction)
-
-        index = bisect.bisect_left([o.center.y for o in to_render_sorted], collectables["Arrows"][i].center.y)
-        to_render_sorted.insert(index, collectables["Arrows"][i])
-
-
 
 
     # fixes z position
@@ -330,6 +380,25 @@ while running:
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], arrows[i].center.y)
         to_render_sorted.insert(index, arrows[i])
 
+
+
+    for i, shuriken in enumerate(boss.shurikens):
+        if not paused:
+            shuriken.update(rotation_input, direction)
+            # limit render distance
+            if shuriken.center.x  > mid_x + render_radius or shuriken.center.x < mid_x - render_radius:
+                continue
+            if shuriken.center.y > mid_y + render_radius or shuriken.center.y < mid_y - render_radius:
+                continue
+
+            if shuriken.center.x  <= player.center.x + collision_radius and shuriken.center.x >= player.center.x - collision_radius and shuriken.center.y <= player.center.y + collision_radius and shuriken.center.y >= player.center.y - collision_radius:
+                collidables.append(shuriken)
+
+        
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], shuriken.center.y)
+        to_render_sorted.insert(index, shuriken)
+
+        
     
 
     for i in range(len(watermelons)):
@@ -364,10 +433,6 @@ while running:
 
 
 
-    # difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
-    # player.move(difference_vec * player.scroll_speed)
-    # direction -= difference_vec * player.scroll_speed
-
 
     # every item including player
     for object in to_render_sorted:
@@ -389,17 +454,37 @@ while running:
         elif isinstance(object, Collectable):
             object.render(display) 
             # object.draw_hitbox(display)
+
+        elif isinstance(object, Uno):
+            object.render(display)
+            object.draw_healthbar(display)
+            object.draw_hitbox(display)
+        
+
         # object.draw_hitbox(display)
 
-
+    # because rendering after, always on top of everything
     for arrow in player.inventory["Arrows"]:
         arrow.render(display)
+
+    for shuriken in boss.shurikens:
+        shuriken.render(display)
+        shuriken.draw_hitbox(display)
+
+
+
 
 
     # deletes arrows that are off the screen
     for i in range(len(arrows) -1, -1, -1):
         if arrows[i].center.x < 0 or arrows[i].center.x > display_width or arrows[i].center.y < 0 or arrows[i].center.y > display_height:
             del arrows[i]
+
+    # deletes all the boss shots that pass a certain radius
+    for i in range(len(boss.shurikens) - 1, -1, -1):
+        if math.sqrt((boss.center.x - boss.shurikens[i].center.x) ** 2 + (boss.center.y - boss.shurikens[i].center.y) ** 2) > boss.delete_radius:
+            del boss.shurikens[i]
+
 
 
 
@@ -415,17 +500,22 @@ while running:
                 continue
             if isinstance(bodyB, Arrow):
                 continue
+            if isinstance(bodyB, Shuriken) and isinstance(bodyA, Shuriken): # so that they dont collide
+                continue
             collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
             # depth - how far you move in before you start pushing it
             if collided:
-                # so that the player doesnt move
-                if bodyA == player:
-                    bodyA.move(normal * (depth / 2))
-                    bodyB.move(normal * -1 * (depth / 2)) # if you divide depth by more, can be treated like slime
+                if isinstance(bodyB, Shuriken) and isinstance(bodyA, Shuriken):
                     continue
-                # so that the player doesnt move
-                if bodyB == player:
-                    bodyA.move(normal * (depth / 2))
+
+                if bodyA == player:
+
+                    if isinstance(bodyB, Shuriken):
+                        bodyA.move(normal * .05)
+                        continue
+
+                    bodyA.move(normal * (depth / 2)) # moves plater so that the player camera moves
+                    bodyB.move(normal * -1 * (depth / 2)) # if you divide depth by more, can be treated like slime
                     continue
                 
                 if isinstance(bodyA, Arrow) and isinstance(bodyB, Barrel):
@@ -436,6 +526,15 @@ while running:
                         delete_barrel(barrels, bodyB, watermelons)
                         continue
                     continue
+                    
+                if isinstance(bodyA, Arrow) and isinstance(bodyB, Uno):
+                    bodyB.health_bar.damage(bodyA.damage)
+                    delete_arrow(arrows, bodyA)
+                    if bodyB.health_bar.health <= 0:
+                        delete_barrel(barrels, bodyB, watermelons)
+                        continue
+                    continue
+
 
                 bodyA.move(normal * (depth / 2))
                 bodyB.move(normal * -1 * (depth / 2))

@@ -28,9 +28,6 @@ class Watermelon(Hitbox):
         self.follow_player = False
         self.follow_speed = 0.02
 
-
-
-
     
     def render(self, surface):
         for i, img in enumerate(self.images):

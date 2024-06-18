@@ -10,15 +10,16 @@ display_center_y = 200
 
 
 class Player(Hitbox):
-    def __init__(self, center, width, height, color):
+    def __init__(self, center, width, height, color, health=100):
         super().__init__(center, width, height, color)
         self.images = player_images
         self.spread = 1
         # self.direction = Vector((0, 0))
         self.to_render = Render(self.images, center, self.angle, self.spread)
 
+        self.health = health
 
-        self.health_bar = HealthBar(100, color)
+        self.health_bar = HealthBar(self.health, color)
         self.looking = Vector((0, 0))
 
         # how fast the camera returns to the player
@@ -64,6 +65,10 @@ class Player(Hitbox):
         if self.knockback == True:
             self.knock_start += self.knock_increment
             self.move(self.looking * -1 * self.knockback_power)
+
+    def damage(self, damage):
+        self.health -= damage
+        self.health_bar.damage(damage)
 
 
 

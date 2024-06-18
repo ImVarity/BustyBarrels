@@ -99,7 +99,10 @@ class Hitbox:
             self.last_looked = self.direction
         else:
             self.direction = Vector((0, 0))
+            # self.last_looked = (math.atan2(self.last_looked.y, self.last_looked.x) * 180 / math.pi + self.angle) * math.pi / 180
         
+
+
 
         return self.direction
 

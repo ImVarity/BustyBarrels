@@ -17,6 +17,9 @@ def convert_to_imgs(directory):
 paused_img = pygame.image.load('imgs/paused_screen/paused.png')
 paused_controls_img = pygame.image.load('imgs/paused_screen/controls.png')
 
+# Uno
+shuriken_img = pygame.image.load('imgs/boss_uno/attacks/shuriken.png')
+
 arrow_img = pygame.image.load('imgs/player/arrow/arrow_white.png')
 barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
@@ -26,7 +29,7 @@ watermelon_images = convert_to_imgs('imgs/watermelon')
 
 
 class Render:
-    def __init__(self, images, loc, angle, spread):
+    def __init__(self, images, loc, angle, spread=0):
         self.images = images
         self.loc = loc
         self.angle = angle
@@ -37,5 +40,10 @@ class Render:
             img.convert_alpha()
             rotated_img = pygame.transform.rotate(img, self.angle)
             surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))
+
+    def render_single(self, surf):
+        rotated_img = pygame.transform.rotate(self.images, self.angle)
+        surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
+
 
 

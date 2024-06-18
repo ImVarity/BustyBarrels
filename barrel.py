@@ -9,7 +9,7 @@ class Barrel(Hitbox):
         super().__init__(center, width, height, color)
         self.images = barrel_images
         self.spread = 1.2
-        self.to_render = Render(self.images, center, self.angle, self.spread)
+        self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
     
     def render(self, surface):
