@@ -112,7 +112,8 @@ collectables = {
     "Arrows" : []
 }
 
-random_barrel_count = 10
+random_barrel_count = 30
+random_arrow_count = 40
 
 barrels = [
     Barrel([150, 150], 16, 16, pink, health=500),
@@ -122,12 +123,12 @@ barrels = [
 ]
 
 
-for i in range(40):
+for i in range(random_arrow_count):
     collectables["Arrows"].append(Collectable([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, black, arrow_images))
 
 
 for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=random.randrange(250, 500)))
+    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=10))
 
 
 # for i in range(100):
@@ -148,11 +149,44 @@ boss = Uno([mid_x, mid_y], 32, 32, black)
 
 bosses = [boss]
 
-Mikhail = NPC([0, 200], 32, 32, red, player_images)
+Mikhail = NPC([0, 0], 32, 32, red, player_images)
 
 npcs = [Mikhail]
 
-map = [
+map_br = [
+    [0, 0, 1, 1, 1, 1, 1, 0, 0],
+    [0, 1, 0, 1, 0, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 0, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 0, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 0, 1],
+    [1, 1, 0, 1, 1, 1, 0, 1, 1],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+]
+map_bl = [
+    [0, 0, 1, 1, 1, 1, 1, 0, 0],
+    [0, 1, 0, 1, 0, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 0, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 0, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 0, 1],
+    [1, 1, 0, 1, 1, 1, 0, 1, 1],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+]
+map_tr = [
+    [0, 0, 1, 1, 1, 1, 1, 0, 0],
+    [0, 1, 0, 1, 0, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 0, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 0, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 0, 1],
+    [1, 1, 0, 1, 1, 1, 0, 1, 1],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+]
+map_tl = [
     [0, 0, 1, 1, 1, 1, 1, 0, 0],
     [0, 1, 0, 1, 0, 1, 1, 1, 0],
     [1, 1, 1, 1, 1, 0, 1, 1, 1],
@@ -167,10 +201,24 @@ map = [
 
 tiles = []
 
+for i in range(len(map_tl)):
+    for j in range(len(map_tl[0])):
+        if map_tl[i][j] == 1:
+            tiles.append(Tile((-(j * 48 - 24), -(i * 48 - 24)), 48, 48, white, grass_img))
 
-for i in range(len(map)):
-    for j in range(len(map[0])):
-        if map[i][j] == 1:
+for i in range(len(map_tr)):
+    for j in range(len(map_tr[0])):
+        if map_tr[i][j] == 1:
+            tiles.append(Tile(((j * 48 - 24), -(i * 48 - 24)), 48, 48, white, grass_img))
+
+for i in range(len(map_bl)):
+    for j in range(len(map_bl[0])):
+        if map_bl[i][j] == 1:
+            tiles.append(Tile((-(j * 48 - 24), i * 48 - 24), 48, 48, white, grass_img))
+
+for i in range(len(map_br)):
+    for j in range(len(map_br[0])):
+        if map_br[i][j] == 1:
             tiles.append(Tile((j * 48 - 24, i * 48 - 24), 48, 48, white, grass_img))
 
 
@@ -182,23 +230,29 @@ def delete_arrow(arrows, arrow_to_delete):
             del arrows[i]
             break
 
-def delete_barrel(barrels, barrel_to_delete, watermelons):
+def delete_barrel(barrels, barrel_to_delete, watermelons, player):
+
     for i in range(len(barrels)):
         if barrels[i] == barrel_to_delete:
             # watermelons appear after breaking barrel
             watermelons.append(Watermelon((barrels[i].center.x, barrels[i].center.y), 12, 12, green, 20))
+            player.barrels_busted += 1
             del barrels[i]
             break
 
 
 attack = False
 
-attack_end = 360
+attack_end = 20
 attack_start = 0
 attack_inc = 1
 
 tracker = 0
 
+arrow_count = "0"
+
+
+tracking = player
 
 pre_time = time.perf_counter()
 while running:
@@ -271,7 +325,7 @@ while running:
 
 
 
-    if len(collectables["Arrows"]) < 30:
+    if len(collectables["Arrows"]) < random_arrow_count:
         collectables["Arrows"].append(Collectable([random.randrange(int(boss.center.x - mid_x), int(boss.center.x + mid_x)), random.randrange(int(boss.center.y - mid_y), int(boss.center.y + mid_y))], 12, 12, black, arrow_images))
 
 
@@ -286,20 +340,23 @@ while running:
 
 
         
+
+
+
+    # camera tracking
+    if not paused:
+        difference_vec = Vector((mid_x - tracking.center.x, mid_y - tracking.center.y))
+        player.move(difference_vec * player.scroll_speed)
+        direction -= difference_vec * player.scroll_speed
+
+        
     player.update_actions(input)
     player.check_knockback()
 
 
-    # so player will catch up when leaving the center
-    if not paused:
-        difference_vec = Vector((mid_x - player.center.x, mid_y - player.center.y))
-        player.move(difference_vec * player.scroll_speed)
-        direction -= difference_vec * player.scroll_speed
 
-
-
-    if action_input["shoot"] and not paused and len(player.inventory["Arrows"]) > 0:
-        player.inventory["Arrows"].pop()
+    if action_input["shoot"] and not paused: # and len(player.inventory["Arrows"]) > 0:
+        # player.inventory["Arrows"].pop()
         player.knockback_power = 1
         player.knockback = True
         shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
@@ -307,18 +364,15 @@ while running:
         arrows.append(shot)
 
 
-    for i in range(len(player.inventory["Arrows"])):
-        if not paused:
-            diff_vec = Vector((player.center.x - player.inventory["Arrows"][i].center.x, player.center.y - player.inventory["Arrows"][i].center.y))
-            player.inventory["Arrows"][i].move(diff_vec * player.inventory["Arrows"][i].follow_speed)
-            player.inventory["Arrows"][i].update(rotation_input, direction)
+
 
     attack_start += attack_inc
     if attack_start == attack_end:
         attack_start = 0
-        boss.attack_one(player.angle_looking)
+        # boss.attack_one(player.angle_looking)
     
 
+    # print(player.center)
     if not paused:
         player_arrow.update(player.looking, player.center)
 
@@ -453,6 +507,26 @@ while running:
 
     player_arrow.render(display)
 
+    print(player.barrels_busted)
+    if player.barrels_busted > 5 and not boss.summoned:
+        boss.summoning = True
+        tracking = boss
+
+    if boss.summoning:
+        boss.summon_start += boss.summon_increment
+
+        if boss.summon_start % 30 == 0:
+            if boss.summon_index > 0:
+                boss.summon_index -= 1
+            else:
+                tracking = player
+                boss.summoning = False
+                boss.summoned = True
+
+
+
+    # print(boss.summoning)
+
     # every item including player
     for object in to_render_sorted:
         
@@ -479,7 +553,7 @@ while running:
             # object.draw_hitbox(display)
 
         elif isinstance(object, Uno):
-            object.render(display)
+            object.summon(display)
             object.draw_healthbar(display)
             object.draw_hitbox(display)
         
@@ -566,7 +640,7 @@ while running:
                     bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
                     delete_arrow(arrows, bodyA)
                     if bodyB.health_bar.health <= 0:
-                        delete_barrel(barrels, bodyB, watermelons)
+                        delete_barrel(barrels, bodyB, watermelons, player)
                         continue
                     continue
                     
@@ -580,6 +654,9 @@ while running:
                 bodyB.move(normal * -1 * (depth / 2))
     # print(count)
 
+
+    arrow_count = str(len(player.inventory["Arrows"]))
+
     # Update the display
     FPS_text_rect = FPS_text_surface.get_rect(center=(28, 12))
     barrel_count_text_rect = barrel_count_text_surface.get_rect(center=(28, 24))
@@ -590,6 +667,18 @@ while running:
     display.blit(barrel_count_text_surface, barrel_count_text_rect)
     display.blit(watermelon_count_text_surface, watermelon_count_text_rect)
 
+
+
+    col = 350
+    row = 30
+
+    divider = 0
+
+    for letter in arrow_count:
+        divider += 1
+        if letter == " ":
+            continue
+        display.blit(abc[letter.capitalize()], (col + divider * 8, row))
 
     if paused:
         display.blit(paused_controls_img, (mid_x - paused_controls_img.get_width() // 2, mid_y - paused_controls_img.get_height() // 2))

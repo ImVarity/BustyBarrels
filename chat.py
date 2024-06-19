@@ -31,6 +31,8 @@ class TextBubble:
 
         self.c_l = 0
 
+        self.continue_text = "press c to continue"
+
 
     def reset(self):
         self.c_l = 0
@@ -53,6 +55,7 @@ class TextBubble:
 
         self.show(surface, self.show_dialogue)
         if self.c_l == len(self.dialogue[self.current_dialogue]):
+            self.show_continue_text(surface)
             return
 
         self.show_dialogue += self.dialogue[self.current_dialogue][self.c_l]
@@ -67,6 +70,22 @@ class TextBubble:
         divider = 0
 
         for letter in text:
+            divider += 1
+            if letter == " ":
+                continue
+            if letter == "+":
+                row += 8
+                divider = 0
+                continue
+            surface.blit(abc[letter.capitalize()], (col + divider * 8, row))
+
+    def show_continue_text(self, surface):
+        col = self.location.x - self.width / 2 + 120
+        row = self.location.y - self.height / 2 + 10 + 8 * 6
+
+        divider = 0
+
+        for letter in self.continue_text:
             divider += 1
             if letter == " ":
                 continue

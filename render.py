@@ -24,6 +24,7 @@ paused_controls_img = pygame.image.load('imgs/paused_screen/controls.png')
 
 # Uno
 shuriken_img = pygame.image.load('imgs/boss_uno/attacks/shuriken.png')
+# shuriken_img = pygame.transform.scale(shuriken_img, (3, 3)) # can use these for leave or soemthing
 
 arrow_img = pygame.image.load('imgs/player/arrow/arrow_white.png')
 barrel_images = convert_to_imgs('imgs/barrel')
@@ -52,8 +53,6 @@ class Render:
 
 
 
-
-
 def limit_render(object, render_radius):
     mid_x, mid_y = 200, 200
     if object.center.x > mid_x + render_radius or object.center.x < mid_x - render_radius:
@@ -77,33 +76,78 @@ def limit_collision_T(object, collision_center, collision_radius, collidables):
 
 
 
-
+A_img = pygame.image.load('imgs/alphabet/A.png')
+B_img = pygame.image.load('imgs/alphabet/B.png')
+C_img = pygame.image.load('imgs/alphabet/C.png')
+D_img = pygame.image.load('imgs/alphabet/D.png')
+E_img = pygame.image.load('imgs/alphabet/E.png')
+F_img = pygame.image.load('imgs/alphabet/F.png')
+G_img = pygame.image.load('imgs/alphabet/G.png')
+H_img = pygame.image.load('imgs/alphabet/H.png')
+I_img = pygame.image.load('imgs/alphabet/I.png')
+J_img = pygame.image.load('imgs/alphabet/J.png')
+K_img = pygame.image.load('imgs/alphabet/K.png')
+L_img = pygame.image.load('imgs/alphabet/L.png')
+M_img = pygame.image.load('imgs/alphabet/M.png')
+N_img = pygame.image.load('imgs/alphabet/N.png')
+O_img = pygame.image.load('imgs/alphabet/O.png')
+P_img = pygame.image.load('imgs/alphabet/P.png')
+Q_img = pygame.image.load('imgs/alphabet/Q.png')
+R_img = pygame.image.load('imgs/alphabet/R.png')
+S_img = pygame.image.load('imgs/alphabet/S.png')
+T_img = pygame.image.load('imgs/alphabet/T.png')
+U_img = pygame.image.load('imgs/alphabet/U.png')
+V_img = pygame.image.load('imgs/alphabet/V.png')
+W_img = pygame.image.load('imgs/alphabet/W.png')
+X_img = pygame.image.load('imgs/alphabet/X.png')
+Y_img = pygame.image.load('imgs/alphabet/Y.png')
+Z_img = pygame.image.load('imgs/alphabet/Z.png')
+ZERO_img = pygame.image.load('imgs/alphabet/0.png')
+ONE_img = pygame.image.load('imgs/alphabet/1.png')
+TWO_img = pygame.image.load('imgs/alphabet/2.png')
+THREE_img = pygame.image.load('imgs/alphabet/3.png')
+FOUR_img = pygame.image.load('imgs/alphabet/4.png')
+FIVE_img = pygame.image.load('imgs/alphabet/5.png')
+SIX_img = pygame.image.load('imgs/alphabet/6.png')
+SEVEN_img = pygame.image.load('imgs/alphabet/7.png')
+EIGHT_img = pygame.image.load('imgs/alphabet/8.png')
+NINE_img = pygame.image.load('imgs/alphabet/9.png')
 
 abc = {
-    "A": pygame.image.load('imgs/alphabet/A.png'),
-    "B": pygame.image.load('imgs/alphabet/B.png'),
-    "C": pygame.image.load('imgs/alphabet/C.png'),
-    "D": pygame.image.load('imgs/alphabet/D.png'),
-    "E": pygame.image.load('imgs/alphabet/E.png'),
-    "F": pygame.image.load('imgs/alphabet/F.png'),
-    "G": pygame.image.load('imgs/alphabet/G.png'),
-    "H": pygame.image.load('imgs/alphabet/H.png'),
-    "I": pygame.image.load('imgs/alphabet/I.png'),
-    "J": pygame.image.load('imgs/alphabet/J.png'),
-    "K": pygame.image.load('imgs/alphabet/K.png'),
-    "L": pygame.image.load('imgs/alphabet/L.png'),
-    "M": pygame.image.load('imgs/alphabet/M.png'),
-    "N": pygame.image.load('imgs/alphabet/N.png'),
-    "O": pygame.image.load('imgs/alphabet/O.png'),
-    "P": pygame.image.load('imgs/alphabet/P.png'),
-    "Q": pygame.image.load('imgs/alphabet/Q.png'),
-    "R": pygame.image.load('imgs/alphabet/R.png'),
-    "S": pygame.image.load('imgs/alphabet/S.png'),
-    "T": pygame.image.load('imgs/alphabet/T.png'),
-    "U": pygame.image.load('imgs/alphabet/U.png'),
-    "V": pygame.image.load('imgs/alphabet/V.png'),
-    "W": pygame.image.load('imgs/alphabet/W.png'),
-    "X": pygame.image.load('imgs/alphabet/X.png'),
-    "Y": pygame.image.load('imgs/alphabet/Y.png'),
-    "Z": pygame.image.load('imgs/alphabet/Z.png')
+    "A": A_img,
+    "B": B_img,
+    "C": C_img,
+    "D": D_img,
+    "E": E_img,
+    "F": F_img,
+    "G": G_img,
+    "H": H_img,
+    "I": I_img,
+    "J": J_img,
+    "K": K_img,
+    "L": L_img,
+    "M": M_img,
+    "N": N_img,
+    "O": O_img,
+    "P": P_img,
+    "Q": Q_img,
+    "R": R_img,
+    "S": S_img,
+    "T": T_img,
+    "U": U_img,
+    "V": V_img,
+    "W": W_img,
+    "X": X_img,
+    "Y": Y_img,
+    "Z": Z_img,
+    "0": ZERO_img,
+    "1": ONE_img,
+    "2": TWO_img,
+    "3": THREE_img,
+    "4": FOUR_img,
+    "5": FIVE_img,
+    "6": SIX_img,
+    "7": SEVEN_img,
+    "8": EIGHT_img,
+    "9": NINE_img,
 }

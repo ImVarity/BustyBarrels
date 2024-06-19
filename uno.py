@@ -13,6 +13,8 @@ class Uno(Hitbox):
     def __init__(self, center, width, height, color, health=1000):
         super().__init__(center, width, height, color)
         self.images = barrel_images
+        self.num_images = len(self.images)
+
         self.spread = 1.3
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, (0, 0, 0))
@@ -28,13 +30,27 @@ class Uno(Hitbox):
 
         self.delete_radius = 200
 
-
+        
+        self.summoning = False
+        self.summon_start = 0
+        self.summon_end = self.num_images * 30
+        self.summon_increment = 1
+        self.summon_index = self.num_images
+        self.summoned = False
 
 
         self.shurikens = []
 
+        self.tracking = False
+
     def render(self, surface):
         self.to_render.render_stack(surface)
+
+
+    def summon(self, surface):
+        self.to_render.images = self.images[self.summon_index:self.num_images]
+        self.to_render.render_stack(surface)
+
 
     def draw_healthbar(self, surface):
         self.health_bar.draw(surface, self.center, self.height)
@@ -79,7 +95,7 @@ class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
         self.images = shuriken_img
-        self.shuriken_velocity = .05
+        self.shuriken_velocity = 1.3
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
         self.shuriken_angle_start = self.shuriken_angle
         # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way

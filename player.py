@@ -38,11 +38,14 @@ class Player(Hitbox):
         self.dash_end = 12
         self.dash_increment = 1
 
-
+        self.tracking = True
 
         self.inventory = {
             "Arrows" : []
         }
+
+
+        self.barrels_busted = 0
 
 
 
@@ -55,6 +58,7 @@ class Player(Hitbox):
     def update(self, rotation_input, action_input, direction): # order matters here so images dont move first
         self.handle_rotation(rotation_input, player=True)
         self.handle_dash(action_input, direction)
+        self.collectables_follow(rotation_input, direction)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
@@ -92,6 +96,13 @@ class Player(Hitbox):
         self.health -= damage
         self.health_bar.damage(damage)
 
+    def collectables_follow(self, rotation_input, direction):
+        for i in range(len(self.inventory["Arrows"])):
+            diff_vec = Vector((self.center.x - self.inventory["Arrows"][i].center.x, self.center.y - self.inventory["Arrows"][i].center.y))
+            self.inventory["Arrows"][i].move(diff_vec * self.inventory["Arrows"][i].follow_speed)
+            self.inventory["Arrows"][i].update(rotation_input, direction)
+
+
 
 
 class PlayerArrow(Hitbox):
@@ -109,6 +120,7 @@ class PlayerArrow(Hitbox):
         self.arrow_angle_degrees = -self.arrow_angle * 180 / math.pi
         self.arrow_rotation(self.arrow_angle + self.arrow_difference)
         self.arrow_difference = -self.arrow_angle
+        
 
         
 
