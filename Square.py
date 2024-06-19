@@ -34,6 +34,8 @@ class Hitbox:
         self.angle = 0
         self.angle_looking = 0
 
+        self.dt = 1
+
 
         
     def draw_hitbox(self, screen):
@@ -63,6 +65,7 @@ class Hitbox:
             edgeVectors.append(q)
 
 
+
         # returns normal vectors that are normalized
         for edge in edgeVectors:
             v = Vector((-edge.y, edge.x))
@@ -73,35 +76,54 @@ class Hitbox:
     
     def get_direction(self, input):
 
-        
-        if input["up"] and input["right"]:
-            self.direction = Vector((cos_45, -sin_45))
-            self.last_looked = self.direction
-        elif input["up"] and input["left"]:
-            self.direction = Vector((-cos_45, -sin_45))
-            self.last_looked = self.direction
-        elif input["down"] and input["right"]:
-            self.direction = Vector((cos_45, sin_45))
-            self.last_looked = self.direction
-        elif input["down"] and input["left"]:
-            self.direction = Vector((-cos_45, sin_45))
-            self.last_looked = self.direction
-
-        elif input["right"]:
-            self.direction = Vector((1, 0))
-            self.last_looked = self.direction
-        elif input["left"]:
-            self.direction = Vector((-1, 0))
-            self.last_looked = self.direction
-        elif input["up"]:
-            self.direction = Vector((0, -1))
-            self.last_looked = self.direction
-        elif input["down"]:
-            self.direction = Vector((0, 1))
-            self.last_looked = self.direction
+        if not input["lock"]:
+            if input["up"] and input["right"]:
+                self.direction = Vector((cos_45, -sin_45))
+                self.last_looked = self.direction
+            elif input["up"] and input["left"]:
+                self.direction = Vector((-cos_45, -sin_45))
+                self.last_looked = self.direction
+            elif input["down"] and input["right"]:
+                self.direction = Vector((cos_45, sin_45))
+                self.last_looked = self.direction
+            elif input["down"] and input["left"]:
+                self.direction = Vector((-cos_45, sin_45))
+                self.last_looked = self.direction
+            elif input["right"]:
+                self.direction = Vector((1, 0))
+                self.last_looked = self.direction
+            elif input["left"]:
+                self.direction = Vector((-1, 0))
+                self.last_looked = self.direction
+            elif input["up"]:
+                self.direction = Vector((0, -1))
+                self.last_looked = self.direction
+            elif input["down"]:
+                self.direction = Vector((0, 1))
+                self.last_looked = self.direction
+            else:
+                self.direction = Vector((0, 0))
         else:
-            self.direction = Vector((0, 0))
-            
+            if input["up"] and input["right"]:
+                self.direction = Vector((cos_45, -sin_45))
+            elif input["up"] and input["left"]:
+                self.direction = Vector((-cos_45, -sin_45))
+            elif input["down"] and input["right"]:
+                self.direction = Vector((cos_45, sin_45))
+            elif input["down"] and input["left"]:
+                self.direction = Vector((-cos_45, sin_45))
+
+            elif input["right"]:
+                self.direction = Vector((1, 0))
+            elif input["left"]:
+                self.direction = Vector((-1, 0))
+            elif input["up"]:
+                self.direction = Vector((0, -1))
+            elif input["down"]:
+                self.direction = Vector((0, 1))
+            else:
+                self.direction = Vector((0, 0))
+
         self.angle_looking = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
         
 
@@ -111,6 +133,11 @@ class Hitbox:
 
     def move(self, direction):
         self.translate(direction)
+
+    def move_distance(self, direction, distance):
+        self.center += direction * distance
+        for i in range(len(self.vertices)):
+            self.vertices[i] += direction * distance
 
 
     # moves everything opposite direction to simulate movement of a static player

@@ -49,7 +49,6 @@ class Uno(Hitbox):
     
     def attack_one(self, player_looking_angle):
         
-        print(self.center)
         for i in range(8):
             # print(self.shoot_angle_radians * 180 / math.pi)
             shuri = Shuriken((self.center.x, self.center.y), 16, 16, self.color, Vector((math.cos(self.shoot_angle_radians + self.boss_angle_radians), math.sin(self.shoot_angle_radians + self.boss_angle_radians))))
@@ -61,7 +60,6 @@ class Uno(Hitbox):
         self.shoot_angle_radians = self.start_shoot_angle * math.pi / 180
         self.start_shoot_angle += 10
 
-        print()
 
 
     
@@ -81,7 +79,7 @@ class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
         self.images = shuriken_img
-        self.shuriken_velocity = 2
+        self.shuriken_velocity = .05
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
         self.shuriken_angle_start = self.shuriken_angle
         # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way

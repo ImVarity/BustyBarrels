@@ -14,7 +14,7 @@ class Player(Hitbox):
         super().__init__(center, width, height, color)
         self.images = player_images
         self.spread = 1
-        # self.direction = Vector((0, 0))
+        self.direction = Vector((0, 0))
         self.to_render = Render(self.images, center, self.angle, self.spread)
 
         self.health = health
@@ -30,6 +30,14 @@ class Player(Hitbox):
         self.knock_start = 0
         self.knock_end = 6
         self.knock_increment = 1
+        
+
+        self.dash_speed = 1
+        self.dash_friction = .03
+        self.dash_start = 0
+        self.dash_end = 12
+        self.dash_increment = 1
+
 
 
         self.inventory = {
@@ -44,15 +52,29 @@ class Player(Hitbox):
     def draw_healthbar(self, surface):
         self.health_bar.draw(surface, self.center, self.height)
 
-    def update(self, rotation_input): # order matters here so images dont move first
+    def update(self, rotation_input, action_input, direction): # order matters here so images dont move first
         self.handle_rotation(rotation_input, player=True)
+        self.handle_dash(action_input, direction)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
+
+    def handle_dash(self, action_input, direction):
+        if self.dash_start == self.dash_end:
+            self.dash_start = 0
+            self.dash_speed = 1
+            action_input["dash"] = False
+            return
+        if action_input["dash"]:
+            self.dash_start += self.dash_increment
+            self.dash_speed -= self.dash_friction
+            if direction.x == 0 and direction.y == 0:
+                direction *= self.dash_speed
+            self.move(direction)
+        
+
     def update_actions(self, action_input):
-        if action_input["shootlock"]:
-            self.looking = self.looking
-        else:
+        if not action_input["lock"]:
             self.looking = self.last_looked
 
     def check_knockback(self):
