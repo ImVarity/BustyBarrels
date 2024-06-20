@@ -41,10 +41,13 @@ class TextBubble:
     def next(self):
         self.current_dialogue += 1
         self.reset()
+
         
     def display(self, surface):
 
-        pygame.draw.rect(surface, linen, self.rect)
+        # pygame.draw.rect(surface, linen, self.rect)
+        surface.blit(dialogue_box, (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
+        self.show_quests(surface)
         if self.current_dialogue >= self.dialogue_count:
             self.reset()
             self.current_dialogue = 0
@@ -61,6 +64,8 @@ class TextBubble:
         self.show_dialogue += self.dialogue[self.current_dialogue][self.c_l]
         self.c_l += 1
 
+    def show_quests(self, surface):
+        surface.blit(quest_box, (0, 0))
 
 
     def show(self, surface, text):
@@ -80,8 +85,8 @@ class TextBubble:
             surface.blit(abc[letter.capitalize()], (col + divider * 8, row))
 
     def show_continue_text(self, surface):
-        col = self.location.x - self.width / 2 + 120
-        row = self.location.y - self.height / 2 + 10 + 8 * 6
+        col = self.location.x - self.width / 2 + 120 + 15
+        row = self.location.y - self.height / 2 + 10 + 8 * 6 + 24
 
         divider = 0
 
@@ -114,3 +119,5 @@ class TextBubble:
         self.dialogue.append(enter)
         print(self.dialogue)
         self.dialogue_count += 1
+
+

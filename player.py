@@ -10,12 +10,13 @@ display_center_y = 200
 
 
 class Player(Hitbox):
-    def __init__(self, center, width, height, color, health=100):
+    def __init__(self, center, width, height, color, health=200):
         super().__init__(center, width, height, color)
         self.images = player_images
         self.spread = 1
         self.direction = Vector((0, 0))
         self.to_render = Render(self.images, center, self.angle, self.spread)
+        self.spawnpoint = Hitbox((0, 0), 1, 1, (0, 0, 0))
 
         self.health = health
 
@@ -24,6 +25,10 @@ class Player(Hitbox):
 
         # how fast the camera returns to the player
         self.scroll_speed = 0.02
+
+
+
+        # default stats for the player
 
         self.knockback_power = 5
         self.knockback = False
@@ -48,6 +53,16 @@ class Player(Hitbox):
         self.barrels_busted = 0
 
 
+        self.arrow_multiplier = 100
+
+        self.arrow_counter = 0
+
+
+    def player_death(self):
+        # probably reset their stats or something
+        # keep barrels busted the same
+        
+        pass
 
     def render(self, surface):
         self.to_render.render_stack(surface)
@@ -62,6 +77,13 @@ class Player(Hitbox):
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
+    
+    def update_away(self, rotation_input, action_input, direction):
+        self.handle_rotation(rotation_input)
+        self.handle_dash(action_input, direction)
+        self.collectables_follow(rotation_input, direction)
+        self.to_render.loc = [self.center.x, self.center.y]
+        self.to_render.angle = self.angle
 
     def handle_dash(self, action_input, direction):
         if self.dash_start == self.dash_end:
@@ -96,11 +118,16 @@ class Player(Hitbox):
         self.health -= damage
         self.health_bar.damage(damage)
 
+    def shoot(self, arrows):
+        pass
+
     def collectables_follow(self, rotation_input, direction):
         for i in range(len(self.inventory["Arrows"])):
             diff_vec = Vector((self.center.x - self.inventory["Arrows"][i].center.x, self.center.y - self.inventory["Arrows"][i].center.y))
             self.inventory["Arrows"][i].move(diff_vec * self.inventory["Arrows"][i].follow_speed)
             self.inventory["Arrows"][i].update(rotation_input, direction)
+
+    
 
 
 

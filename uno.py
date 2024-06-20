@@ -12,7 +12,7 @@ mid_y = 200
 class Uno(Hitbox):
     def __init__(self, center, width, height, color, health=1000):
         super().__init__(center, width, height, color)
-        self.images = barrel_images
+        self.images = Uno_images
         self.num_images = len(self.images)
 
         self.spread = 1.3
@@ -31,9 +31,11 @@ class Uno(Hitbox):
         self.delete_radius = 200
 
         
+        self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
+
         self.summoning = False
         self.summon_start = 0
-        self.summon_end = self.num_images * 30
+        self.summon_end = self.num_images * self.summon_rise
         self.summon_increment = 1
         self.summon_index = self.num_images
         self.summoned = False
@@ -43,13 +45,16 @@ class Uno(Hitbox):
 
         self.tracking = False
 
+
+
+    def death(self):
+        self.images = barrel_images
+
     def render(self, surface):
-        self.to_render.render_stack(surface)
-
-
-    def summon(self, surface):
         self.to_render.images = self.images[self.summon_index:self.num_images]
         self.to_render.render_stack(surface)
+    
+
 
 
     def draw_healthbar(self, surface):
@@ -62,12 +67,18 @@ class Uno(Hitbox):
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
-    
+
+    def damage(self, dmg):
+        if not self.summoned:
+            pass
+        else:
+            self.health_bar.damage(dmg)
+
     def attack_one(self, player_looking_angle):
         
         for i in range(8):
             # print(self.shoot_angle_radians * 180 / math.pi)
-            shuri = Shuriken((self.center.x, self.center.y), 16, 16, self.color, Vector((math.cos(self.shoot_angle_radians + self.boss_angle_radians), math.sin(self.shoot_angle_radians + self.boss_angle_radians))))
+            shuri = Shuriken((self.center.x, self.center.y), 12, 12, self.color, Vector((math.cos(self.shoot_angle_radians + self.boss_angle_radians), math.sin(self.shoot_angle_radians + self.boss_angle_radians))))
             # shuri.shuriken_angle_start = player_looking_angle
             self.shurikens.append(shuri)
             self.shoot_angle_radians += self.shoot_angle_degrees * math.pi / 180
@@ -76,6 +87,11 @@ class Uno(Hitbox):
         self.shoot_angle_radians = self.start_shoot_angle * math.pi / 180
         self.start_shoot_angle += 10
 
+    def delete_shuriken(self, shuriken_to_delete):
+        for i in range(len(self.shurikens)):
+            if self.shurikens[i] == shuriken_to_delete:
+                del self.shurikens[i]
+                return
 
 
     
@@ -95,15 +111,15 @@ class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
         self.images = shuriken_img
-        self.shuriken_velocity = 1.3
+        self.shuriken_velocity = .3
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
         self.shuriken_angle_start = self.shuriken_angle
         # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
-        self.damage = 5
+        self.damage = 25
         self.to_render = Render(self.images, center, self.shuriken_angle)
 
         self.rotation_angle = 0
-        self.spin_speed_degrees = 2
+        self.spin_speed_degrees = 4
         self.spin_speed = self.spin_speed_degrees * math.pi / 180
 
         self.distance_from_boss = 0

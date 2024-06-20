@@ -218,7 +218,7 @@ class Hitbox:
 
         normal = normals[0]
         depth = float('inf')
-        collided = True
+
 
         for i in range(len(self.vertices)):
 
@@ -229,7 +229,7 @@ class Hitbox:
 
             # checking overlap
             if (minA >= maxB or minB >= maxA):
-                collided = False
+                return False, depth, normal
             
             axisDepth = min(maxB - minA, maxA - minB)
 
@@ -247,7 +247,7 @@ class Hitbox:
 
             # checking overlap
             if (minA >= maxB or minB >= maxA):
-                collided = False
+                return False, depth, normal
             
             axisDepth = min(maxB - minA, maxA - minB)
 
@@ -264,7 +264,7 @@ class Hitbox:
         if direction.dotproduct(normal) < 0:
             normal = normal * -1
         
-        return (collided, depth, normal)
+        return (True, depth, normal)
 
 
     def project_vertices(self, vertices, axis):

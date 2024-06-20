@@ -21,28 +21,16 @@ from render import *
 import time
 
 
-
 screen_width = 800
 screen_height = 800
 
-heather = (210, 145, 255)
-indigo = (75, 0, 130)
-pink = (255, 182, 193)
-blue = (30, 144, 255)
-white = (255, 255, 255)
-black = (0, 0, 0)
-green = (0, 161, 82)
-linen = (250, 240, 230)
-slate_grey = (174, 198, 224)
-lime_green = (50, 205, 50)
-grass_green = (142, 200, 64)
-red = (220, 20, 60)
 
-# Initialize Pygame
+
+
 pygame.init()
 
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('Collision')
+pygame.display.set_caption('Busty Barrels')
 
 display_width, display_height = 400, 400
 mid_x, mid_y = display_width / 2, display_height /2
@@ -71,7 +59,8 @@ input = {
     "down" : False,
     "up": False,
     "lock" : False,
-    "interact": False
+    "interact": False,
+    "stats" : False
 }
 
 rotation_input = {
@@ -92,19 +81,22 @@ admin_input = {
     "hitboxes": False
 }
 
+# ------------------------------------------------------------ Player ------------------------------------------------------------------------
 
 player = Player([0, 0], 8, 8, blue, health=500)
 player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
-test = Barrel([mid_x + 12, mid_y], 16, 16, blue)
+spawnpoint = Hitbox((0, 0), 1, 1, black)
 
- 
-# print(player.center.x, player.center.y)
+
+# ------------------------------------------------------------ Radius ------------------------------------------------------------------
 
 render_radius = 200
 collision_radius = 33
 
-to_render = []
 
+# -------------------------------------------------- Where items and objects are held --------------------------------------------------------------------------------
+
+to_render = []
 boxes = []
 arrows = []
 watermelons = []
@@ -112,11 +104,13 @@ collectables = {
     "Arrows" : []
 }
 
-random_barrel_count = 30
-random_arrow_count = 40
+random_barrel_count = 20
+random_arrow_count = 30
+
+check = Barrel([150, 150], 16, 16, pink, health=500)
 
 barrels = [
-    Barrel([150, 150], 16, 16, pink, health=500),
+    check,
     Barrel([250, 150], 16, 16, pink, health=500),
     Barrel([150, 250], 16, 16, pink, health=500),
     Barrel([250, 250], 16, 16, pink, health=500)
@@ -128,7 +122,7 @@ for i in range(random_arrow_count):
 
 
 for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=10))
+    barrels.append(Barrel([random.randrange(0, display_width), random.randrange(0, display_height)], 16, 16, pink, health=25))
 
 
 # for i in range(100):
@@ -136,22 +130,23 @@ for i in range(random_barrel_count):
 
 
 
+# ------------------------------------------------- Bosses and NPCS ----------------------------------------------------------------------
 
-# Main loop
-running = True
-paused = False
 
 
 font = pygame.font.Font('fonts/tiny.ttf', 8)
 
 
-boss = Uno([mid_x, mid_y], 32, 32, black)
+Tifanie = Uno([mid_x, mid_y], 32, 32, black)
 
-bosses = [boss]
+bosses = [Tifanie]
 
-Mikhail = NPC([0, 0], 32, 32, red, player_images)
+Mikhail = NPC([0, 0], 32, 32, red, rock_images)
 
 npcs = [Mikhail]
+
+
+# -------------------------------------------------- Map stuff that needs to be moved somewhere else ------------------------------------------------
 
 map_br = [
     [0, 0, 1, 1, 1, 1, 1, 0, 0],
@@ -223,12 +218,15 @@ for i in range(len(map_br)):
 
 
 
+# ------------------------------------------------------ Useful functions ------------------------------------------------------------
+
 def delete_arrow(arrows, arrow_to_delete):
     for i in range(len(arrows)):
         if arrows[i] == arrow_to_delete:
             # could draw like arrow in the ground
             del arrows[i]
             break
+
 
 def delete_barrel(barrels, barrel_to_delete, watermelons, player):
 
@@ -241,9 +239,11 @@ def delete_barrel(barrels, barrel_to_delete, watermelons, player):
             break
 
 
+# ------------------------------------------------ Testing stuff that will be fixed in the future ------------------------------------------------
+
 attack = False
 
-attack_end = 20
+attack_end = 120
 attack_start = 0
 attack_inc = 1
 
@@ -255,6 +255,12 @@ arrow_count = "0"
 tracking = player
 
 pre_time = time.perf_counter()
+running = True
+paused = False
+
+
+# --------------------------------------------------------------- Main loop ------------------------------------------------------------------
+
 while running:
     now_time = time.perf_counter()
     dt = now_time - pre_time
@@ -270,16 +276,16 @@ while running:
     mousePos = pygame.mouse.get_pos()
 
     fps = clock.get_fps()
-    FPS_text = "FPS: " + str(int(fps))
+    FPS_text = "FPS:" + str(int(fps))
     FPS_text_surface = font.render(FPS_text, True, (0, 0, 0))
-    barrel_count_text = "Barrels: " + str(len(barrels))
+    barrel_count_text = "Barrels:" + str(len(barrels))
     barrel_count_text_surface = font.render(barrel_count_text, True, (0, 0, 0))
 
-    watermelon_count_text = "Watermelons: " + str(len(watermelons))
+    watermelon_count_text = "Watermelons:" + str(len(watermelons))
     watermelon_count_text_surface = font.render(watermelon_count_text, True, (0, 0, 0))
 
 
-    # Handle events
+# ------------------------------------------------------- Handling input ------------------------------------------------------------------
     action_input["shoot"] = False
 
     for event in pygame.event.get():
@@ -317,6 +323,7 @@ while running:
     input["left"] = keys[pygame.K_a]
     input["right"] = keys[pygame.K_d]
     input["lock"] = keys[pygame.K_l]
+    input["stats"] = keys[pygame.K_TAB]
     
     if action_input["autofire"]:
         action_input["shoot"] = True
@@ -324,52 +331,55 @@ while running:
         action_input["shoot"] = keys[pygame.K_j]
 
 
+# ---------------------------------------------------------- Adding collectables to places -------------------------------------------------------
 
     if len(collectables["Arrows"]) < random_arrow_count:
-        collectables["Arrows"].append(Collectable([random.randrange(int(boss.center.x - mid_x), int(boss.center.x + mid_x)), random.randrange(int(boss.center.y - mid_y), int(boss.center.y + mid_y))], 12, 12, black, arrow_images))
+        collectables["Arrows"].append(Collectable([random.randrange(int(Tifanie.center.x - mid_x), int(Tifanie.center.x + mid_x)), random.randrange(int(Tifanie.center.y - mid_y), int(Tifanie.center.y + mid_y))], 12, 12, black, arrow_images))
 
 
-
-
+# ------------------------------------------------- Handling the rotation and direction and some updating -------------------------------------------------------
+# -------------------------------------------- Other updating happens in the z-positiong updating so less for loops ----------------------------------------
     direction = player.get_direction(input)
     direction *= dt
     player.direction = direction
 
     if not paused:
-        player.update(rotation_input, action_input, direction)
+        if tracking == player:
+            player.update(rotation_input, action_input, direction)
+        else:
+            player.update_away(rotation_input, action_input, direction) # apparently i had handle rotation for a player and objects, so i can just do this so that the player doesnt rotate around the camera when tracking something else. i am such a genius
 
 
         
-
-
-
     # camera tracking
     if not paused:
         difference_vec = Vector((mid_x - tracking.center.x, mid_y - tracking.center.y))
         player.move(difference_vec * player.scroll_speed)
         direction -= difference_vec * player.scroll_speed
 
-        
+    
+    if action_input["shoot"] and not paused and len(player.inventory["Arrows"]) > 0:
+        if player.arrow_counter < player.arrow_multiplier:
+            player.knockback_power = 1
+            player.knockback = True
+            shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
+            shot.arrow_angle_start = player.angle_looking
+            arrows.append(shot)
+            player.arrow_counter += 1
+        else:
+            player.inventory["Arrows"].pop()
+            player.arrow_counter = 0
+
+
     player.update_actions(input)
     player.check_knockback()
 
-
-
-    if action_input["shoot"] and not paused: # and len(player.inventory["Arrows"]) > 0:
-        # player.inventory["Arrows"].pop()
-        player.knockback_power = 1
-        player.knockback = True
-        shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
-        shot.arrow_angle_start = player.angle_looking
-        arrows.append(shot)
-
-
-
-
+    # NEED TO FIX
     attack_start += attack_inc
     if attack_start == attack_end:
         attack_start = 0
-        # boss.attack_one(player.angle_looking)
+        if Tifanie.summoned:
+            Tifanie.attack_one(player.angle_looking)
     
 
     # print(player.center)
@@ -378,44 +388,48 @@ while running:
 
 
 
-    # just put player in here immediately, it will be sorted in place anyway
-    to_render_sorted = [player]
-    collidables = []
-
     for tile in tiles:
         if not paused:
             tile.update(rotation_input, direction)
+    # in here so collidables get emptied every loop
+    collidables = {
+        "Barrels": [],
+        "Arrows" : [],
+        "Shurikens" : [],
+        "Bosses" : []
+    }
 
+    # just put player in here immediately, it will be sorted in place anyway
+    to_render_sorted = [player]
+
+    spawnpoint.handle_rotation(rotation_input)
+    spawnpoint.move(direction * -1)
+
+# ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
     for npc in npcs:
         if not paused:
             npc.update(rotation_input, direction)
             limit_render(npc, render_radius)
-
             if player.center.x >= npc.center.x - npc.width / 2 and player.center.x <= npc.center.x + npc.width / 2 and player.center.y >= npc.center.y - npc.width / 2 and player.center.y <= npc.center.y + npc.width / 2:
                 if input["interact"]:
                     npc.interacting = True
-
             if not input["interact"]:
                 npc.interacting = False
-
-
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], npc.center.y)
         to_render_sorted.insert(index, npc)
     
 
     for i in range(len(collectables["Arrows"]) - 1, -1, -1):
         if not paused:
-        
             if collectables["Arrows"][i].center.x < player.center.x + 8 and collectables["Arrows"][i].center.x > player.center.x - 8 and collectables["Arrows"][i].center.y < player.center.y + 8 and collectables["Arrows"][i].center.y > player.center.y - 8:
                 collectables["Arrows"][i].follow_player = True
                 collectables["Arrows"][i].follow_speed = random.randrange(50, 200) / 10000
                 player.inventory["Arrows"].append(collectables["Arrows"][i])
                 del collectables["Arrows"][i]
                 continue
-                    
-            
             collectables["Arrows"][i].update(rotation_input, direction)
+        
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], collectables["Arrows"][i].center.y)
         to_render_sorted.insert(index, collectables["Arrows"][i])
 
@@ -423,18 +437,15 @@ while running:
     # UNO sorting
     for b in bosses:
         if not paused:
-
             b.update(rotation_input, direction)
-            for arrow in arrows:
-                if b.center.x  <= arrow.center.x + b.width / 2 and b.center.x >= arrow.center.x - b.width / 2 and b.center.y <= arrow.center.y + b.height / 2 and b.center.y >= arrow.center.y - b.height / 2:
-                    collidables.append(arrow)
-                    collidables.append(b)
+            if b.summoned:
+                for arrow in arrows:
+                    if b.center.x  <= arrow.center.x + b.width / 2 and b.center.x >= arrow.center.x - b.width / 2 and b.center.y <= arrow.center.y + b.height / 2 and b.center.y >= arrow.center.y - b.height / 2:
+                        collidables["Arrows"].append(arrow)
+                        collidables["Bosses"].append(b)
 
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], b.center.y)
         to_render_sorted.insert(index, b)
-
-
-
 
 
     # fixes z position
@@ -445,17 +456,26 @@ while running:
             # limits the render distance by not allowing things outside of range to be added to to_render
             if limit_render(barrel, render_radius):
                 continue
-
+            
+            added = False
             for arrow in arrows:
                 if barrel.center.x  <= arrow.center.x + barrel.width / 2 and barrel.center.x >= arrow.center.x - barrel.width / 2 and barrel.center.y <= arrow.center.y + barrel.height / 2 and barrel.center.y >= arrow.center.y - barrel.height / 2:
-                    collidables.append(arrow)
-                    collidables.append(barrel)
-
-            limit_collision_T(barrel, player, collision_radius, collidables)
+                    collidables["Arrows"].append(arrow)
+                    collidables["Barrels"].append(barrel)
+                    added = True
+                
+                    
+            # breaking game :skull:
+            # if not added: # dont wanna add twie
+            #     for cbarrel in collidables["Barrels"]:
+            #         if cbarrel.center.x <= barrel.center.x + cbarrel.width / 2 and cbarrel.center.x >= barrel.center.x - cbarrel.width / 2 and cbarrel.center.y <= barrel.center.y + cbarrel.height / 2 and cbarrel.center.y >= barrel.center.y - cbarrel.height / 2:
+            #             collidables["Barrels"].append(barrel)
+            #             continue
+            if not added:
+                limit_collision(barrel, player, collision_radius, collidables["Barrels"])
 
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], barrel.center.y)
         to_render_sorted.insert(index, barrel)
-
 
 
     # fixes z position of arrows
@@ -468,7 +488,7 @@ while running:
 
 
     # dont need to fix z position of shurikens because always on top
-    for i, shuriken in enumerate(boss.shurikens):
+    for i, shuriken in enumerate(Tifanie.shurikens):
         if not paused:
             shuriken.update(rotation_input, direction)
             
@@ -476,11 +496,9 @@ while running:
             if limit_render(shuriken, render_radius):
                 continue
 
-            limit_collision(shuriken, player, collision_radius, collidables)
+            limit_collision(shuriken, player, collision_radius, collidables["Shurikens"])
 
 
-
-        
     # fixes z position of watermelons
     for watermelon in watermelons:
         if not paused:
@@ -497,35 +515,51 @@ while running:
 
             # 1 limits render distance
             limit_render(watermelon, render_radius)
-
         # 3 add to to-be-rendered
-        index = bisect.bisect_left([o.center.y for o in to_render_sorted], watermelon.center.y)
-        to_render_sorted.insert(index, watermelon)
+        # index = bisect.bisect_left([o.center.y for o in to_render_sorted], watermelon.center.y)
+        # to_render_sorted.insert(index, watermelon)
 
+
+
+# ------------------------------------------------------ Rendering objects -------------------------------------------------------
+
+    # render tiles first
     for tile in tiles:
         tile.render(display)
 
+    # arrow should be below everythign except tiles
     player_arrow.render(display)
 
-    print(player.barrels_busted)
-    if player.barrels_busted > 5 and not boss.summoned:
-        boss.summoning = True
-        tracking = boss
+    for melon in watermelons:
+        melon.render(display)
 
-    if boss.summoning:
-        boss.summon_start += boss.summon_increment
+    for arrow in player.inventory["Arrows"]:
+        arrow.render(display)
 
-        if boss.summon_start % 30 == 0:
-            if boss.summon_index > 0:
-                boss.summon_index -= 1
+
+
+# ------------------------------------------------------- Boss stuff (to fix) -------------------------------------------------------
+
+    if player.barrels_busted > 5 and not Tifanie.summoned:
+        # Tifanie.summoned = True
+        Tifanie.summoning = True
+        tracking = Tifanie
+
+    if Tifanie.summoning:
+        Tifanie.summon_start += Tifanie.summon_increment
+
+        if Tifanie.summon_start % Tifanie.summon_rise == 0:
+            if Tifanie.summon_index > 0:
+                Tifanie.summon_index -= 1
             else:
                 tracking = player
-                boss.summoning = False
-                boss.summoned = True
+                Tifanie.summoned = True
+                Tifanie.summoning = False
 
+# ------------------------------------------------------- End of boss stuff ------------------------------------------------------------------
 
+# ----------------------------------------------------------- Rendering ----------------------------------------------------------------------------
 
-    # print(boss.summoning)
 
     # every item including player
     for object in to_render_sorted:
@@ -533,7 +567,7 @@ while running:
         if isinstance(object, Player):
             object.render(display)
             # object.draw_hitbox(display)
-            # object.draw_healthbar(display)
+            object.draw_healthbar(display)
 
         elif isinstance(object, NPC):
             object.render(display)
@@ -545,17 +579,18 @@ while running:
         elif isinstance(object, Arrow):
             object.render(display)
 
-        elif isinstance(object, Watermelon):
-            object.render(display)
+        # elif isinstance(object, Watermelon):
+        #     object.render(display)
 
         elif isinstance(object, Collectable):
             object.render(display) 
             # object.draw_hitbox(display)
 
         elif isinstance(object, Uno):
-            object.summon(display)
-            object.draw_healthbar(display)
-            object.draw_hitbox(display)
+            object.render(display)
+            if object.summoned:
+                object.draw_healthbar(display)
+            # object.draw_hitbox(display)
         
 
         
@@ -563,12 +598,17 @@ while running:
             object.draw_hitbox(display)
 
     # because rendering after, always on top of everything
-    for arrow in player.inventory["Arrows"]:
-        arrow.render(display)
 
-    for shuriken in boss.shurikens:
+
+    for shuriken in Tifanie.shurikens:
         shuriken.render(display)
+
+        if admin_input["hitboxes"]:
+            shuriken.draw_hitbox(display)
         # shuriken.draw_hitbox(display)
+
+
+# ------------------------------------------------------- Deleting stuff -----------------------------------------------------------
 
 
     # deletes arrows that are off the screen
@@ -576,10 +616,10 @@ while running:
         if arrows[i].center.x < 0 or arrows[i].center.x > display_width or arrows[i].center.y < 0 or arrows[i].center.y > display_height:
             del arrows[i]
 
-    # deletes all the boss shots that pass a certain radius
-    for i in range(len(boss.shurikens) - 1, -1, -1):
-        if math.sqrt((boss.center.x - boss.shurikens[i].center.x) ** 2 + (boss.center.y - boss.shurikens[i].center.y) ** 2) > boss.delete_radius:
-            del boss.shurikens[i]
+    # deletes all the Tifanie shots that pass a certain radius
+    for i in range(len(Tifanie.shurikens) - 1, -1, -1):
+        if math.sqrt((Tifanie.center.x - Tifanie.shurikens[i].center.x) ** 2 + (Tifanie.center.y - Tifanie.shurikens[i].center.y) ** 2) > Tifanie.delete_radius:
+            del Tifanie.shurikens[i]
 
     for npc in npcs:
         if npc.interacting:
@@ -588,97 +628,99 @@ while running:
             npc.reset_talk()
 
     count = 0
-    # print(len(collidables) * len(collidables))
-    for i in range(len(collidables) + 1): # +1 to account for player collision
+
+
+# ----------------------------------------------------- Collision with stuff ------------------------------------------------------------
+    print(collidables["Bosses"])
+    counter = 0
+    # Barrels colliding with Barrels
+    for i in range(len(collidables["Barrels"]) + 1 - 1, -1, -1):
         bodyA = player
-        if i != len(collidables):
-            bodyA = collidables[i]
 
-        for j in range(len(collidables)):
-            bodyB = collidables[j]
+        if i != len(collidables["Barrels"]):
+            bodyA = collidables["Barrels"][i]
 
-            if bodyB == bodyA:
-                continue
+        for j in range(len(collidables["Barrels"]) - 1, -1, -1):
+            counter += 1
+            bodyB = collidables["Barrels"][j]
 
-            if isinstance(bodyB, Arrow): # only arrow will collide with others as bodyA (should do if hitting everything)
-                continue
-            if isinstance(bodyB, NPC): # so you can only interact with them
-                continue
-            if isinstance(bodyB, Shuriken) and isinstance(bodyA, Shuriken): # so that they dont collide
-                continue
-            if isinstance(bodyA, Watermelon) and isinstance(bodyB, Watermelon): # never collide
-                continue
-            
-            
-
-            if isinstance(bodyA, Uno) and isinstance(bodyB, Player) or isinstance(bodyA, Player) and isinstance(bodyB, Uno): # never collide
-                continue
-            if isinstance(bodyA, Uno) and isinstance(bodyB, Shuriken) or isinstance(bodyA, Shuriken) and isinstance(bodyB, Uno): # never collide
-                continue
-            if isinstance(bodyA, Shuriken) and isinstance(bodyB, Barrel) or isinstance(bodyA, Barrel) and isinstance(bodyB, Shuriken): # never collide
-                continue
-
-
-
-            count += 1
             collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
-            # depth - how far you move in before you start pushing it
+
             if collided:
-
-                if bodyA == player:
-
-                    if isinstance(bodyB, Shuriken):
-                        bodyA.move(normal * .05)
-                        continue
-
-                    bodyA.move(normal * (depth / 2)) # moves plater so that the player camera moves
-                    bodyB.move(normal * -1 * (depth / 2)) # if you divide depth by more, can be treated like slime
-                    continue
-                
-                if isinstance(bodyA, Arrow) and isinstance(bodyB, Barrel):
-                    bodyB.health_bar.damage(bodyA.damage)
-                    bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
-                    delete_arrow(arrows, bodyA)
-                    if bodyB.health_bar.health <= 0:
-                        delete_barrel(barrels, bodyB, watermelons, player)
-                        continue
-                    continue
-                    
-                if isinstance(bodyA, Arrow) and isinstance(bodyB, Uno) or isinstance(bodyA, Uno) and isinstance(bodyB, Arrow):
-                    bodyB.health_bar.damage(bodyA.damage)
-                    delete_arrow(arrows, bodyA)
-                    continue
-
-
                 bodyA.move(normal * (depth / 2))
                 bodyB.move(normal * -1 * (depth / 2))
-    # print(count)
 
+
+    # Arrows colliding with Barrels
+    for i in range(len(collidables["Arrows"]) - 1, -1, -1):
+        bodyA = collidables["Arrows"][i]
+
+        hit = False
+        for j in range(len(collidables["Barrels"]) - 1, -1, -1):
+            bodyB = collidables["Barrels"][j]
+            counter += 1
+            collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
+
+            if collided:
+                bodyB.health_bar.damage(bodyA.damage)
+                bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
+                delete_arrow(arrows, bodyA)
+                del collidables["Arrows"][i]
+                if bodyB.health_bar.health <= 0:
+                    delete_barrel(barrels, bodyB, watermelons, player)
+                    del collidables["Barrels"][j]
+                hit = True
+                break  # okay to break because the arrow already hit something and it wont hit anything else
+
+        # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
+        if hit == False and len(collidables["Bosses"]) > 0: # check if it already hit something
+            bodyB = Tifanie
+            collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
+
+            if collided:
+                bodyB.health_bar.damage(bodyA.damage)
+                delete_arrow(arrows, bodyA)
+                del collidables["Arrows"][i]
+                if bodyB.health_bar.health <= 0:
+                    Tifanie.death()
+                
+
+    
+    # Player colliding with Shurikens
+    for i in range(len(collidables["Shurikens"]) - 1, -1, -1):
+        bodyB = collidables["Shurikens"][i]
+        counter += 1
+        collided, depth, normal = player.handle_collision(bodyB.normals(), player.normals(), bodyB)
+
+        if collided:
+            player.health_bar.damage(bodyB.damage)
+            Tifanie.delete_shuriken(bodyB)
+            del collidables["Shurikens"][i]
+            if player.health_bar.health <= 0:
+                player.center = spawnpoint.center
+                player.player_death()
+            player.move(normal * .05)
+
+
+    # print(Tifanie.summoned)
+
+
+# ------------------------------------------------------- Rendering text / images ------------------------------------------------------------------
 
     arrow_count = str(len(player.inventory["Arrows"]))
 
-    # Update the display
-    FPS_text_rect = FPS_text_surface.get_rect(center=(28, 12))
-    barrel_count_text_rect = barrel_count_text_surface.get_rect(center=(28, 24))
-    watermelon_count_text_rect = watermelon_count_text_surface.get_rect(center=(40, 36))
+
+    render_text((350, 30), arrow_count, display)
 
 
-    display.blit(FPS_text_surface, FPS_text_rect)
-    display.blit(barrel_count_text_surface, barrel_count_text_rect)
-    display.blit(watermelon_count_text_surface, watermelon_count_text_rect)
+    if input["stats"]: # hold tab to see stats
+        render_text((12, 60), FPS_text, display)
+        render_text((12, 70), barrel_count_text, display)
+        render_text((12, 80), watermelon_count_text, display)
 
 
-
-    col = 350
-    row = 30
-
-    divider = 0
-
-    for letter in arrow_count:
-        divider += 1
-        if letter == " ":
-            continue
-        display.blit(abc[letter.capitalize()], (col + divider * 8, row))
+    UI_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
+    display.blit(UI_arrow, (340 - (UI_arrow.get_width() / 2 + 3), 30 - (UI_arrow.get_height() / 2) + 3))
 
     if paused:
         display.blit(paused_controls_img, (mid_x - paused_controls_img.get_width() // 2, mid_y - paused_controls_img.get_height() // 2))
