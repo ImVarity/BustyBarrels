@@ -57,8 +57,8 @@ class Player(Hitbox):
         self.barrels_busted = 0
 
         self.stats = {
-            'M' : 1,
-            'R' : 50
+            'M' : 100,
+            'R' : 200
         }
 
         # self.arrow_multiplier = 1

@@ -47,6 +47,8 @@ class Uno(Hitbox):
 
         self.dead = False
 
+        self.name = "Tifanie"
+
 
 
     def death(self):
@@ -57,10 +59,29 @@ class Uno(Hitbox):
         self.to_render.images = self.images[self.summon_index:self.num_images]
         self.to_render.render_stack(surface)
     
-
+    def follow_player(self, player_center):
+        v = self.center - player_center
+        v = v.normalize()
+        angle = math.atan2(v.x, v.y)
+        angle = angle * 180 / math.pi
+        self.to_render.angle = angle - 90
 
 
     def draw_healthbar(self, surface):
+        white_bar_width = 180
+        white_bar_height = 20
+
+
+        width = self.health_bar.health / self.health_bar.maxhealth * 180
+        center = Vector((mid_x, 30))
+        
+        margin_top_bottom = 2
+        margin_left_right = 2
+
+        render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
+        pygame.draw.rect(surface, (255, 255, 255), pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
+        pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
+        
         self.health_bar.draw(surface, self.center, self.height)
 
 
@@ -68,7 +89,7 @@ class Uno(Hitbox):
         self.handle_rotation_boss(rotation_input)
         self.move(direction * -1)
         self.to_render.loc = [self.center.x, self.center.y]
-        self.to_render.angle = self.angle
+        # self.to_render.angle = self.angle
 
 
     def damage(self, dmg):

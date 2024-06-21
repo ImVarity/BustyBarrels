@@ -495,6 +495,7 @@ while running:
     for b in bosses:
         if not paused:
             b.update(rotation_input, direction)
+            b.follow_player(player.center)
             if b.summoned:
                 for arrow in arrows:
                     if b.center.x  <= arrow.center.x + b.width / 2 and b.center.x >= arrow.center.x - b.width / 2 and b.center.y <= arrow.center.y + b.height / 2 and b.center.y >= arrow.center.y - b.height / 2:
