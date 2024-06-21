@@ -18,6 +18,7 @@ class Player(Hitbox):
         self.to_render = Render(self.images, center, self.angle, self.spread)
         self.spawnpoint = Hitbox((0, 0), 1, 1, (0, 0, 0))
 
+        self.original_health = health
         self.health = health
 
         self.health_bar = HealthBar(self.health, color)
@@ -27,8 +28,10 @@ class Player(Hitbox):
         self.scroll_speed = 0.02
 
 
+        self.dead = False
 
         # default stats for the player
+
 
         self.knockback_power = 5
         self.knockback = False
@@ -46,22 +49,29 @@ class Player(Hitbox):
         self.tracking = True
 
         self.inventory = {
-            "Arrows" : []
+            "Arrows" : [],
+            "Watermelons": []
         }
 
 
         self.barrels_busted = 0
 
+        self.stats = {
+            'M' : 1,
+            'R' : 50
+        }
 
-        self.arrow_multiplier = 100
+        # self.arrow_multiplier = 1
 
         self.arrow_counter = 0
 
 
     def player_death(self):
+        self.health_bar.set_health(self.original_health)
+
         # probably reset their stats or something
         # keep barrels busted the same
-        
+
         pass
 
     def render(self, surface):
@@ -84,6 +94,10 @@ class Player(Hitbox):
         self.collectables_follow(rotation_input, direction)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
+
+    def update_spawnpoint(self, rotation_input, direction):
+        self.spawnpoint.handle_rotation(rotation_input)
+        self.spawnpoint.move(direction * -1)
 
     def handle_dash(self, action_input, direction):
         if self.dash_start == self.dash_end:
@@ -122,12 +136,13 @@ class Player(Hitbox):
         pass
 
     def collectables_follow(self, rotation_input, direction):
-        for i in range(len(self.inventory["Arrows"])):
-            diff_vec = Vector((self.center.x - self.inventory["Arrows"][i].center.x, self.center.y - self.inventory["Arrows"][i].center.y))
-            self.inventory["Arrows"][i].move(diff_vec * self.inventory["Arrows"][i].follow_speed)
-            self.inventory["Arrows"][i].update(rotation_input, direction)
+        for items, holder in self.inventory.items():
+            for i in range(len(holder)):
+                diff_vec = Vector((self.center.x - holder[i].center.x, self.center.y - holder[i].center.y))
+                holder[i].move(diff_vec * holder[i].follow_speed)
+                holder[i].update(rotation_input, direction)
 
-    
+        
 
 
 

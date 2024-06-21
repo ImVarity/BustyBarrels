@@ -15,4 +15,11 @@ class HealthBar:
 
     def damage(self, damage):
         self.health -= damage
+        self.update()
+    
+    def update(self):
         self.width = self.health / self.maxhealth * 16
+
+    def set_health(self, health):
+        self.health = health
+        self.update()

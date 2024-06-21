@@ -45,10 +45,13 @@ class Uno(Hitbox):
 
         self.tracking = False
 
+        self.dead = False
+
 
 
     def death(self):
         self.images = barrel_images
+        self.dead = True
 
     def render(self, surface):
         self.to_render.images = self.images[self.summon_index:self.num_images]

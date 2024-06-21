@@ -24,7 +24,6 @@ def convert_to_imgs(directory):
     directory = directory
     files = [img for img in os.listdir(directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
     files = sorted(files, reverse=True)
-    print(files)
     images = [pygame.image.load(os.path.join(directory, img)) for img in files]
 
     return images
