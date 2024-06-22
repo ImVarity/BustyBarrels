@@ -58,7 +58,7 @@ class Player(Hitbox):
 
         self.stats = {
             'M' : 100,
-            'R' : 200
+            'R' : 50
         }
 
         # self.arrow_multiplier = 1

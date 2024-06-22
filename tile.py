@@ -2,7 +2,6 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
-import math
 
 class Tile(Hitbox):
     def __init__(self, center, width, height, color, images):

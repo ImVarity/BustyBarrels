@@ -3,7 +3,6 @@ from Square import Hitbox
 from vector import Vector
 from health import HealthBar
 from chat import TextBubble
-import math
 
 class NPC(Hitbox):
     def __init__(self, center, width, height, color, images, health=5):

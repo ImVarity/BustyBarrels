@@ -4,7 +4,6 @@ import bisect
 import random
 from Square import Hitbox
 from vector import Vector
-from Circle import Circle
 from arrow import Arrow
 from barrel import Barrel
 from player import Player
@@ -19,17 +18,18 @@ from uno import Shuriken
 from tile import Tile
 from render import *
 import time
+from pygame.locals import *
+flags = DOUBLEBUF
 
 
 screen_width = 800
 screen_height = 800
 
 
-
-
 pygame.init()
+pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN,pygame.KEYUP])
 
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), flags, 32)
 pygame.display.set_caption('Busty Barrels')
 
 display_width, display_height = 400, 400
@@ -108,8 +108,8 @@ collectables = {
     "Watermelons" : []
 }
 
-random_barrel_count = 100
-random_arrow_count = 100
+random_barrel_count = 30
+random_arrow_count = 50
 
 check = Barrel([150, 150], 16, 16, pink, health=500)
 
@@ -128,9 +128,6 @@ for i in range(random_arrow_count):
 for i in range(random_barrel_count):
     barrels.append(Barrel([random.randrange(-display_width, display_width), random.randrange(-display_height, display_height)], 16, 16, pink, health=25))
 
-
-# for i in range(100):
-#     watermelons.append(Watermelon([random.randrange(0, display_width), random.randrange(0, display_height)], 12, 12, green))
 
 
 
@@ -225,22 +222,16 @@ for i in range(len(map_br)):
 # ------------------------------------------------------ Useful functions ------------------------------------------------------------
 
 def delete_arrow(arrows, arrow_to_delete):
-    for i in range(len(arrows)):
-        if arrows[i] == arrow_to_delete:
-            # could draw like arrow in the ground
-            del arrows[i]
-            break
+    if arrow_to_delete in arrows:
+        arrows.remove(arrow_to_delete)
 
 
 def delete_barrel(barrels, barrel_to_delete, watermelons, player):
+    if barrel_to_delete in barrels:
+        player.barrels_busted += 1
+        watermelons.append(Collectable([barrel_to_delete.center.x, barrel_to_delete.center.y], 12, 12, green, watermelon_images))
+        barrels.remove(barrel_to_delete)
 
-    for i in range(len(barrels)):
-        if barrels[i] == barrel_to_delete:
-            # watermelons appear after breaking barrel
-            watermelons.append(Collectable([barrels[i].center.x, barrels[i].center.y], 12, 12, green, watermelon_images))
-            player.barrels_busted += 1
-            del barrels[i]
-            break
 
 
 # ------------------------------------------------ Testing stuff that will be fixed in the future ------------------------------------------------
@@ -301,15 +292,12 @@ while running:
     pre_time = time.perf_counter()
     start_of_game_pause += 1
 
-
-
     screen.fill(white)
     display.fill(grass_green)
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
     fps = clock.get_fps()
-
     FPS_text = "FPS:" + str(int(fps))
 
 
@@ -381,6 +369,8 @@ while running:
     if len(collectables["Arrows"]) < random_arrow_count:
         collectables["Arrows"].append(Collectable([random.randrange(int(Tifanie.center.x - mid_x), int(Tifanie.center.x + mid_x)), random.randrange(int(Tifanie.center.y - mid_y), int(Tifanie.center.y + mid_y))], 12, 12, black, arrow_images))
 
+    if len(barrels) < random_barrel_count:
+        barrels.append(Barrel([random.randrange(-display_width, display_width), random.randrange(-display_height, display_height)], 16, 16, pink, health=25))
 
 # ------------------------------------------------- Handling the rotation and direction and some updating -------------------------------------------------------
 # -------------------------------------------- Other updating happens in the z-positiong updating so less for loops ----------------------------------------
@@ -457,11 +447,15 @@ while running:
 
 # ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
+
+    player_center_x, player_center_y = player.center.x, player.center.y
+
+
     for npc in npcs:
         if not paused:
             npc.update(rotation_input, direction)
             limit_render(npc, render_radius)
-            if player.center.x >= npc.center.x - npc.width / 2 and player.center.x <= npc.center.x + npc.width / 2 and player.center.y >= npc.center.y - npc.width / 2 and player.center.y <= npc.center.y + npc.width / 2:
+            if player_center_x >= npc.center.x - npc.width / 2 and player_center_x <= npc.center.x + npc.width / 2 and player.center.y >= npc.center.y - npc.width / 2 and player.center.y <= npc.center.y + npc.width / 2:
                 if input["interact"]:
                     npc.interacting = True
                 else:
@@ -478,7 +472,7 @@ while running:
     for items, holder in collectables.items():
         for i in range (len(holder) - 1, -1, -1):
             if not paused:
-                if holder[i].center.x < player.center.x + 8 and holder[i].center.x > player.center.x - 8 and holder[i].center.y < player.center.y + 8 and holder[i].center.y > player.center.y - 8:
+                if abs(holder[i].center.x - player_center_x) < 8 and abs(holder[i].center.y - player_center_y) < 8:
                     holder[i].follow_player = True
                     holder[i].follow_speed = random.randrange(50, 200) / 10000
                     player.inventory[items].append(holder[i])
@@ -498,7 +492,7 @@ while running:
             b.follow_player(player.center)
             if b.summoned:
                 for arrow in arrows:
-                    if b.center.x  <= arrow.center.x + b.width / 2 and b.center.x >= arrow.center.x - b.width / 2 and b.center.y <= arrow.center.y + b.height / 2 and b.center.y >= arrow.center.y - b.height / 2:
+                    if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
                         collidables["Arrows"].append(arrow)
                         collidables["Bosses"].append(b)
 
@@ -517,7 +511,7 @@ while running:
             
             added = False
             for arrow in arrows:
-                if barrel.center.x  <= arrow.center.x + barrel.width / 2 and barrel.center.x >= arrow.center.x - barrel.width / 2 and barrel.center.y <= arrow.center.y + barrel.height / 2 and barrel.center.y >= arrow.center.y - barrel.height / 2:
+                if abs(barrel.center.x - arrow.center.x) <= barrel.width / 2 and abs(barrel.center.y - arrow.center.y) <= barrel.height / 2:
                     collidables["Arrows"].append(arrow)
                     collidables["Barrels"].append(barrel)
                     added = True
@@ -557,25 +551,6 @@ while running:
             limit_collision(shuriken, player, collision_radius, collidables["Shurikens"])
 
 
-    # fixes z position of watermelons
-    for watermelon in watermelons:
-        if not paused:
-            watermelon.update(rotation_input, direction)
-
-            if watermelon.follow_player:
-                diff_vec = Vector((player.center.x - watermelon.center.x, player.center.y - watermelon.center.y))
-                watermelon.move(diff_vec * watermelon.follow_speed)
-            
-            if not watermelon.follow_player:
-                if watermelon.center.x < player.center.x + 8 and watermelon.center.x > player.center.x - 8 and watermelon.center.y < player.center.y + 8 and watermelon.center.y > player.center.y - 8:
-                    watermelon.follow_player = True
-                    watermelon.follow_speed = random.randrange(50, 200) / 10000
-
-            # 1 limits render distance
-            limit_render(watermelon, render_radius)
-        # 3 add to to-be-rendered
-        # index = bisect.bisect_left([o.center.y for o in to_render_sorted], watermelon.center.y)
-        # to_render_sorted.insert(index, watermelon)
 
 
 
@@ -583,13 +558,12 @@ while running:
 
     # render tiles first
     for tile in tiles:
-        tile.render(display)
+        if abs(tile.center.x + 32) < display_width + 64 and abs(tile.center.y + 32) < display_height + 64:
+            tile.render(display)
 
     # arrow should be below everythign except tiles
     player_arrow.render(display)
 
-    for melon in watermelons:
-        melon.render(display)
 
     for melon in player.inventory["Watermelons"]:
         melon.render(display)
@@ -675,22 +649,22 @@ while running:
 
     # deletes arrows that are off the screen
     for i in range(len(arrows) -1, -1, -1):
-        if math.sqrt((arrows[i].center.x - player.center.x) ** 2 + (arrows[i].center.y - player.center.y) ** 2) > player.stats["R"]:
+        if math.hypot(arrows[i].center.x - player_center_x, arrows[i].center.y - player_center_y) > player.stats["R"]:
             del arrows[i]
         # if arrows[i].center.x < 0 or arrows[i].center.x > display_width or arrows[i].center.y < 0 or arrows[i].center.y > display_height:
         #     del arrows[i]
 
     # deletes all the Tifanie shots that pass a certain radius
     for i in range(len(Tifanie.shurikens) - 1, -1, -1):
-        if math.sqrt((Tifanie.center.x - Tifanie.shurikens[i].center.x) ** 2 + (Tifanie.center.y - Tifanie.shurikens[i].center.y) ** 2) > Tifanie.delete_radius:
+        if math.hypot(Tifanie.center.x - Tifanie.shurikens[i].center.x, Tifanie.center.y - Tifanie.shurikens[i].center.y) > Tifanie.delete_radius:
             del Tifanie.shurikens[i]
 
     for npc in npcs:
         if npc.interacting:
             npc.talk(display, npc_input)
         else:
-            if player.center.x >= Mikhail.center.x - Mikhail.width / 2 and player.center.x <= Mikhail.center.x + Mikhail.width / 2 and player.center.y >= Mikhail.center.y - Mikhail.width / 2 and player.center.y <= Mikhail.center.y + Mikhail.width / 2 and not paused:
-                render_text((player.center.x - len("T to talk to Mikhail") * 7 / 2, player.center.y - 15), "T to talk to Mikhail", display)
+            if player_center_x >= Mikhail.center.x - Mikhail.width / 2 and player_center_x <= Mikhail.center.x + Mikhail.width / 2 and player.center.y >= Mikhail.center.y - Mikhail.width / 2 and player.center.y <= Mikhail.center.y + Mikhail.width / 2 and not paused:
+                render_text((player_center_x - len("T to talk to Mikhail") * 7 / 2, player.center.y - 15), "T to talk to Mikhail", display)
             npc.reset_talk()
 
     count = 0
@@ -841,8 +815,8 @@ while running:
             Tifanie.delete_shuriken(bodyB)
             del collidables["Shurikens"][i]
             if player.health_bar.health <= 0:
-                x_distance = math.sqrt((player.center.x - spawnpoint.center.x) ** 2 + (player.center.y - spawnpoint.center.y) ** 2)
-                v = Vector(((player.center.x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
+                x_distance = math.sqrt((player_center_x - spawnpoint.center.x) ** 2 + (player.center.y - spawnpoint.center.y) ** 2)
+                v = Vector(((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
                 v.normalize()
                 player.move_distance(v * -1, x_distance)
                 player.player_death()

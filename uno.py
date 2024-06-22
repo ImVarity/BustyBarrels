@@ -2,7 +2,6 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
-from arrow import Arrow
 import math
 
 mid_x = 200

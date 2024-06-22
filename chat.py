@@ -1,5 +1,4 @@
 import pygame
-import time
 from render import *
 
 linen = (250, 240, 230)
