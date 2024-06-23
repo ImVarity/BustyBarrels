@@ -5,8 +5,8 @@ from health import HealthBar
 import math
 
 
-display_center_x = 200
-display_center_y = 200
+mid_x = 200
+mid_y = 200
 
 
 class Player(Hitbox):
@@ -53,12 +53,23 @@ class Player(Hitbox):
             "Watermelons": []
         }
 
-
+        self.active_quest = ""
         self.barrels_busted = 0
+        self.quest_barrels_busted = 0
+        self.inQuest = False
+
+
+        self.quest_completed = False
+        self.quest_complete_text_start = 0
+        self.quest_complete_text_speed = 2
+        self.quest_complete_text_friction = .05
+
+
+        
 
         self.stats = {
             'M' : 100,
-            'R' : 50
+            'R' : 200
         }
 
         # self.arrow_multiplier = 1
@@ -141,8 +152,18 @@ class Player(Hitbox):
                 diff_vec = Vector((self.center.x - holder[i].center.x, self.center.y - holder[i].center.y))
                 holder[i].move(diff_vec * holder[i].follow_speed)
                 holder[i].update(rotation_input, direction)
+    
 
-        
+    def quest_complete_text(self, surface):
+        if self.quest_completed:
+            render_text((mid_x - len("Quest Comepleted") * 7 / 2, mid_y - self.quest_complete_text_start), "Quest Completed", surface, "white")
+            self.quest_complete_text_start += self.quest_complete_text_speed
+            self.quest_complete_text_speed  -= self.quest_complete_text_friction
+        if self.quest_complete_text_start < -200:
+            self.quest_completed = False
+            self.quest_complete_text_start = 0
+            self.quest_complete_text_speed = 2
+
 
 
 
@@ -172,9 +193,9 @@ class PlayerArrow(Hitbox):
 
 
     def arrow_rotation(self, angle):
-        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(angle) + (self.center.y - display_center_x) * -math.sin(angle) + display_center_x, (self.center.x - display_center_x) * math.sin(angle) + (self.center.y - display_center_x) * math.cos(angle) + display_center_x
+        self.center.x, self.center.y = (self.center.x - mid_x) * math.cos(angle) + (self.center.y - mid_x) * -math.sin(angle) + mid_x, (self.center.x - mid_x) * math.sin(angle) + (self.center.y - mid_x) * math.cos(angle) + mid_x
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(angle) + (self.vertices[i].y - display_center_x) * -math.sin(angle) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(angle) + (self.vertices[i].y - display_center_x) * math.cos(angle) + display_center_x
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - mid_x) * math.cos(angle) + (self.vertices[i].y - mid_x) * -math.sin(angle) + mid_x, (self.vertices[i].x - mid_x) * math.sin(angle) + (self.vertices[i].y - mid_x) * math.cos(angle) + mid_x
 
 
     def set_angle(self, angle):

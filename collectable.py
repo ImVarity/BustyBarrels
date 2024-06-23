@@ -1,7 +1,6 @@
 from render import *
 from Square import Hitbox
-from vector import Vector
-from health import HealthBar
+import random
 import math
 
 class Collectable(Hitbox):
@@ -26,6 +25,9 @@ class Collectable(Hitbox):
 
         self.follow_player = False
         self.follow_speed = 0.02
+
+        self.timer = 0
+        self.despawn_time = 60 * random.randint(30, 35) # 30 to 35 seconds around
 
 
 
@@ -54,4 +56,5 @@ class Collectable(Hitbox):
         self.self_spin()
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.item_angle
+        self.timer += 1
 

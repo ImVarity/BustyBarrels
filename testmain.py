@@ -1,41 +1,82 @@
 import pygame
 import sys
+from vector import Vector
+import random
+from particles import Particle
 
 # Initialize Pygame
 pygame.init()
 
 # Set up the display
-screen_width, screen_height = 800, 600
+screen_width, screen_height = 800, 800
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Circular Clip Example")
 
 # Define colors
 background_color = (0, 0, 0)  # Black
-circle_color = (255, 255, 255) # White
 
-# Create a circular mask
-mask_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
-pygame.draw.circle(mask_surface, (255, 255, 255, 255), (screen_width // 2, screen_height // 2), 150)
-mask = pygame.mask.from_surface(mask_surface)
-mask_surface = mask.to_surface(setcolor=(255, 255, 255, 255))
+#     position      direction     size
+particles = []
+
+clock = pygame.time.Clock()
+
+shrink_rate = 1
+gravity = .5
 
 # Main loop
+
+tracker = 0
+
 running = True
 while running:
+    screen.fill(background_color)
+    pos = pygame.mouse.get_pos()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # Fill the screen with the background color
-    screen.fill(background_color)
+    tracker += 1
+    # pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(pos[0], pos[1], 50, 50))
+    if tracker % 30 == 0:
+        direction_x = -1
+        direction_y = 0
 
-    pygame.draw.rect(mask_surface, (34, 34, 34), pygame.Rect(screen_width / 2, screen_height / 2, 50, 50))
-    # Blit the mask surface onto the main screen
-    screen.blit(mask_surface, (0, 0))
+
+        for i in range(20):
+            v_x = random.randint(-200, 400) / 500 * direction_x * -random.randint(3, 5)
+            v_y = random.randint(0, 400) / 500 * direction_y * -1
+            p = Particle([pos[0], pos[1]], [v_x, v_y], random.randint(3, 5), "dust")
+            p.gravity = -.02
+            p.shrink_rate = .1
+            particles.append(p)
+
+
+
+    # for i in range(10):
+    #     v_x = random.randint(0, 100) / 500 * direction.x * -random.randint(7, 8)
+    #     v_y = random.randint(0, 340) / 500 * direction.y * -random.randint(1, 2)
+    #     p = Particle([loc[0], loc[1]], [v_x, v_y], random.randint(3, 5), "dust")
+    #     p.gravity = -.02
+    #     p.shrink_rate = .1
+    #     particles.append(p)
+
+    for i in range(len(particles) -1, -1, -1):
+        particle = particles[i]
+        particle.all(screen)
+
+        if particle.dead():
+            particles.remove(particle)
+
+
+
+
+    
+
 
 
     # Update the display
     pygame.display.flip()
+    clock.tick(60)
 
 # Quit Pygame
 pygame.quit()

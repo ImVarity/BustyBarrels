@@ -30,7 +30,7 @@ class TextBubble:
 
 
         self.hovering = 0
-
+        
 
         self.current_quest = ""
 
@@ -62,35 +62,43 @@ class TextBubble:
 
         if len(quest) > 0:
             return quest
+        
+        surface.blit(dialogue_box.convert_alpha(), (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
 
-        surface.blit(dialogue_box, (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
-        self.show_quests(surface)
+        
+        
 
         if self.current_dialogue >= self.dialogue_count:
             self.reset()
             self.current_dialogue = 0
             return ""
-        
         # shows each letter and the continue text if reaching the last letter of the dialogue
-        self.show_text(surface, self.show_dialogue, [self.location.x - self.width / 2 - 10, self.location.y - self.height / 2 + 20])
+        self.show_text(surface, self.show_dialogue, [self.location.x - self.width / 2 - 10, self.location.y - self.height / 2 + 20], "black")
         if self.c_l == len(self.dialogue[self.current_dialogue]):
             self.show_continue_text(surface)
+            if self.current_dialogue > 1:
+                self.show_quests(surface)
             return ""
 
         # puts every letter that we have been through in a shown dialogue variable
         self.show_dialogue += self.dialogue[self.current_dialogue][self.c_l]
         self.c_l += 1
 
+        
+        
 
 
         return ""
 
     def trade(self, quest):
+        print(quest)
         del self.quests[quest]
         pass
 
     def show_quests(self, surface):
-
+        # dont show hovering if its -1
+        if self.hovering == -1:
+            pass
 
         for i, (code, qr) in enumerate(self.quests.items()):
             quest = qr[0]
@@ -101,27 +109,28 @@ class TextBubble:
                 if self.hovering == i:
                     self.current_quest = code # change
                     # showing the quest
-                    self.show_text(surface, quest, [self.location.x - (len(quest) * 7 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)])
+                    self.show_text(surface, quest, [self.location.x - (len(quest) * 7 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "white")
                     selected_box = pygame.transform.scale(quest_box, (quest_box.get_width() + 30, quest_box.get_height()))
-                    surface.blit(selected_box, (self.location.x - quest_box.get_width() / 2 - 15, self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
+                    surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 - 15, self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
                     # showing the reward
-                    self.show_text(surface, reward, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 30])
+                    self.show_text(surface, reward, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 25], "white")
+                    self.show_text(surface, "Enter to confirm", [self.location.x - (len("Enter to confirm") * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 45], "black")
 
                 # boxes below what is hovered on
                 elif i > self.hovering:
-                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 35])
-                    surface.blit(selected_box, (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40) + 35))
+                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 35], "black")
+                    surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40) + 35))
 
                 # boxes above what is hovered on
                 else:
-                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)])
-                    surface.blit(selected_box, (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
+                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "black")
+                    surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
 
                 
 
 
 
-    def show_text(self, surface, text, loc):
+    def show_text(self, surface, text, loc, color):
 
         col = loc[0]
         row = loc[1]
@@ -136,7 +145,10 @@ class TextBubble:
                 row += 8
                 divider = 0
                 continue
-            surface.blit(abc[letter.capitalize()], (col + divider * 8, row))
+            if color == "white":
+                surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
+            if color == "black":
+                surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
 
     def show_continue_text(self, surface):
         col = self.location.x - self.width / 2 + 120 + 15
@@ -152,7 +164,7 @@ class TextBubble:
                 row += 8
                 divider = 0
                 continue
-            surface.blit(abc[letter.capitalize()], (col + divider * 8, row))
+            surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
 
 
     def add_dialogue(self, text):

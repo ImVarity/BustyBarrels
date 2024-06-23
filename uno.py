@@ -138,7 +138,7 @@ class Shuriken(Hitbox):
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
         self.shuriken_angle_start = self.shuriken_angle
         # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
-        self.damage = 25
+        self.damage = 50
         self.to_render = Render(self.images, center, self.shuriken_angle)
 
         self.rotation_angle = 0

@@ -18,7 +18,7 @@ class NPC(Hitbox):
 
         self.text.add_dialogue("What is up gamer")
         self.text.add_dialogue("Complete some tasks for me would ya")
-        # self.text.add_dialogue("Enter shop")
+        self.text.add_dialogue("Use the arrow keys ^`<> to navigate Press enter to confirm")
         self.text.add_dialogue("Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum")
         
         self.text.add_quests("Deliver 10 arrows:Plus 10 arrow multiplier", "1A10M10")
