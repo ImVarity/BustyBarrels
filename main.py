@@ -16,6 +16,7 @@ from npc import NPC
 from uno import Uno
 from uno import Shuriken
 from particles import Particle
+from bomb import Bomb
 from tile import Tile
 from render import *
 import time
@@ -28,6 +29,19 @@ screen_height = 800
 
 
 pygame.init()
+pygame.mixer.init()
+
+dash_sound = pygame.mixer.Sound('sfx/grabitem.wav')
+collect_sound_2 = pygame.mixer.Sound('sfx/collectitem2.wav')
+explosion_sound = pygame.mixer.Sound('sfx/explosion.wav')
+menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
+
+explosion_sound.set_volume(.2)
+pygame.mixer.music.load('sfx/bgm.mp3')
+
+pygame.mixer.music.play(loops=-1)
+
+
 pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN,pygame.KEYUP])
 
 screen = pygame.display.set_mode((screen_width, screen_height), flags, 32)
@@ -79,7 +93,8 @@ action_input = {
     "ultimate" : False,
     "shoot" : False,
     "autofire": False,
-    "dash": False
+    "dash": False,
+    "throw" : False
 
 }
 
@@ -108,6 +123,7 @@ collision_radius = 33
 to_render = []
 boxes = []
 arrows = []
+bombs = []
 watermelons = []
 collectables = {
     "Arrows" : [],
@@ -115,7 +131,7 @@ collectables = {
 }
 
 random_barrel_count = 50
-random_arrow_count = 50
+random_arrow_count = 100
 
 check = Barrel([150, 150], 16, 16, pink, health=500)
 
@@ -132,8 +148,7 @@ for i in range(random_arrow_count):
 
 
 for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(-display_width, display_width), random.randrange(-display_height, display_height)], 16, 16, pink, health=25))
-
+    barrels.append(Barrel([random.randrange(int(-spawnpoint.center.x - 300), int(spawnpoint.center.x + 300)), random.randrange(int(-spawnpoint.center.y - 300), int(spawnpoint.center.y + 300))], 16, 16, pink, health=25))
 
 
 
@@ -144,7 +159,7 @@ for i in range(random_barrel_count):
 font = pygame.font.Font('fonts/tiny.ttf', 8)
 
 
-Tifanie = Uno([mid_x, mid_y], 32, 32, black)
+Tifanie = Uno([mid_x, mid_y], 32, 32, purple)
 
 bosses = [Tifanie]
 
@@ -230,6 +245,7 @@ for i in range(len(map_br)):
 # ------------------------------------------------------ Useful functions ------------------------------------------------------------
 
 def explode(particles, loc):
+    explosion_sound.play()
     for i in range(30):
         particles.append(Particle([loc[0], loc[1]], [random.randint(-628, 628) / 100 / 2, random.randint(-628, 0) / 100], random.randint(10, 20), "explosion"))
 
@@ -258,7 +274,6 @@ def delete_barrel(barrels, barrel_to_delete, watermelons, player, particles):
         if player.inQuest:
             player.quest_barrels_busted += 1
         watermelons.append(Collectable([barrel_to_delete.center.x, barrel_to_delete.center.y], 12, 12, green, watermelon_images))
-        explode(particles, [barrel_to_delete.center.x, barrel_to_delete.center.y])
         barrels.remove(barrel_to_delete)
     
 
@@ -315,6 +330,7 @@ quest = ""
 
 screen_shake = 0
 
+
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
 while running:
@@ -335,6 +351,7 @@ while running:
 
 # ------------------------------------------------------- Handling input ------------------------------------------------------------------
     action_input["shoot"] = False
+    action_input["throw"] = False
 
     npc_input = { # in main loop so that it only registers once per click
         "up" : False,
@@ -363,6 +380,8 @@ while running:
                 npc_input["down"] = True
             if event.key == pygame.K_RETURN:
                 npc_input["confirm"] = True
+            if event.key == pygame.K_SPACE:
+                action_input["throw"] = True
 
 
         if event.type == pygame.KEYUP:
@@ -374,7 +393,9 @@ while running:
                 admin_input["hitboxes"] = not admin_input["hitboxes"]
             if event.key == pygame.K_c:
                 if input["interact"]:
+                    menu_click.play()
                     npc.next()
+                    
 
 
 
@@ -412,6 +433,8 @@ while running:
     direction *= dt
     player.direction = direction
 
+    # if direction.x > 0 or direction.y > 0: # makes sound if moving
+        # footstep.play()
 
     if not paused:
         if tracking == player:
@@ -436,11 +459,23 @@ while running:
             shot.arrow_angle_start = player.angle_looking
             arrows.append(shot)
             player.arrow_counter += 1
+
+
+            
         else:
             player.inventory["Arrows"].pop()
             player.arrow_counter = 0
+
+    if action_input["throw"]:
+        bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking)
+        if action_input["dash"]:
+            bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking, velocity=3.25)
+        bomb.bomb_angle_start = player.angle_looking
+        bombs.append(bomb)
     
-    if action_input["dash"] and player.dash_start <= 2:
+    
+    if action_input["dash"] and player.dash_start <= 1:
+        dash_sound.play()
         dust(particles, [player.center.x, player.center.y], direction)
 
 
@@ -470,6 +505,7 @@ while running:
         "Barrels": [],
         "Arrows" : [],
         "Shurikens" : [],
+        "Bombs" : [],
         "Bosses" : []
     }
 
@@ -483,6 +519,7 @@ while running:
 
 
     player_center_x, player_center_y = player.center.x, player.center.y
+
 
 
     for npc in npcs:
@@ -549,11 +586,19 @@ while running:
                 continue
             
             added = False
+
             for arrow in arrows:
                 if abs(barrel.center.x - arrow.center.x) <= barrel.width / 2 and abs(barrel.center.y - arrow.center.y) <= barrel.height / 2:
                     collidables["Arrows"].append(arrow)
                     collidables["Barrels"].append(barrel)
                     added = True
+
+            for bomb in bombs:
+                if bomb.landing:
+                    if abs(barrel.center.x - bomb.center.x) <= barrel.width / 2 + bomb.width / 2 and abs(barrel.center.y - bomb.center.y) <= barrel.height / 2 + bomb.height / 2:
+                        collidables["Bombs"].append(bomb)
+                        if not added:
+                            collidables["Barrels"].append(barrel)
                 
                     
             # breaking game :skull:
@@ -577,6 +622,12 @@ while running:
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], arrow.center.y)
         to_render_sorted.insert(index, arrow)
 
+    for bomb in bombs:
+        if not paused:
+            bomb.update(rotation_input, direction)
+
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], bomb.center.y)
+        to_render_sorted.insert(index, bomb)
 
     # dont need to fix z position of shurikens because always on top
     for i, shuriken in enumerate(Tifanie.shurikens):
@@ -666,6 +717,11 @@ while running:
             if object.summoned and not object.dead:
                 object.draw_healthbar(display)
             # object.draw_hitbox(display)
+
+        elif isinstance(object, Bomb):
+            object.render(display)
+            object.draw_hitbox(display)
+
         
 
         
@@ -674,11 +730,7 @@ while running:
 
     # because rendering after, always on top of everything
 
-    for i in range(len(particles) - 1, -1, -1):
-        particle = particles[i]
-        particle.all(display)
-        if particle.dead():
-            particles.remove(particle)
+
 
 
     for shuriken in Tifanie.shurikens:
@@ -688,7 +740,14 @@ while running:
             shuriken.draw_hitbox(display)
         # shuriken.draw_hitbox(display)
 
-    # spawnpoint.draw_hitbox(display)
+
+
+
+    for i in range(len(particles) - 1, -1, -1):
+        particle = particles[i]
+        particle.all(display)
+        if particle.dead():
+            particles.remove(particle)
 
 # ------------------------------------------------------- Deleting stuff -----------------------------------------------------------
 
@@ -705,12 +764,21 @@ while running:
         if math.hypot(Tifanie.center.x - Tifanie.shurikens[i].center.x, Tifanie.center.y - Tifanie.shurikens[i].center.y) > Tifanie.delete_radius:
             del Tifanie.shurikens[i]
 
+
+    for i in range(len(bombs) -1, -1, -1):
+        if bombs[i].bomb_height < -6:
+            explode(particles, [bombs[i].center.x, bombs[i].center.y])
+            del bombs[i]
+
     for npc in npcs:
         if npc.interacting:
             display.blit(npc_surface, (0, 0))
             npc.talk(display, npc_input)
         else:
             if player_center_x >= Mikhail.center.x - Mikhail.width / 2 and player_center_x <= Mikhail.center.x + Mikhail.width / 2 and player.center.y >= Mikhail.center.y - Mikhail.width / 2 and player.center.y <= Mikhail.center.y + Mikhail.width / 2 and not paused:
+                M_surface = pygame.Surface((len("T to talk to Mikhail") * 7 + 4, 10), pygame.SRCALPHA).convert_alpha()
+                M_surface.fill(npc_color)
+                display.blit(M_surface, (player_center_x - len("T to talk to Mikhail") * 7 / 2 - 2, player.center.y - 40 - 2))
                 render_text((player_center_x - len("T to talk to Mikhail") * 7 / 2, player.center.y - 40), "T to talk to Mikhail", display, "white")
             npc.reset_talk()
 
@@ -744,13 +812,12 @@ while running:
                 reward_amount = active_quest[end_idx + 1::]
 
                 player.stats[reward] += int(reward_amount)
-
-
+                
                 transaction = True
             else:
                 transaction = False
 
-        if active_quest[0] == "2": # breaking barrels quest
+        elif active_quest[0] == "2": # breaking barrels quest
             # print("inside")
             end_idx = 0
             labor_amount = ""
@@ -827,6 +894,28 @@ while running:
                 bodyB.move(normal * -1 * (depth / 2))
 
 
+    # Bombs colliding with Barrels
+    for i in range(len(collidables["Bombs"]) - 1, -1, -1):
+        bodyA = collidables["Bombs"][i]
+        
+        hit = False
+        for j in range(len(collidables["Barrels"]) - 1, -1, -1):
+            bodyB = collidables["Barrels"][j]
+            counter += 1
+            collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
+
+            if collided:
+                bodyB.health_bar.damage(bodyA.damage)
+                bodyB.move(Vector((math.cos(bodyA.bomb_angle), math.sin(bodyA.bomb_angle))) * .1)
+                delete_arrow(arrows, bodyA)
+                del collidables["Bombs"][i]
+                if bodyB.health_bar.health <= 0:
+                    screen_shake = 10
+                    delete_barrel(barrels, bodyB, collectables["Watermelons"], player, particles)
+                    del collidables["Barrels"][j]
+                hit = True
+                break  # okay to break because the arrow already hit something and it wont hit anything else
+
     # Arrows colliding with Barrels
     for i in range(len(collidables["Arrows"]) - 1, -1, -1):
         bodyA = collidables["Arrows"][i]
@@ -843,7 +932,7 @@ while running:
                 delete_arrow(arrows, bodyA)
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
-                    screen_shake = 10
+                    # screen_shake = 10
                     delete_barrel(barrels, bodyB, collectables["Watermelons"], player, particles)
                     del collidables["Barrels"][j]
                 hit = True
@@ -855,7 +944,6 @@ while running:
             collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
             if collided:
                 bodyB.health_bar.damage(bodyA.damage)
-                explode(particles, [bodyA.center.x, bodyA.center.y])
                 delete_arrow(arrows, bodyA)
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
@@ -880,6 +968,12 @@ while running:
                 player.player_death()
                 break
             player.move(normal * .05)
+
+
+    # print(counter)
+
+
+
 
 
 

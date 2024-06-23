@@ -1,6 +1,11 @@
 import pygame
 from render import *
 
+pygame.init()
+
+menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
+
+
 linen = (250, 240, 230)
 
 mid_x, mid_y = 200, 200
@@ -47,11 +52,14 @@ class TextBubble:
         if input["down"]:
             if self.hovering < 3:
                 if self.hovering != len(self.quests) - 1:
+                    menu_click.play()
                     self.hovering += 1
         elif input["up"]:
             if self.hovering != 0:
+                menu_click.play()
                 self.hovering -= 1
         elif input["confirm"]:
+            menu_click.play()
             return self.current_quest
 
         return ""
@@ -104,15 +112,24 @@ class TextBubble:
             quest = qr[0]
             reward = qr[1]
             selected_box = quest_box
+
+            npc_color = (47,79,79, 100)
+            quest_surface = pygame.Surface((len(quest) * 8 + 4, 10), pygame.SRCALPHA).convert_alpha()
+            reward_surface = pygame.Surface((len(reward) * 8 + 4, 10), pygame.SRCALPHA).convert_alpha()
+            quest_surface.fill(npc_color)
+            reward_surface.fill(npc_color)
+
             # box that is hovered on
             if i < 4: # only show the first 4 quests
                 if self.hovering == i:
                     self.current_quest = code # change
                     # showing the quest
-                    self.show_text(surface, quest, [self.location.x - (len(quest) * 7 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "white")
+                    surface.blit(quest_surface, (self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 2))
+                    self.show_text(surface, quest, [self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "white")
                     selected_box = pygame.transform.scale(quest_box, (quest_box.get_width() + 30, quest_box.get_height()))
                     surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 - 15, self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
                     # showing the reward
+                    surface.blit(reward_surface, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 25 - 2])
                     self.show_text(surface, reward, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 25], "white")
                     self.show_text(surface, "Enter to confirm", [self.location.x - (len("Enter to confirm") * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 45], "black")
 

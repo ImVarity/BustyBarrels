@@ -50,6 +50,8 @@ while running:
             p.shrink_rate = .1
             particles.append(p)
 
+        
+
 
 
     # for i in range(10):

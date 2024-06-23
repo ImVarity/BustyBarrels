@@ -16,7 +16,7 @@ class Uno(Hitbox):
 
         self.spread = 1.3
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
-        self.health_bar = HealthBar(health, (0, 0, 0))
+        self.health_bar = HealthBar(health, color)
 
         self.boss_angle_radians = 0
 
@@ -68,7 +68,7 @@ class Uno(Hitbox):
 
     def draw_healthbar(self, surface):
         white_bar_width = 180
-        white_bar_height = 20
+        white_bar_height = 16
 
 
         width = self.health_bar.health / self.health_bar.maxhealth * 180
@@ -78,8 +78,8 @@ class Uno(Hitbox):
         margin_left_right = 2
 
         render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
-        pygame.draw.rect(surface, (255, 255, 255), pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
-        pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
+        pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
+        pygame.draw.rect(surface, purple, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
         
         self.health_bar.draw(surface, self.center, self.height)
 

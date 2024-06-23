@@ -14,6 +14,7 @@ slate_grey = (174, 198, 224)
 lime_green = (50, 205, 50)
 grass_green = (142, 200, 64)
 red = (220, 20, 60)
+purple = (112, 41, 99)
 
 def render_stack(surf, images, pos, rotation, spread):
     for i, img in enumerate(images):
@@ -30,12 +31,13 @@ def convert_to_imgs(directory):
 
 
 
+
 # Terrain
 grass_img = pygame.image.load('imgs/terrain/grass_patch.png')
 rock_images = convert_to_imgs('imgs/rock')
 
 
-
+# Paused
 paused_img = pygame.image.load('imgs/paused_screen/paused.png')
 paused_controls_img = pygame.image.load('imgs/paused_screen/controls.png')
 
@@ -56,6 +58,7 @@ barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
 watermelon_images = convert_to_imgs('imgs/watermelon')
+bomb_images = convert_to_imgs('imgs/bomb')
 
 
 # arrow keys

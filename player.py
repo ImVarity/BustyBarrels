@@ -68,7 +68,7 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 100,
+            'M' : 200,
             'R' : 200
         }
 
