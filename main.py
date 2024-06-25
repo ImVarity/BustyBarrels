@@ -186,81 +186,90 @@ npcs = [Mikhail]
 # -------------------------------------------------- Map stuff that needs to be moved somewhere else ------------------------------------------------
 
 map_br = [
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [1, 1, 1, 1, 1, 0, 1, 1, 1],
-    [0, 0, 1, 1, 1, 1, 0, 1, 1],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 0, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 1, 1, 0, 1, 1, 1, 1, 0],
-    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0],
 ]
 map_bl = [
-    [0, 0, 1, 1, 1, 1, 1, 0, 0],
-    [0, 1, 0, 1, 0, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 0, 1, 1, 1],
-    [0, 0, 1, 1, 1, 1, 0, 1, 1],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 0, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 map_tr = [
-    [0, 0, 1, 1, 1, 1, 1, 0, 0],
-    [0, 1, 0, 1, 0, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 0, 1, 1, 1],
-    [0, 0, 1, 1, 1, 1, 0, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 0, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 1, 1, 0, 1, 1, 1, 1, 0],
-    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 map_tl = [
-    [0, 0, 1, 1, 1, 1, 1, 0, 0],
-    [0, 1, 0, 1, 0, 1, 1, 1, 0],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 0, 1, 1, 1, 1, 0, 1, 1],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1],
-    [0, 1, 1, 0, 1, 1, 1, 1, 0],
-    [0, 0, 1, 1, 0, 1, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
 
 tiles = []
 
-
-
 for i in range(len(map_tl)):
     for j in range(len(map_tl[0])):
         if map_tl[i][j] == 1:
-            tiles.append(Tile((-(j * 48 - 24), -(i * 48 - 24)), 48, 48, white, grass_img))
+            tiles.append(Tile((-(j * 48 + 48), -(i * 48 + 48)), 48, 48, white, grass_img))
+        else:
+            tiles.append(Tile((-(j * 48 + 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs, type="water"))
+
 
 for i in range(len(map_tr)):
     for j in range(len(map_tr[0])):
         if map_tr[i][j] == 1:
-            tiles.append(Tile(((j * 48 - 24), -(i * 48 - 24)), 48, 48, white, grass_img))
+            tiles.append(Tile(((j * 48), -(i * 48 + 48)), 48, 48, white, grass_img))
+        else:
+            tiles.append(Tile(((j * 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs, type="water"))
 
 for i in range(len(map_bl)):
     for j in range(len(map_bl[0])):
         if map_bl[i][j] == 1:
-            tiles.append(Tile((-(j * 48 - 24), i * 48 - 24), 48, 48, white, grass_img))
+            tiles.append(Tile((-(j * 48 + 48), i * 48), 48, 48, white, grass_img))
+        else:
+            tiles.append(Tile((-(j * 48 + 48), i * 48), 48, 48, blue, flat_water_imgs, type="water"))
 
 for i in range(len(map_br)):
     for j in range(len(map_br[0])):
         if map_br[i][j] == 1:
-            tiles.append(Tile((j * 48 - 24, i * 48 - 24), 48, 48, white, grass_img))
+            tiles.append(Tile((j * 48, i * 48), 48, 48, white, grass_img))
+        else:
+            tiles.append(Tile((j * 48, i * 48), 48, 48, blue, flat_water_imgs, type="water"))
+
+            
 
 
 
 # ------------------------------------------------------ Useful functions ------------------------------------------------------------
 
 
-overlay = pygame.Surface((screen_width / 2, screen_height / 2), pygame.SRCALPHA)
+day_cycle = pygame.Surface((screen_width / 2, screen_height / 2), pygame.SRCALPHA)
 
 def update_overlay(hour):
     if 6 <= hour < 36:
@@ -269,16 +278,34 @@ def update_overlay(hour):
         color = (255, 255, 255, alpha)
     else:
         # dark overlay
-        alpha = min(255, int((hour - 36) / 12 * 80) if hour >= 36 else int((12 + hour) / 12 * 80))
+        alpha = min(255, int((hour - 36) / 12 * 60) if hour >= 36 else int((12 + hour) / 12 * 60))
         print(alpha)
         color = (0, 0, 64, alpha)
     
-    overlay.fill(color)
+    day_cycle.fill(color)
+
+
+def celebrate(particles):
+    for j in range(20):
+        loc = [random.randint(0, 400), random.randint(0, 400)]
+        for i in range(20):
+            p = Particle([loc[0], loc[1]], [random.randint(-324, 324) / 100 / 2, random.randint(-324, 0) / 100], random.randint(10, 20), "celebrate")
+            p.shrink_rate = .04
+            p.gravity = 0.00
+            particles.append(p)
+
+def fireflies(particles):
+    loc = [random.randint(20, 380), random.randint(20, 380)]
+    for i in range(10):
+        p = Particle([loc[0], loc[1]], [random.randint(-100, 100) / 100 / 2, random.randint(-100, 0) / 100], random.randint(3, 6), "explosion", lighting=True)
+        p.shrink_rate = .1
+        p.gravity = 0.00
+        particles.append(p)
 
 def explode(particles, loc):
     explosion_sound.play()
     for i in range(30):
-        particles.append(Particle([loc[0], loc[1]], [random.randint(-628, 628) / 100 / 2, random.randint(-628, 0) / 100], random.randint(10, 20), "explosion"))
+        particles.append(Particle([loc[0], loc[1]], [random.randint(-628, 628) / 100 / 2, random.randint(-628, 0) / 100], random.randint(10, 20), "explosion", lighting=True))
 
 def dust(particles, loc, direction):
 
@@ -305,7 +332,9 @@ def delete_barrel(barrels, barrel_to_delete, watermelons, Tifanie, player):
         player.barrels_busted += 1
         if player.inQuest:
             player.quest_barrels_busted += 1
-        watermelons.append(Collectable([barrel_to_delete.center.x, barrel_to_delete.center.y], 12, 12, green, watermelon_images))
+        yes = random.randint(0, 1)
+        if yes:
+            watermelons.append(Collectable([barrel_to_delete.center.x, barrel_to_delete.center.y], 12, 12, green, watermelon_images))
         barrels.remove(barrel_to_delete)
     
 
@@ -375,6 +404,12 @@ while running:
     pre_time = time.perf_counter()
     start_of_game_pause += 1
     timer += 1
+
+    current_time = time.time()
+    if current_time - last_time >= 2:
+        hour = (hour + 1) % 48
+        update_overlay(hour)
+        last_time = current_time
 
     screen.fill(white)
     display.fill(grass_green)
@@ -478,7 +513,12 @@ while running:
         else:
             player.update_away(rotation_input, action_input, direction) # apparently i had handle rotation for a player and objects, so i can just do this so that the player doesnt rotate around the camera when tracking something else. i am such a genius
 
-
+    if player.in_water:
+        lower_player(player)
+        player.move(Vector((0, 1)) * .1)
+        player.move(direction * -.5)
+    else:
+        raise_player(player)
         
     # camera tracking
     if not paused:
@@ -489,16 +529,15 @@ while running:
 
     if action_input["shoot"] and not paused and len(player.inventory["Arrows"]) > 0:
         if player.arrow_counter < player.stats["M"]:
-            arrow_shot2.play()
-            player.knockback_power = 1
-            player.knockback = True
-            shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
-            shot.arrow_angle_start = player.angle_looking # based on rotation
-            arrows.append(shot)
-            player.arrow_counter += 1
-
-
-            
+            player.shot = not player.shot
+            if not player.shot:
+                arrow_shot2.play()
+                player.knockback_power = 1
+                player.knockback = True
+                shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
+                shot.arrow_angle_start = player.angle_looking # based on rotation
+                arrows.append(shot)
+                player.arrow_counter += 1
         else:
             player.inventory["Arrows"].pop()
             player.arrow_counter = 0
@@ -553,7 +592,8 @@ while running:
         "Arrows" : [],
         "Shurikens" : [],
         "Bombs" : [],
-        "Bosses" : []
+        "Bosses" : [],
+        "Water" : []
     }
 
     # just put player in here immediately, it will be sorted in place anyway
@@ -598,6 +638,7 @@ while running:
                 if abs(holder[i].center.x - player_center_x) < 8 and abs(holder[i].center.y - player_center_y) < 8:
                     if holder[i].powerup:
                         player.power_up = True
+                        celebrate(particles)
                         del holder[i]
                         break
                     holder[i].follow_player = True
@@ -697,16 +738,31 @@ while running:
 
             limit_collision(shuriken, player, collision_radius, collidables["Shurikens"])
 
+# ------------------------------------------------------- Boss stuff (to fix) -------------------------------------------------------
 
-
+    Tifanie.check_if_summon()
+    if Tifanie.tracking:
+        tracking = Tifanie
+    else:
+        tracking = player
 
 # ------------------------------------------------------ Rendering objects -------------------------------------------------------
 
     # render tiles first
     for tile in tiles:
         if abs(tile.center.x + 32) < display_width + 64 and abs(tile.center.y + 32) < display_height + 64:
+            if admin_input["hitboxes"]:
+                tile.draw_hitbox(display)
+
+            if tile.type == "water":
+                limit_collision(tile, player, collision_radius, collidables["Water"])
+                tile.to_render.animate(display, dt)
+                continue
+
             tile.render(display)
 
+        
+            
     # arrow should be below everythign except tiles
     player_arrow.render(display)
 
@@ -719,21 +775,7 @@ while running:
         player.inventory["Arrows"][i].render(display)
 
 
-
-# ------------------------------------------------------- Boss stuff (to fix) -------------------------------------------------------
-
-
-    Tifanie.check_if_summon()
-    if Tifanie.tracking:
-        tracking = Tifanie
-    else:
-        tracking = player
-
-
-# ------------------------------------------------------- End of boss stuff ------------------------------------------------------------------
-
 # ----------------------------------------------------------- Rendering ----------------------------------------------------------------------------
-
 
     # every item including player
     for object in to_render_sorted:
@@ -820,6 +862,8 @@ while running:
             explode(particles, [bombs[i].center.x, bombs[i].center.y])
             del bombs[i]
 
+    display.blit(day_cycle, (0, 0))
+
     for npc in npcs:
         if npc.interacting:
             display.blit(npc_surface, (0, 0))
@@ -844,6 +888,8 @@ while running:
 
     player.quest_complete_text(display)
     player.powerup_collected(display, powerup)
+        
+
 
 
 # 1 - deliver (Deliver 100 arrows/watermelons)
@@ -972,9 +1018,21 @@ while running:
                 break
             player.move(normal * .05)
 
+    in_water = False
+    for i in range(len(collidables["Water"]) - 1, -1, -1):
+        bodyB = collidables["Water"][i]
+        counter += 1
+        collided, depth, normal = player.handle_collision(bodyB.normals(), player.normals(), bodyB)
+        if collided:
+            in_water = True
+            break
+    player.in_water = in_water
 
+    if player.in_water:
+        print("in water")
+    else:
+        print("not in water")
     # print(counter)
-
 
 
 
@@ -1020,14 +1078,9 @@ while running:
         render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
 
 
-    current_time = time.time()
-    print(hour)
-    if current_time - last_time >= 2:
-        hour = (hour + 1) % 48
-        update_overlay(hour)
-        last_time = current_time
 
-    display.blit(overlay, (0, 0))
+
+    
         
     if screen_shake > 0:
         screen_shake -= 1

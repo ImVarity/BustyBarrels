@@ -10,7 +10,7 @@ mid_x, mid_y = 200, 200
 class Bomb(Hitbox):
     def __init__(self, center, width, height, color, looking, velocity=2):
         super().__init__(center, width, height, color)
-        self.images = bomb_images
+        self.images = [img.convert_alpha() for img in bomb_images]
         self.bomb_velocity = velocity
         self.bomb_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates bomb to point that direction
         self.bomb_angle_start = 0

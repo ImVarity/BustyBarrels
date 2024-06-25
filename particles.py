@@ -14,8 +14,9 @@ l_p = [207, 159, 255]
 blue = [65,105,225]
 
 # colors_start = [b_p, iris, l_p, blue] # not bad
-colors_start = [red, yellow, orange]
+colors_start_red = [red, yellow, orange]
 colors_end =[brown, brownish]
+colors_start_purple = [b_p, iris, l_p, blue]
 
 
 def square_surf(width, height, color):
@@ -26,7 +27,7 @@ def square_surf(width, height, color):
     return surf
 
 class Particle:
-    def __init__(self, loc, vel, size, type="explosion") -> None:
+    def __init__(self, loc, vel, size, type="explosion", lighting=False) -> None:
         self.loc = loc
         self.vel = vel
         self.size = size
@@ -34,15 +35,20 @@ class Particle:
         self.shrink_rate = 1
         self.gravity = .5
 
+        self.lighting = lighting
 
         self.time = self.size / self.shrink_rate
 
         if type == "explosion":
-            self.start_color = colors_start[(random.randint(0, len(colors_start) - 1))].copy()
+            self.start_color = colors_start_red[(random.randint(0, len(colors_start_red) - 1))].copy()
             self.end_color = colors_end[(random.randint(0, len(colors_end) - 1))].copy()
         if type == "dust":
             self.start_color = [255, 255, 255]
             self.end_color = [255, 255, 255]
+        if type == "celebrate":
+            self.start_color = colors_start_purple[(random.randint(0, len(colors_start_purple) - 1))].copy()
+            self.end_color = colors_end[(random.randint(0, len(colors_end) - 1))].copy()
+
 
 
         self.r = (self.start_color[0] - self.end_color[0]) / self.time
@@ -91,7 +97,8 @@ class Particle:
     def draw(self, surface):
         color = (int(self.start_color[0]), int(self.start_color[1]), int(self.start_color[2]))
         pygame.draw.rect(surface, color, pygame.Rect(self.loc[0], self.loc[1], self.size, self.size))
-        surface.blit(square_surf(self.size * 2, self.size * 2, (20, 20, 20)), (self.loc[0] - self.size / 2, self.loc[1] - self.size / 2), special_flags=pygame.BLEND_RGB_ADD)
+        if self.lighting:
+            surface.blit(square_surf(self.size * 2, self.size * 2, (20, 20, 20)), (self.loc[0] - self.size / 2, self.loc[1] - self.size / 2), special_flags=pygame.BLEND_RGB_ADD)
 
 
     def dead(self):

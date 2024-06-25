@@ -2,6 +2,7 @@ import pygame
 import os
 
 
+
 green = (0, 161, 82)
 heather = (210, 145, 255)
 indigo = (75, 0, 130)
@@ -75,12 +76,26 @@ return_arrow = pygame.image.load('imgs/arrowkeys/return_arrow.png')
 return_arrow = pygame.transform.scale(return_arrow, (return_arrow.get_width() + 4, return_arrow.get_height() + 3))
 
 
+empty_image = pygame.image.load('imgs/arrow/arrow_0.png')
+
+
 class Render:
     def __init__(self, images, loc, angle, spread=0):
         self.images = images
         self.loc = loc
         self.angle = angle
         self.spread = spread
+
+        self.timer = 0
+        try:
+            self.frames = len(self.images)
+        except:
+            self.frames = 1
+
+        self.frame_duration = 60
+        self.current_frame = 0
+
+
 
     def render_stack(self, surf, hover=False):
         for i, img in enumerate(self.images):
@@ -90,6 +105,18 @@ class Render:
 
     def render_single(self, surf):
         rotated_img = pygame.transform.rotate(self.images, self.angle)
+        surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
+
+    def animate(self, surface, dt):
+        self.timer += dt
+        if self.timer >= self.frame_duration:
+            self.timer = 0
+            self.current_frame = (self.current_frame + 1) % self.frames
+
+        self.render_single_animation(surface)
+    
+    def render_single_animation(self, surf):
+        rotated_img = pygame.transform.rotate(self.images[self.current_frame], self.angle)
         surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
 
 
@@ -131,7 +158,11 @@ def render_text(loc, word, surface, color="black"):
             surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         divider += 1
 
+def lower_player(player):
+    player.to_render.images = player.images[2::]
 
+def raise_player(player):
+    player.to_render.images = player.images
 
 A_img = pygame.image.load('imgs/a_2/A.png')
 B_img = pygame.image.load('imgs/a_2/B.png')
@@ -296,4 +327,17 @@ abc_white = {
     "/": SLASH_img_white
 }
 
+
+def convert_to_imgs_t(directory):
+    directory = directory
+    files = [img for img in os.listdir(directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+    files = sorted(files, reverse=True)
+    images = [pygame.transform.scale(pygame.image.load(os.path.join(directory, img)), (48, 48)) for img in files]
+
+    return images
+
+
+flat_water_imgs = convert_to_imgs_t('imgs/water/flat')
+split_water_imgs = convert_to_imgs_t('imgs/water/split')
+hole_water_imgs = convert_to_imgs_t('imgs/water/hole')
 

@@ -12,7 +12,7 @@ mid_y = 200
 class Player(Hitbox):
     def __init__(self, center, width, height, color, health=200):
         super().__init__(center, width, height, color)
-        self.images = player_images
+        self.images = [img.convert_alpha() for img in player_images]
         self.spread = 1
         self.direction = Vector((0, 0))
         self.to_render = Render(self.images, center, self.angle, self.spread)
@@ -82,6 +82,10 @@ class Player(Hitbox):
 
         self.arrow_counter = 0
 
+
+        self.in_water = False
+
+        self.shot = False
 
     def player_death(self):
         self.health_bar.set_health(self.original_health)
@@ -180,9 +184,6 @@ class Player(Hitbox):
             render_text((mid_x - len("POWERUP") * 7 / 2, mid_y - 100), "POWERUP", surface, "white")
             self.power_up_text_start += self.power_up_text_inc
             
-
-
-
         if self.power_up_text_start == self.power_up_text_end:
             print("end")
             self.power_up = False
@@ -193,7 +194,7 @@ class Player(Hitbox):
 class PlayerArrow(Hitbox):
     def __init__(self, center, width, height, color):
         super().__init__(center, width, height, color)
-        self.image = arrow_img
+        self.image = arrow_img.convert_alpha()
         self.arrow_angle = 0
         self.arrow_difference = 0
         self.arrow_angle_degrees = 0

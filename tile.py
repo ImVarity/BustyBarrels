@@ -4,10 +4,14 @@ from vector import Vector
 from health import HealthBar
 
 class Tile(Hitbox):
-    def __init__(self, center, width, height, color, images):
+    def __init__(self, center, width, height, color, images, type="land"):
         super().__init__(center, width, height, color)
-        self.image = images
-        self.to_render = Render(self.image, center, self.angle)
+        self.type = type
+        if type == "water":
+            self.images = [img.convert_alpha() for img in images]
+        else:
+            self.images = images.convert_alpha()
+        self.to_render = Render(self.images, center, self.angle)
 
     def render(self, surf):
         self.to_render.render_single(surf)
@@ -18,3 +22,4 @@ class Tile(Hitbox):
         self.move(direction * -1)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
+

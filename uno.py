@@ -12,7 +12,7 @@ class Uno(Hitbox):
     def __init__(self, center, width, height, color, health=1000):
         super().__init__(center, width, height, color)
         self.health = health
-        self.images = Uno_images
+        self.images = [img.convert_alpha() for img in Uno_images]
         self.num_images = len(self.images)
 
         self.spread = 1.3
@@ -142,11 +142,25 @@ class Uno(Hitbox):
 
     def spiral_attack(self):
         
-        shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked * -1)
-        shot.shuriken_angle_start = math.atan2(self.last_looked.y * -1, self.last_looked.x * -1) + self.angle * math.pi / 180
-        self.shurikens.append(shot)
+        shot_1 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked * -1)
+        shot_1.shuriken_angle_start = math.atan2(self.last_looked.y * -1, self.last_looked.x * -1) + self.angle * math.pi / 180
+        
+        self.shurikens.append(shot_1)
 
+        shot_2 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector((-self.last_looked.y, self.last_looked.x)))
+        shot_2.shuriken_angle_start = math.atan2(self.last_looked.x, -self.last_looked.y) + self.angle * math.pi / 180
+        
+        self.shurikens.append(shot_2)
 
+        shot_3 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
+        shot_3.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
+        
+        self.shurikens.append(shot_3)
+
+        shot_4 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector((self.last_looked.y, -self.last_looked.x)))
+        shot_4.shuriken_angle_start = math.atan2(-self.last_looked.x, self.last_looked.y) + self.angle * math.pi / 180
+        
+        self.shurikens.append(shot_4)
     def attack_two(self):
         self.locked = self.looking
         self.charging = True
@@ -176,7 +190,7 @@ class Uno(Hitbox):
 class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
-        self.images = shuriken_img
+        self.images = shuriken_img.convert_alpha()
         self.shuriken_velocity = 1
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
         self.shuriken_angle_start = self.shuriken_angle

@@ -6,7 +6,7 @@ import math
 class Collectable(Hitbox):
     def __init__(self, center, width, height, color, images):
         super().__init__(center, width, height, color)
-        self.images = images
+        self.images = [img.convert_alpha() for img in images]
         self.spread = .4
 
         self.spinspeed_degrees = 1

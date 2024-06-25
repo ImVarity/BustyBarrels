@@ -9,7 +9,8 @@ mid_x, mid_y = 200, 200
 class Arrow(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
-        self.images = arrow_images
+        
+        self.images = [img.convert_alpha() for img in arrow_images]
         self.arrow_velocity = 4
         self.arrow_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates arrow to point that direction
         self.arrow_angle_start = 0
