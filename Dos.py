@@ -1,36 +1,20 @@
 from render import *
 from Square import Hitbox
-from vector import Vector
 from health import HealthBar
+from vector import Vector
+from arrow import Arrow
 import math
 
-mid_x = 200
-mid_y = 200
-
-
-class Uno(Hitbox):
+class Dos(Hitbox):
     def __init__(self, center, width, height, color, health=1000):
         super().__init__(center, width, height, color)
-        self.health = health
         self.images = Uno_images
         self.num_images = len(self.images)
-
-        self.spread = 1.3
+        self.spread = 1.2
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
 
-        self.boss_angle_radians = 0
-
-        self.shoot_angle_degrees = 45
-        self.shoot_angle_radians = 0
-
-        self.start_shoot_angle = 10
-
-        self.turn_angle_degrees = 1
-
         self.delete_radius = 200
-
-        
         self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
 
         self.summoning = False
@@ -38,73 +22,87 @@ class Uno(Hitbox):
         self.summon_end = self.num_images * self.summon_rise
         self.summon_increment = 1
         self.summon_index = self.num_images
-        self.summoned = False
-
-
-        self.looking = Vector((0, 0))
-        self.locked = Vector((0, 0))
-
-
-        self.charge_now = False
-        self.charging = False
-        self.charge_start = 0
-        self.charge_end = 45
-        self.charge_inc = 1
-
-        self.shurikens = []
+        self.summoned = True
 
         self.tracking = False
 
         self.dead = False
 
-        self.name = "Tifanie"
+        self.name = "Tif"
 
-        self.barrels_busted = 0
+        self.shurikens = []
 
+        self.angle_r = 0
 
-    def check_if_summon(self):
-        if self.barrels_busted > 2 and not self.summoned:
-            self.summoning = True
-            self.tracking = True
-
-        if self.summoning:
-            self.summon_start += self.summon_increment
-
-            if self.summon_start % self.summon_rise == 0:
-                if self.summon_index > 0:
-                    self.summon_index -= 1
-                else:
-                    self.summoned = True
-                    self.summoning = False
-                    self.tracking = False
-
-    def temp_death(self):
-
-        self.health_bar.set_health(self.health)
-        self.summoned = False
-        self.summon_start = 0
-        self.summon_index = self.num_images
-        self.barrels_busted = 0
+        self.tif_last_looked_og = Vector((0, 1))
+        self.tif_angle_looking_og = 90 * math.pi / 180 
+        
+        self.tif_last_looked = Vector((0, 1))
+        self.tif_angle_looking = 90 * math.pi / 180 
 
 
 
+        self.v_add = Vector((0, 1))
+        self.angle_add = 45 * math.pi / 180
 
-    def death(self):
-        self.images = barrel_images
-        self.dead = True
 
-    def render(self, surface):
-        self.to_render.images = self.images[self.summon_index:self.num_images]
-        self.to_render.render_stack(surface)
-    
+    # def random_direction(self):
+
+
+    def spiral_attack(self):
+        
+        shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.tif_last_looked)
+        shot.shuriken_angle_start = math.atan2(self.tif_last_looked.y, self.tif_last_looked.x) + self.angle * math.pi / 180
+        self.shurikens.append(shot)
+
+        
+
+
     def follow_player(self, player_center):
         v = self.center - player_center
         v = v.normalize()
-        self.looking = v
         angle = math.atan2(v.x, v.y)
         angle = angle * 180 / math.pi
         self.to_render.angle = angle - 90
+        
+    def death(self):
+        self.to_render.images = barrel_images
+        self.dead = True
+    
+    def render(self, surface):
+        self.to_render.render_stack(surface)
 
+    def draw_healthbar(self, surface):
+        self.health_bar.draw(surface, self.center, self.height)
+
+    def damage(self, dmg):
+        if not self.summoned:
+            pass
+        else:
+            self.health_bar.damage(dmg)
+
+    # def update_look(self, angle_looking, looking):
+
+    #     print("looks", looking, self.last_looked)
+    #     # self.looking = looking
+    #     # self.angle_looking = angle_looking
+    #     # self.looking = looking
+
+    def update(self, rotation_input, input, direction):
+        # print(self.angle_looking, math.atan2(self.tif_last_looked.y, self.tif_last_looked.x) + self.angle * math.pi / 180)
+        # print(90 * math.pi / 180 - self.angle * math.pi / 180, self.angle, self.angle_looking)
+        # print(self.angle_looking * 180 / math.pi)
+        # print(self.angle_looking - 45 * math.pi / 180)
+        # print(self.tif_last_looked, self.tif_angle_looking)
+        print(self.angle_looking, math.atan2(self.tif_last_looked.y, self.tif_last_looked.x))
+        self.get_direction(input)
+        self.handle_rotation(rotation_input)
+        # if rotation_input["reset"]:
+        #     self.tif_angle_looking = self.tif_angle_looking_og
+        #     self.tif_last_looked = self.tif_last_looked_og
+        self.move(direction * -1)
+        self.to_render.loc = [self.center.x, self.center.y]
+        self.to_render.angle = self.angle
 
     def draw_healthbar(self, surface):
         white_bar_width = 180
@@ -124,63 +122,15 @@ class Uno(Hitbox):
         self.health_bar.draw(surface, self.center, self.height)
 
 
-    def update(self, rotation_input, input, direction):
-        self.get_direction(input)
-        self.handle_rotation(rotation_input)
-        self.move(direction * -1)
-        self.to_render.loc = [self.center.x, self.center.y]
-        self.to_render.angle = self.angle
-
-
-
-    def damage(self, dmg):
-        if not self.summoned:
-            pass
-        else:
-            self.health_bar.damage(dmg)
-
-
-    def spiral_attack(self):
-        
-        shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked * -1)
-        shot.shuriken_angle_start = math.atan2(self.last_looked.y * -1, self.last_looked.x * -1) + self.angle * math.pi / 180
-        self.shurikens.append(shot)
-
-
-    def attack_two(self):
-        self.locked = self.looking
-        self.charging = True
-
-        self.charge()
-
-    def charge(self):
-        if self.charging:
-            self.charge_start += self.charge_inc
-
-            self.move(self.locked * -1 * .8)
-
-            shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-            shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-            shot.shuriken_velocity = 4
-            self.shurikens.append(shot)
-
-
-
-    def delete_shuriken(self, shuriken_to_delete):
-        for i in range(len(self.shurikens)):
-            if self.shurikens[i] == shuriken_to_delete:
-                del self.shurikens[i]
-                return
-
 
 class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
-        self.images = shuriken_img
-        self.shuriken_velocity = 1
+        self.images = shuriken_img.convert_alpha()
+        self.shuriken_velocity = .1
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
-        self.shuriken_angle_start = self.shuriken_angle
-        # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
+        self.shuriken_angle_start = 0
+        self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
         self.damage = 50
         self.to_render = Render(self.images, center, self.shuriken_angle)
 
@@ -188,9 +138,6 @@ class Shuriken(Hitbox):
         self.spin_speed_degrees = 4
         self.spin_speed = self.spin_speed_degrees * math.pi / 180
 
-        self.distance_from_boss = 0
-
-        self.og_center = center
         
 
     def set_angle(self, angle):
@@ -202,8 +149,11 @@ class Shuriken(Hitbox):
         self.to_render.render_single(surface)
 
 
-
     def handle_rotation_shuriken(self, rotation_input):
+        
+        # print("shuri angle", self.shuriken_angle * 180 / math.pi, "started with", self.shuriken_angle_start * 180 / math.pi, "subtracted", self.shuriken_angle * 180 / math.pi - self.shuriken_angle_start * 180 / math.pi)
+        # print("turned", (self.shuriken_angle * 180 / math.pi - self.shuriken_angle_start * 180 / math.pi), "degrees")
+
         if not rotation_input["reset"]:
             self.handle_rotation(rotation_input)
 
@@ -220,7 +170,12 @@ class Shuriken(Hitbox):
                 self.shuriken_angle += self.rotationspeed
 
     def reset_rotation_shuriken(self):
+
+
+        # print(self.shuriken_angle * 180 / math.pi - self.shuriken_angle_start * 180 / math.pi)
+
         back = -(self.shuriken_angle - self.shuriken_angle_start)
+
         self.center.x, self.center.y = (self.center.x - mid_x) * math.cos(back) + (self.center.y - mid_y) * -math.sin(back) + mid_x, (self.center.x - mid_x) * math.sin(back) + (self.center.y - mid_y) * math.cos(back) + mid_y
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - mid_x) * math.cos(back) + (self.vertices[i].y - mid_y) * -math.sin(back) + mid_x, (self.vertices[i].x - mid_x) * math.sin(back) + (self.vertices[i].y - mid_y) * math.cos(back) + mid_y
@@ -233,7 +188,7 @@ class Shuriken(Hitbox):
 
 
     def update(self, rotation_input, direction):
-        self.self_spin()
+        # self.self_spin()
         self.handle_rotation_shuriken(rotation_input)
         self.translate(Vector((math.cos(self.shuriken_angle), math.sin(self.shuriken_angle))) * self.shuriken_velocity) # if i want to simulate shooting shurikens, remove this * self.shuriken_velocity and then put it into translate instead
         self.translate(direction * -1 * self.velocity) # have to multiply player velocity as well???
@@ -245,4 +200,10 @@ class Shuriken(Hitbox):
         self.center += direction # * self.shuriken_velocity // simulates pull back of shurikens
         for i in range(len(self.vertices)):
             self.vertices[i] += direction # * self.shuriken_velocity
+
+
+    def translate(self, direction):
+        self.center += direction # * self.arrow_velocity // simulates pull back of arrows
+        for i in range(len(self.vertices)):
+            self.vertices[i] += direction # * self.arrow_velocity
 

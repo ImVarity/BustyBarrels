@@ -99,9 +99,11 @@ class TextBubble:
         return ""
 
     def trade(self, quest):
-        print(quest)
-        del self.quests[quest]
-        pass
+        try:
+            print(quest)
+            del self.quests[quest]
+        except:
+            pass
 
     def show_quests(self, surface):
         # dont show hovering if its -1

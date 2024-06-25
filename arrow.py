@@ -32,6 +32,7 @@ class Arrow(Hitbox):
             self.handle_rotation(rotation_input)
 
 
+
         if rotation_input["reset"]:
             if self.arrow_angle != self.arrow_angle_start:
                 self.reset_arrow_rotation()

@@ -15,6 +15,11 @@ lime_green = (50, 205, 50)
 grass_green = (142, 200, 64)
 red = (220, 20, 60)
 purple = (112, 41, 99)
+npc_color = (47,79,79, 100)
+
+
+mid_x = 200
+mid_y = 200
 
 def render_stack(surf, images, pos, rotation, spread):
     for i, img in enumerate(images):
@@ -79,8 +84,8 @@ class Render:
 
     def render_stack(self, surf, hover=False):
         for i, img in enumerate(self.images):
-            img.convert_alpha()
             rotated_img = pygame.transform.rotate(img, self.angle)
+            rotated_img.convert_alpha()
             surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))
 
     def render_single(self, surf):

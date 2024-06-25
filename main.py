@@ -18,6 +18,7 @@ from uno import Shuriken
 from particles import Particle
 from bomb import Bomb
 from tile import Tile
+from Dos import Dos
 from render import *
 import time
 from pygame.locals import *
@@ -35,6 +36,9 @@ dash_sound = pygame.mixer.Sound('sfx/grabitem.wav')
 collect_sound_2 = pygame.mixer.Sound('sfx/collectitem2.wav')
 explosion_sound = pygame.mixer.Sound('sfx/explosion.wav')
 menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
+arrow_shot = pygame.mixer.Sound('sfx/arrow_shot.wav')
+arrow_shot2 = pygame.mixer.Sound('sfx/arrow_sound2.wav')
+swing = pygame.mixer.Sound('sfx/swing_sound.wav')
 
 explosion_sound.set_volume(.2)
 pygame.mixer.music.load('sfx/bgm.mp3')
@@ -108,9 +112,10 @@ admin_input = {
 player = Player([0, 0], 8, 8, blue, health=500)
 player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
 spawnpoint = Barrel((0, 0), 8, 8, black)
+tif_spawnpoint = Barrel((200, 200), 8, 8, black)
 
 
-cur_point = Hitbox((0, 0), 8, 8, black)
+
 
 # ------------------------------------------------------------ Radius ------------------------------------------------------------------
 
@@ -127,10 +132,19 @@ bombs = []
 watermelons = []
 collectables = {
     "Arrows" : [],
-    "Watermelons" : []
+    "Watermelons" : [],
+    "Powerups" : []
 }
 
-random_barrel_count = 50
+bigger_bomb_images = []
+for i in range(len(bomb_images)):
+    n = pygame.transform.scale(bomb_images[i], (bomb_images[i].get_width() + 20, bomb_images[i].get_height() + 20))
+    n.convert_alpha()
+    bigger_bomb_images.append(n)
+powerup = Collectable((mid_x, mid_x), 16, 16, black, bigger_bomb_images)
+
+
+random_barrel_count = 150
 random_arrow_count = 100
 
 check = Barrel([150, 150], 16, 16, pink, health=500)
@@ -148,7 +162,7 @@ for i in range(random_arrow_count):
 
 
 for i in range(random_barrel_count):
-    barrels.append(Barrel([random.randrange(int(-spawnpoint.center.x - 300), int(spawnpoint.center.x + 300)), random.randrange(int(-spawnpoint.center.y - 300), int(spawnpoint.center.y + 300))], 16, 16, pink, health=25))
+        barrels.append(Barrel([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 16, 16, pink, health=25))
 
 
 
@@ -268,8 +282,9 @@ def delete_arrow(arrows, arrow_to_delete):
         arrows.remove(arrow_to_delete)
 
 
-def delete_barrel(barrels, barrel_to_delete, watermelons, player, particles):
+def delete_barrel(barrels, barrel_to_delete, watermelons, Tifanie, player):
     if barrel_to_delete in barrels:
+        Tifanie.barrels_busted += 1
         player.barrels_busted += 1
         if player.inQuest:
             player.quest_barrels_busted += 1
@@ -281,7 +296,7 @@ def delete_barrel(barrels, barrel_to_delete, watermelons, player, particles):
 
 attack = False
 
-attack_end = 120
+attack_end = 30
 attack_start = 0
 attack_inc = 1
 
@@ -330,6 +345,7 @@ quest = ""
 
 screen_shake = 0
 
+timer = 0
 
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
@@ -339,6 +355,7 @@ while running:
     dt *= 60
     pre_time = time.perf_counter()
     start_of_game_pause += 1
+    timer += 1
 
     screen.fill(white)
     display.fill(grass_green)
@@ -423,7 +440,7 @@ while running:
         collectables["Arrows"].append(Collectable([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, arrow_images))
 
     if len(barrels) < random_barrel_count:
-        barrels.append(Barrel([random.randrange(int(-spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(-spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 16, 16, pink, health=25))
+        barrels.append(Barrel([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 16, 16, pink, health=25))
 
 # ------------------------------------------------- Handling the rotation and direction and some updating -------------------------------------------------------
 # -------------------------------------------- Other updating happens in the z-positiong updating so less for loops ----------------------------------------
@@ -453,10 +470,11 @@ while running:
 
     if action_input["shoot"] and not paused and len(player.inventory["Arrows"]) > 0:
         if player.arrow_counter < player.stats["M"]:
+            arrow_shot2.play()
             player.knockback_power = 1
             player.knockback = True
             shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
-            shot.arrow_angle_start = player.angle_looking
+            shot.arrow_angle_start = player.angle_looking # based on rotation
             arrows.append(shot)
             player.arrow_counter += 1
 
@@ -466,7 +484,7 @@ while running:
             player.inventory["Arrows"].pop()
             player.arrow_counter = 0
 
-    if action_input["throw"]:
+    if action_input["throw"] and player.bomber:
         bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking)
         if action_input["dash"]:
             bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking, velocity=3.25)
@@ -488,8 +506,18 @@ while running:
     if attack_start == attack_end:
         attack_start = 0
         if Tifanie.summoned and not Tifanie.dead:
-            Tifanie.attack_one(player.angle_looking)
+            # Tifanie.attack_one(player.angle_looking)
+            if not paused:
+                Tifanie.spiral_attack()
+
+
+    if Tifanie.summoned and not Tifanie.dead and Tifanie.health_bar.health < 500:
+        if not paused:
+            Tifanie.attack_two()
+
     
+    
+
 
     # print(player.center)
     if not paused:
@@ -514,6 +542,9 @@ while running:
 
     if not paused:
         spawnpoint.update(rotation_input, direction)
+        tif_spawnpoint.update(rotation_input, direction)
+
+    powerup.update_powerup()
 
 # ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
@@ -544,7 +575,12 @@ while running:
         for i in range (len(holder) - 1, -1, -1):
 
             if not paused:
+                
                 if abs(holder[i].center.x - player_center_x) < 8 and abs(holder[i].center.y - player_center_y) < 8:
+                    if holder[i].powerup:
+                        player.power_up = True
+                        del holder[i]
+                        break
                     holder[i].follow_player = True
                     holder[i].follow_speed = random.randrange(50, 200) / 10000
                     player.inventory[items].append(holder[i])
@@ -564,7 +600,7 @@ while running:
     # UNO sorting
     for b in bosses:
         if not paused:
-            b.update(rotation_input, direction)
+            b.update(rotation_input, input, direction)
             b.follow_player(player.center)
             if b.summoned:
                 for arrow in arrows:
@@ -574,6 +610,8 @@ while running:
 
         index = bisect.bisect_left([o.center.y for o in to_render_sorted], b.center.y)
         to_render_sorted.insert(index, b)
+
+
 
 
     # fixes z position
@@ -643,7 +681,6 @@ while running:
 
 
 
-
 # ------------------------------------------------------ Rendering objects -------------------------------------------------------
 
     # render tiles first
@@ -666,21 +703,13 @@ while running:
 
 # ------------------------------------------------------- Boss stuff (to fix) -------------------------------------------------------
 
-    if player.barrels_busted > 5 and not Tifanie.summoned:
-        # Tifanie.summoned = True
-        Tifanie.summoning = True
+
+    Tifanie.check_if_summon()
+    if Tifanie.tracking:
         tracking = Tifanie
+    else:
+        tracking = player
 
-    if Tifanie.summoning:
-        Tifanie.summon_start += Tifanie.summon_increment
-
-        if Tifanie.summon_start % Tifanie.summon_rise == 0:
-            if Tifanie.summon_index > 0:
-                Tifanie.summon_index -= 1
-            else:
-                tracking = player
-                Tifanie.summoned = True
-                Tifanie.summoning = False
 
 # ------------------------------------------------------- End of boss stuff ------------------------------------------------------------------
 
@@ -713,10 +742,13 @@ while running:
             # object.draw_hitbox(display)
 
         elif isinstance(object, Uno):
-            object.render(display)
+            if object.summoning:
+                object.render(display)
             if object.summoned and not object.dead:
+                object.render(display)
                 object.draw_healthbar(display)
-            # object.draw_hitbox(display)
+            if object.dead:
+                object.draw_hitbox(display)
 
         elif isinstance(object, Bomb):
             object.render(display)
@@ -739,7 +771,6 @@ while running:
         if admin_input["hitboxes"]:
             shuriken.draw_hitbox(display)
         # shuriken.draw_hitbox(display)
-
 
 
 
@@ -773,8 +804,13 @@ while running:
     for npc in npcs:
         if npc.interacting:
             display.blit(npc_surface, (0, 0))
-            npc.talk(display, npc_input)
+            if not npc.talk(display, npc_input, player, display):
+                input["interact"] = False
         else:
+            npc.check_funds(display)
+            if player.inQuest:
+                npc.update_quests(player)
+                npc.show_quest_status(display)
             if player_center_x >= Mikhail.center.x - Mikhail.width / 2 and player_center_x <= Mikhail.center.x + Mikhail.width / 2 and player.center.y >= Mikhail.center.y - Mikhail.width / 2 and player.center.y <= Mikhail.center.y + Mikhail.width / 2 and not paused:
                 M_surface = pygame.Surface((len("T to talk to Mikhail") * 7 + 4, 10), pygame.SRCALPHA).convert_alpha()
                 M_surface.fill(npc_color)
@@ -783,76 +819,12 @@ while running:
             npc.reset_talk()
 
     count = 0
-    # print(Mikhail.active_quest)
-
-    # print(input["interact"])
-
-    active_quest = Mikhail.active_quest
-
-    transaction = False
 
 
-    if len(active_quest) > 0: # just pressed enter to confirm a quest
-        if active_quest[0] == "1": # means there there is a delivery quest
-            end_idx = 0
-            labor_amount = ""
-            for i in range(2, len(active_quest)):
-                if ord(active_quest[i]) > 57:
-                    labor_amount = active_quest[2:i]
-                    end_idx = i
-                    break
 
-            if len(player.inventory[quest_encryption[active_quest[1]]]) >= int(labor_amount):
-                # taking away how many items you collected
-                player.inventory[quest_encryption[active_quest[1]]] = player.inventory[quest_encryption[active_quest[1]]][int(labor_amount)::]
-
-                # rewarding the player
-
-                reward = active_quest[end_idx]
-                reward_amount = active_quest[end_idx + 1::]
-
-                player.stats[reward] += int(reward_amount)
-                
-                transaction = True
-            else:
-                transaction = False
-
-        elif active_quest[0] == "2": # breaking barrels quest
-            # print("inside")
-            end_idx = 0
-            labor_amount = ""
-            for i in range(2, len(active_quest)):
-                if ord(active_quest[i]) > 57: # just checks if the unicode number is greater than the last unicode number for a number which is 9 because unicode numbers for letters are all after numbers
-                    labor_amount = active_quest[2:i]
-                    end_idx = i
-                    break
-            
-            if player.inQuest and player.quest_barrels_busted >= int(labor_amount):
-                # rewarding the player
-                reward = active_quest[end_idx]
-                reward_amount = active_quest[end_idx + 1::]
-                player.stats[reward] += int(reward_amount)
-
-                player.active_quest = ""
-                player.inQuest = False
-                player.quest_barrels_busted = 0
-                transaction = True
-            else:
-                player.active_quest = quest_encryption["2"] + " " + str(player.quest_barrels_busted) + "/" + labor_amount + " Barrels"
-                player.inQuest = True
-                input["interact"] = False
-                Mikhail.interacting = False
-                transaction = False
-
-    if transaction == True:
-        npc.exchange(active_quest)
-        player.quest_completed = True
-        Mikhail.active_quest = ""
-        
-    # Mikhail.active_quest = ""
-    # print(active_quest)
 
     player.quest_complete_text(display)
+    player.powerup_collected(display, powerup)
 
 
 # 1 - deliver (Deliver 100 arrows/watermelons)
@@ -911,7 +883,7 @@ while running:
                 del collidables["Bombs"][i]
                 if bodyB.health_bar.health <= 0:
                     screen_shake = 10
-                    delete_barrel(barrels, bodyB, collectables["Watermelons"], player, particles)
+                    delete_barrel(barrels, bodyB, collectables["Watermelons"], Tifanie, player)
                     del collidables["Barrels"][j]
                 hit = True
                 break  # okay to break because the arrow already hit something and it wont hit anything else
@@ -933,7 +905,7 @@ while running:
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
                     # screen_shake = 10
-                    delete_barrel(barrels, bodyB, collectables["Watermelons"], player, particles)
+                    delete_barrel(barrels, bodyB, collectables["Watermelons"], Tifanie, player)
                     del collidables["Barrels"][j]
                 hit = True
                 break  # okay to break because the arrow already hit something and it wont hit anything else
@@ -947,6 +919,12 @@ while running:
                 delete_arrow(arrows, bodyA)
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
+                    
+                    if not Tifanie.dead:
+                        p = Collectable((Tifanie.center.x, Tifanie.center.y), 8, 8, black, bomb_images)
+                        p.powerup = True
+                        player.bomber = True
+                        collectables["Powerups"].append(p)
                     Tifanie.death()
                 
 
@@ -965,6 +943,11 @@ while running:
                 v = Vector(((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
                 v.normalize()
                 player.move_distance(v * -1, x_distance)
+                t_x_distance = math.sqrt((Tifanie.center.x- tif_spawnpoint.center.x) ** 2 + (Tifanie.center.y - tif_spawnpoint.center.y) ** 2)
+                t_v = Vector(((Tifanie.center.x - tif_spawnpoint.center.x), (Tifanie.center.y - tif_spawnpoint.center.y)))
+                t_v.normalize()
+                Tifanie.move_distance(t_v * -1, t_x_distance)
+                Tifanie.temp_death()
                 player.player_death()
                 break
             player.move(normal * .05)
@@ -988,8 +971,7 @@ while running:
         render_text((150, 375), "Range:" + str(player.stats['R']), display)
 
 
-    if player.inQuest:
-        render_text((mid_x - len(player.active_quest) * 7 / 2, 70), player.active_quest, display)
+
 
 
     # arrow on thej top left

@@ -29,6 +29,8 @@ class Collectable(Hitbox):
         self.timer = 0
         self.despawn_time = 60 * random.randint(30, 35) # 30 to 35 seconds around
 
+        self.powerup = False
+
 
 
     def render(self, surface):
@@ -58,3 +60,7 @@ class Collectable(Hitbox):
         self.to_render.angle = self.item_angle
         self.timer += 1
 
+    def update_powerup(self):
+        self.self_spin()
+        self.to_render.loc = [self.center.x, self.center.y]
+        self.to_render.angle = self.item_angle
