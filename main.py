@@ -39,6 +39,7 @@ menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
 arrow_shot = pygame.mixer.Sound('sfx/arrow_shot.wav')
 arrow_shot2 = pygame.mixer.Sound('sfx/arrow_sound2.wav')
 swing = pygame.mixer.Sound('sfx/swing_sound.wav')
+damage = pygame.mixer.Sound('sfx/damage.mp3')
 
 explosion_sound.set_volume(.2)
 pygame.mixer.music.load('sfx/bgm.mp3')
@@ -258,6 +259,22 @@ for i in range(len(map_br)):
 
 # ------------------------------------------------------ Useful functions ------------------------------------------------------------
 
+
+overlay = pygame.Surface((screen_width / 2, screen_height / 2), pygame.SRCALPHA)
+
+def update_overlay(hour):
+    if 6 <= hour < 36:
+        # transparent overlay
+        alpha = 0
+        color = (255, 255, 255, alpha)
+    else:
+        # dark overlay
+        alpha = min(255, int((hour - 36) / 12 * 80) if hour >= 36 else int((12 + hour) / 12 * 80))
+        print(alpha)
+        color = (0, 0, 64, alpha)
+    
+    overlay.fill(color)
+
 def explode(particles, loc):
     explosion_sound.play()
     for i in range(30):
@@ -346,6 +363,8 @@ quest = ""
 screen_shake = 0
 
 timer = 0
+hour = 6  # Starting at 6 AM
+last_time = time.time()
 
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
@@ -902,6 +921,7 @@ while running:
                 bodyB.health_bar.damage(bodyA.damage)
                 bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
                 delete_arrow(arrows, bodyA)
+                damage.play()
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
                     # screen_shake = 10
@@ -909,7 +929,6 @@ while running:
                     del collidables["Barrels"][j]
                 hit = True
                 break  # okay to break because the arrow already hit something and it wont hit anything else
-
         # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
         if hit == False and len(collidables["Bosses"]) > 0: # check if it already hit something
             bodyB = Tifanie
@@ -917,15 +936,16 @@ while running:
             if collided:
                 bodyB.health_bar.damage(bodyA.damage)
                 delete_arrow(arrows, bodyA)
+                damage.play()
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
-                    
                     if not Tifanie.dead:
                         p = Collectable((Tifanie.center.x, Tifanie.center.y), 8, 8, black, bomb_images)
                         p.powerup = True
                         player.bomber = True
                         collectables["Powerups"].append(p)
                     Tifanie.death()
+                break
                 
 
     # Player colliding with Shurikens
@@ -1000,7 +1020,14 @@ while running:
         render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
 
 
+    current_time = time.time()
+    print(hour)
+    if current_time - last_time >= 2:
+        hour = (hour + 1) % 48
+        update_overlay(hour)
+        last_time = current_time
 
+    display.blit(overlay, (0, 0))
         
     if screen_shake > 0:
         screen_shake -= 1

@@ -232,5 +232,3 @@ class TextBubble:
 
             self.quests[code].append(enter)
         self.quests_count += 1
-
-        print(self.quests)
