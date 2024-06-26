@@ -113,7 +113,7 @@ admin_input = {
 player = Player([0, 0], 8, 8, blue, health=500)
 player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
 spawnpoint = Barrel((0, 0), 8, 8, black)
-tif_spawnpoint = Barrel((200, 200), 8, 8, black)
+tif_spawnpoint = Barrel([mid_x + 16, mid_y + 16], 8, 8, black)
 
 
 
@@ -169,12 +169,9 @@ for i in range(random_barrel_count):
 
 # ------------------------------------------------- Bosses and NPCS ----------------------------------------------------------------------
 
-
-
 font = pygame.font.Font('fonts/tiny.ttf', 8)
 
-
-Tifanie = Uno([mid_x, mid_y], 32, 32, purple)
+Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple)
 
 bosses = [Tifanie]
 
@@ -185,49 +182,73 @@ npcs = [Mikhail]
 
 # -------------------------------------------------- Map stuff that needs to be moved somewhere else ------------------------------------------------
 
+
+bounding_boxes = [
+    Barrel((-24, -624), 624 * 2, 40, red),
+    Barrel((590, -24), 40, 624 * 2, red),
+    Barrel((-24, 590), 624 * 2, 40, red),
+    Barrel((-624, -24), 40, 624 * 2, red)
+]
+
 map_br = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 map_bl = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 map_tr = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 map_tl = [
-    [0, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
 
@@ -238,7 +259,7 @@ for i in range(len(map_tl)):
         if map_tl[i][j] == 1:
             tiles.append(Tile((-(j * 48 + 48), -(i * 48 + 48)), 48, 48, white, grass_img))
         else:
-            tiles.append(Tile((-(j * 48 + 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs, type="water"))
+            tiles.append(Tile((-(j * 48 + 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs if random.randint(0, 1) == 1 else split_water_imgs, type="water"))
 
 
 for i in range(len(map_tr)):
@@ -246,21 +267,21 @@ for i in range(len(map_tr)):
         if map_tr[i][j] == 1:
             tiles.append(Tile(((j * 48), -(i * 48 + 48)), 48, 48, white, grass_img))
         else:
-            tiles.append(Tile(((j * 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs, type="water"))
+            tiles.append(Tile(((j * 48), -(i * 48 + 48)), 48, 48, blue, flat_water_imgs if random.randint(0, 1) == 1 else split_water_imgs, type="water"))
 
 for i in range(len(map_bl)):
     for j in range(len(map_bl[0])):
         if map_bl[i][j] == 1:
             tiles.append(Tile((-(j * 48 + 48), i * 48), 48, 48, white, grass_img))
         else:
-            tiles.append(Tile((-(j * 48 + 48), i * 48), 48, 48, blue, flat_water_imgs, type="water"))
+            tiles.append(Tile((-(j * 48 + 48), i * 48), 48, 48, blue, flat_water_imgs if random.randint(0, 1) == 1 else split_water_imgs, type="water"))
 
 for i in range(len(map_br)):
     for j in range(len(map_br[0])):
         if map_br[i][j] == 1:
             tiles.append(Tile((j * 48, i * 48), 48, 48, white, grass_img))
         else:
-            tiles.append(Tile((j * 48, i * 48), 48, 48, blue, flat_water_imgs, type="water"))
+            tiles.append(Tile((j * 48, i * 48), 48, 48, blue, flat_water_imgs if random.randint(0, 1) == 1 else split_water_imgs, type="water"))
 
             
 
@@ -593,7 +614,8 @@ while running:
         "Shurikens" : [],
         "Bombs" : [],
         "Bosses" : [],
-        "Water" : []
+        "Water" : [],
+        "Boundary": []
     }
 
     # just put player in here immediately, it will be sorted in place anyway
@@ -605,6 +627,18 @@ while running:
 
     powerup.update_powerup()
 
+    for boundary in bounding_boxes:
+        boundary.update(rotation_input, direction)
+        if player.angle == 0:
+            if (player.center.x + player.width / 2 + 6 > boundary.center.x - boundary.width / 2 and
+                player.center.x - player.width / 2 - 6 < boundary.center.x + boundary.width / 2 and
+                player.center.y + player.height / 2 + 6 > boundary.center.y - boundary.height / 2 and
+                player.center.y - player.height / 2 - 6 < boundary.center.y + boundary.height / 2):            
+                collidables["Boundary"].append(boundary)
+        else:
+            collidables["Boundary"].append(boundary)
+
+    print(len(collidables["Boundary"]))
 # ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
 
@@ -823,8 +857,9 @@ while running:
 
     # because rendering after, always on top of everything
 
-
-
+    for boundary in bounding_boxes:
+        if admin_input["hitboxes"]:
+            boundary.draw_hitbox(display)
 
     for shuriken in Tifanie.shurikens:
         shuriken.render(display)
@@ -1028,10 +1063,14 @@ while running:
             break
     player.in_water = in_water
 
-    if player.in_water:
-        print("in water")
-    else:
-        print("not in water")
+
+    for i in range(len(collidables["Boundary"]) -1, -1, -1):
+        bodyB = collidables["Boundary"][i]
+        counter += 1
+        collided, depth, normal = player.handle_collision(bodyB.normals(), player.normals(), bodyB)
+        if collided:
+            player.move(normal)
+
     # print(counter)
 
 

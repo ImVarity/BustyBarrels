@@ -54,6 +54,7 @@ class Player(Hitbox):
             "Powerups" : []
         }
 
+        self.active_quest_code = ""
         self.active_quest = ""
         self.barrels_busted = 0
         self.quest_barrels_busted = 0
@@ -74,7 +75,7 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 100,
+            'M' : 1000,
             'R' : 200
         }
 

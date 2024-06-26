@@ -28,7 +28,7 @@ class NPC(Hitbox):
         self.text.add_quests("Deliver 30 arrows:Plus 30 arrow multiplier", "1A30M30")
         self.text.add_quests("Break 10 barrels:Plus 20 range", "2B10R20")
         self.text.add_quests("Deliver 10 watermelons:Plus 30 arrow multiplier", "1W10M30")
-        self.text.add_quests("Break 50 barrels:Plus 70 range", "2B50R70")
+        self.text.add_quests("Break 40 barrels:Plus 70 range", "2B40R70")
         self.text.add_quests("Deliver 30 watermelons:Plus 30 arrow multiplier", "1W30M30")
         self.text.add_quests("Break 100 barrels:Plus 100 range", "2B100R100")
 
@@ -76,11 +76,9 @@ class NPC(Hitbox):
 
     def check_funds(self, surface):
         if self.not_enough:
-            print('ere')
             render_text((200 - len("not enough") * 7 / 2, 175), "Not enough", surface)
             self.not_enough_start += self.not_enough_inc
         if self.not_enough_start == self.not_enough_end:
-            print('done')
             self.not_enough = False
             self.not_enough_start = 0
 
@@ -88,8 +86,9 @@ class NPC(Hitbox):
 
 
     def talk(self, surface, input, player, display):
-        self.active_quest = self.text.display_text_bubble(surface, input)
 
+        self.active_quest = self.text.display_text_bubble(surface, input)
+        
 
         transaction = False
 
@@ -151,7 +150,7 @@ class NPC(Hitbox):
         self.reward_amount = self.active_quest[end_idx + 1::]
         
 
-
+        player.active_quest_code = self.active_quest
         player.active_quest = self.quest_encryption["2"] + " " + str(player.quest_barrels_busted) + "/" + labor_amount + " Barrels"
         player.inQuest = True
         self.interacting = False
@@ -175,13 +174,14 @@ class NPC(Hitbox):
             self.quest_status = str(player.active_quest[0:space]) + str(player.quest_barrels_busted) + str(player.active_quest[slash::])
 
             if player.quest_barrels_busted >= int(self.quest_goal):
+                self.exchange(player.active_quest_code)
 
                 player.stats[self.reward_for_quest] += int(self.reward_amount)
                 player.quest_completed = True
                 player.active_quest = ""
+                player.active_quest_code = ""
                 player.inQuest = False
                 player.quest_barrels_busted = 0
-                self.text.trade(self.active_quest)
 
 
         # if int(player.active_quest[slash + 1:player.active_quest.index("Ba")]) == player.quest_barrels_busted:

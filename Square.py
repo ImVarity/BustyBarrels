@@ -19,11 +19,12 @@ class Hitbox:
         self.height = height
         self.center = Vector((center[0], center[1]))
         
-        self.vertices = [Vector((self.center.x - width / 2, self.center.y - height / 2), origin=[self.center.x, self.center.y]),
-                         Vector((self.center.x + width / 2, self.center.y - height / 2), origin=[self.center.x, self.center.y]),
-                         Vector((self.center.x + width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y]),
-                         Vector((self.center.x - width / 2, self.center.y + height / 2), origin=[self.center.x, self.center.y])]
-
+        self.vertices = [
+            Vector((self.center.x - width / 2, self.center.y - height / 2)),
+            Vector((self.center.x + width / 2, self.center.y - height / 2)),
+            Vector((self.center.x + width / 2, self.center.y + height / 2)),
+            Vector((self.center.x - width / 2, self.center.y + height / 2))
+        ]
         self.rotation_speed = 0
         self.rotationspeed_degress = 2
         self.rotationspeed = self.rotationspeed_degress * math.pi / 180
@@ -44,35 +45,10 @@ class Hitbox:
         pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 1)
         pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 1)
 
-    
+    def update(self, rotation_input, direction):
+        self.handle_rotation(rotation_input)
+        self.move(direction * -1)
 
-    def normals(self):
-        edgeVectors = []
-        normalVectors = []
-
-        for i in range(4):
-            if (i == 3):
-                v = self.vertices[0]
-                z = self.vertices[3]
-                q = v - z # gets edge
-                edgeVectors.append(q)
-                break
-
-            v = self.vertices[i + 1]
-            z = self.vertices[i]
-            q = v - z # gets edge
-
-            edgeVectors.append(q)
-
-
-
-        # returns normal vectors that are normalized
-        for edge in edgeVectors:
-            v = Vector((-edge.y, edge.x))
-            v = v.normalize()
-            normalVectors.append(v)
-
-        return normalVectors
     
     def get_direction(self, input):
 
@@ -212,6 +188,34 @@ class Hitbox:
         pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (length / 2)).tail)
         pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (-length / 2)).tail)
 
+        
+    def normals(self):
+        edgeVectors = []
+        normalVectors = []
+
+        for i in range(4):
+            if (i == 3):
+                v = self.vertices[0]
+                z = self.vertices[3]
+                q = v - z # gets edge
+                edgeVectors.append(q)
+                break
+
+            v = self.vertices[i + 1]
+            z = self.vertices[i]
+            q = v - z # gets edge
+
+            edgeVectors.append(q)
+
+
+
+        # returns normal vectors that are normalized
+        for edge in edgeVectors:
+            v = Vector((-edge.y, edge.x))
+            v = v.normalize()
+            normalVectors.append(v)
+
+        return normalVectors
 
     # SAT collision
     def handle_collision(self, normals, normalstwo, boxtwo):

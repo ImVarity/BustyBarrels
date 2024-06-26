@@ -100,9 +100,9 @@ class TextBubble:
 
     def trade(self, quest):
         try:
-            print(quest)
             del self.quests[quest]
         except:
+            print(quest)
             pass
 
     def show_quests(self, surface):
