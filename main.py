@@ -1,3 +1,4 @@
+from pygame.locals import *
 import pygame
 import math
 import bisect
@@ -16,7 +17,6 @@ from bomb import Bomb
 from tile import Tile
 from render import *
 import time
-from pygame.locals import *
 flags = DOUBLEBUF
 
 
@@ -527,8 +527,6 @@ while running:
     direction *= dt
     player.direction = direction
 
-    # if direction.x > 0 or direction.y > 0: # makes sound if moving
-        # footstep.play()
 
     if not paused:
         if tracking == player:
@@ -597,7 +595,6 @@ while running:
             Tifanie.attack_two()
 
     
-    
 
 
     # print(player.center)
@@ -627,25 +624,17 @@ while running:
         spawnpoint.update(rotation_input, direction)
         tif_spawnpoint.update(rotation_input, direction)
 
-    powerup.update_powerup()
+    
 
-    for boundary in bounding_boxes:
-        boundary.update(rotation_input, direction)
-        if player.angle == 0:
-            if (player.center.x + player.width / 2 + 6 > boundary.center.x - boundary.width / 2 and
-                player.center.x - player.width / 2 - 6 < boundary.center.x + boundary.width / 2 and
-                player.center.y + player.height / 2 + 6 > boundary.center.y - boundary.height / 2 and
-                player.center.y - player.height / 2 - 6 < boundary.center.y + boundary.height / 2):            
-                collidables["Boundary"].append(boundary)
-        else:
-            collidables["Boundary"].append(boundary)
+
 
 # ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
 
     player_center_x, player_center_y = player.center.x, player.center.y
 
-
+    # just a powerup thats there and spinning
+    powerup.update_powerup()
 
     for npc in npcs:
         if not paused:
@@ -709,7 +698,16 @@ while running:
         to_render_sorted.insert(index, b)
 
 
-
+    for boundary in bounding_boxes:
+        boundary.update(rotation_input, direction)
+        if player.angle == 0:
+            if (player.center.x + player.width / 2 + 6 > boundary.center.x - boundary.width / 2 and
+                player.center.x - player.width / 2 - 6 < boundary.center.x + boundary.width / 2 and
+                player.center.y + player.height / 2 + 6 > boundary.center.y - boundary.height / 2 and
+                player.center.y - player.height / 2 - 6 < boundary.center.y + boundary.height / 2):            
+                collidables["Boundary"].append(boundary)
+        else:
+            collidables["Boundary"].append(boundary)
 
     # fixes z position
     for barrel in barrels:
@@ -768,11 +766,9 @@ while running:
     for i, shuriken in enumerate(Tifanie.shurikens):
         if not paused:
             shuriken.update(rotation_input, direction)
-            
             # limit render distance
             if limit_render(shuriken, render_radius):
                 continue
-
             limit_collision(shuriken, player, collision_radius, collidables["Shurikens"])
 
 # ------------------------------------------------------- Boss stuff (to fix) -------------------------------------------------------
@@ -894,12 +890,13 @@ while running:
         if math.hypot(Tifanie.center.x - Tifanie.shurikens[i].center.x, Tifanie.center.y - Tifanie.shurikens[i].center.y) > Tifanie.delete_radius:
             del Tifanie.shurikens[i]
 
-
+    # checks if the bomb height is lower enough then explodes it
     for i in range(len(bombs) -1, -1, -1):
         if bombs[i].bomb_height < -6:
             explode(particles, [bombs[i].center.x, bombs[i].center.y])
             del bombs[i]
 
+    # show the overlay below the npc screen
     display.blit(day_cycle, (0, 0))
 
     for npc in npcs:
@@ -917,34 +914,18 @@ while running:
                 M_surface = pygame.Surface((len("T to talk to Mikhail") * 7 + 4, 10), pygame.SRCALPHA).convert_alpha()
                 M_surface.fill(npc_color)
                 display.blit(M_surface, (player_center_x - len("T to talk to Mikhail") * 7 / 2 - 2, player.center.y - 40 - 2))
-                render_text((player_center_x - len("T to talk to Mikhail") * 7 / 2, player.center.y - 40), "T to talk to Mikhail", display, "white")
+                render_text_centered((player_center_x, player.center.y - 40), "T to talk to Mikhail", display, "white")
             npc.reset_talk()
 
     count = 0
 
 
 
-
+    # text that appears when something happens
     player.quest_complete_text(display)
     player.powerup_collected(display, powerup)
         
 
-
-
-# 1 - deliver (Deliver 100 arrows/watermelons)
-# 2 - action (Break 100 barrels)
-
-# A - arrows
-# W - watermelons
-# B - barrels
-
-# M - arrow multiplier
-# R - range
-
-
-# Ex
-# 1A100M10 (deliver 100 arrows for 100 arrow multiplier)
-# 2B5R9 (Break 5 barrels for 9 more range)
 
 
 
@@ -1087,10 +1068,10 @@ while running:
 
     if input["stats"]: # hold tab to see stats
         display.blit(tab_surface, (30, 50))
-        render_text((200 - len("Barrels busted:" + str(player.barrels_busted)) * 7 / 2, 100), "Barrels busted:" + str(player.barrels_busted), display, "white")
-        render_text((200 - len("Watermelons holding:" + str(len(player.inventory["Watermelons"]))) * 7 / 2, 115), "Watermelons holding:" + str(len(player.inventory["Watermelons"])), display, "white")
-        render_text((200 - len("Arrow multiplier:" + str(player.stats['M'])) * 7 / 2, 130), "Arrow multiplier:" + str(player.stats['M']), display, "white")
-        render_text((200 - len("Range:" + str(player.stats['R'])) * 7 / 2, 145), "Range:" + str(player.stats['R']), display, "white")
+        render_text_centered((200, 100), "Barrels busted:" + str(player.barrels_busted), display, "white")
+        render_text_centered((200, 115), "Watermelons holding:" + str(len(player.inventory["Watermelons"])), display, "white")
+        render_text_centered((200, 130), "Arrow multiplier:" + str(player.stats['M']), display, "white")
+        render_text_centered((200, 145), "Range:" + str(player.stats['R']), display, "white")
 
 
 
@@ -1098,10 +1079,18 @@ while running:
 
     # arrow on thej top right
     arrow_count = str(len(player.inventory["Arrows"]))
-    UI_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
-    display.blit(UI_arrow.convert_alpha(), (310 - (UI_arrow.get_width() / 2 + 3), 30 - (UI_arrow.get_height() / 2) + 3))
+    icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
+    display.blit(icon_arrow.convert_alpha(), (310 - (icon_arrow.get_width() / 2 + 3), 30 - (icon_arrow.get_height() / 2) + 3))
     render_text((320, 30), arrow_count, display)
     render_text((320 + len(arrow_count) * 8 + 4, 30), "x" + str(player.stats["M"]), display)
+    if not Mikhail.interacting:
+        display.blit(watermelon_img.convert_alpha(), (310 - (watermelon_img.get_width() / 2 + 3), 30 - (watermelon_img.get_height() / 2) + 20))
+        render_text((320, 47),str(len(player.inventory["Watermelons"])), display)
+
+        display.blit(barrel_img.convert_alpha(), (310 - (barrel_img.get_width() / 2 + 3), 30 - (barrel_img.get_height() / 2) + 37))
+        render_text((320, 64), str(player.barrels_busted), display)
+
+
 
     if paused:
         display.blit(npc_surface, (0, 0))
@@ -1120,7 +1109,6 @@ while running:
         render_text((mid_x - len("Enter to confirm") * 7 / 2, mid_y + start + 90), "Enter to confirm", display, "white")
         render_text((mid_x - len("Tab for stats") * 7 / 2, mid_y + start + 110), "Tab for stats", display, "white")
         render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
-
 
 
 

@@ -49,18 +49,19 @@ class TextBubble:
         self.reset()
 
     def key_input(self, input):
-        if input["down"]:
-            if self.hovering < 3:
-                if self.hovering != len(self.quests) - 1:
+        if self.current_dialogue >= 2:
+            if input["down"]:
+                if self.hovering < 3:
+                    if self.hovering != len(self.quests) - 1:
+                        menu_click.play()
+                        self.hovering += 1
+            elif input["up"]:
+                if self.hovering != 0:
                     menu_click.play()
-                    self.hovering += 1
-        elif input["up"]:
-            if self.hovering != 0:
+                    self.hovering -= 1
+            elif input["confirm"]:
                 menu_click.play()
-                self.hovering -= 1
-        elif input["confirm"]:
-            menu_click.play()
-            return self.current_quest
+                return self.current_quest
 
         return ""
         

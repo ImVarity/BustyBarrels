@@ -63,7 +63,7 @@ class Uno(Hitbox):
 
 
     def check_if_summon(self):
-        if self.barrels_busted > 2 and not self.summoned:
+        if self.barrels_busted > 5 and not self.summoned:
             self.summoning = True
             self.tracking = True
 

@@ -34,6 +34,9 @@ def convert_to_imgs(directory):
     return images
 
 
+# Icons
+watermelon_img = pygame.image.load('imgs/icons/melon_c.png')
+barrel_img = pygame.image.load('imgs/icons/barrel_icon.png')
 
 
 # Terrain
@@ -155,6 +158,26 @@ def render_text(loc, word, surface, color="black"):
         elif color == "black":
             surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         divider += 1
+
+def render_text_centered(loc, word, surface, color="black"):
+
+
+    col = loc[0] - len(word) * 7 / 2
+    row = loc[1]
+
+    divider = 0
+
+    for letter in word:
+        if letter == " ":
+            divider += 1
+            continue
+        if color == "white":
+            surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        elif color == "black":
+            surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        divider += 1
+
+
 
 def lower_player(player):
     player.to_render.images = player.images[2::]
