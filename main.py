@@ -8,17 +8,12 @@ from arrow import Arrow
 from barrel import Barrel
 from player import Player
 from player import PlayerArrow
-from chat import TextBubble
-from health import HealthBar
-from watermelon import Watermelon
 from collectable import Collectable
 from npc import NPC
 from uno import Uno
-from uno import Shuriken
 from particles import Particle
 from bomb import Bomb
 from tile import Tile
-from Dos import Dos
 from render import *
 import time
 from pygame.locals import *
@@ -37,9 +32,13 @@ collect_sound_2 = pygame.mixer.Sound('sfx/collectitem2.wav')
 explosion_sound = pygame.mixer.Sound('sfx/explosion.wav')
 menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
 arrow_shot = pygame.mixer.Sound('sfx/arrow_shot.wav')
+arrow_shot.set_volume(3)
+
 arrow_shot2 = pygame.mixer.Sound('sfx/arrow_sound2.wav')
-swing = pygame.mixer.Sound('sfx/swing_sound.wav')
+# swing = pygame.mixer.Sound('sfx/swing_sound.wav')
 damage = pygame.mixer.Sound('sfx/damage.mp3')
+throw = pygame.mixer.Sound('sfx/throw.wav')
+stick = pygame.mixer.Sound('sfx/stick.wav')
 
 explosion_sound.set_volume(.2)
 pygame.mixer.music.load('sfx/bgm.mp3')
@@ -68,8 +67,12 @@ npc_color = (47,79,79, 100)
 npc_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
 npc_surface.fill(npc_color)
 
+talk_surface = pygame.Surface((display_width - 60, display_height - 60)).convert_alpha()
+talk_surface.fill(npc_color)
 
 
+tab_surface = pygame.Surface((display_width - 60, 150)).convert_alpha()
+tab_surface.fill(npc_color)
 
 mousePos = pygame.mouse.get_pos()
 
@@ -145,8 +148,8 @@ for i in range(len(bomb_images)):
 powerup = Collectable((mid_x, mid_x), 16, 16, black, bigger_bomb_images)
 
 
-random_barrel_count = 150
-random_arrow_count = 100
+random_barrel_count = 75
+random_arrow_count = 50
 
 check = Barrel([150, 150], 16, 16, pink, health=500)
 
@@ -159,7 +162,7 @@ barrels = [
 
 
 for i in range(random_arrow_count):
-    collectables["Arrows"].append(Collectable([random.randrange(-display_width, display_width), random.randrange(-display_height, display_height)], 12, 12, black, arrow_images))
+    collectables["Arrows"].append(Collectable([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, arrow_images))
 
 
 for i in range(random_barrel_count):
@@ -169,13 +172,12 @@ for i in range(random_barrel_count):
 
 # ------------------------------------------------- Bosses and NPCS ----------------------------------------------------------------------
 
-font = pygame.font.Font('fonts/tiny.ttf', 8)
 
 Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple)
 
 bosses = [Tifanie]
 
-Mikhail = NPC([0, -20], 64, 64, red, rock_images)
+Mikhail = NPC([0, -40], 64, 64, red, rock_images)
 
 npcs = [Mikhail]
 
@@ -184,10 +186,10 @@ npcs = [Mikhail]
 
 
 bounding_boxes = [
-    Barrel((-24, -624), 624 * 2, 40, red),
-    Barrel((590, -24), 40, 624 * 2, red),
-    Barrel((-24, 590), 624 * 2, 40, red),
-    Barrel((-624, -24), 40, 624 * 2, red)
+    Hitbox((-24, -624), 624 * 2, 40, red),
+    Hitbox((590, -24), 40, 624 * 2, red),
+    Hitbox((-24, 590), 624 * 2, 40, red),
+    Hitbox((-624, -24), 40, 624 * 2, red)
 ]
 
 map_br = [
@@ -552,7 +554,6 @@ while running:
         if player.arrow_counter < player.stats["M"]:
             player.shot = not player.shot
             if not player.shot:
-                arrow_shot2.play()
                 player.knockback_power = 1
                 player.knockback = True
                 shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
@@ -568,6 +569,7 @@ while running:
         if action_input["dash"]:
             bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking, velocity=3.25)
         bomb.bomb_angle_start = player.angle_looking
+        throw.play()
         bombs.append(bomb)
     
     
@@ -638,7 +640,6 @@ while running:
         else:
             collidables["Boundary"].append(boundary)
 
-    print(len(collidables["Boundary"]))
 # ---------------------------------------- Sorting stuff that need to be ordered for correct z-position --------------------------------------------
 
 
@@ -678,6 +679,8 @@ while running:
                     holder[i].follow_player = True
                     holder[i].follow_speed = random.randrange(50, 200) / 10000
                     player.inventory[items].append(holder[i])
+                    # stick.play()
+                    arrow_shot.play()
                     del holder[i]
                     continue
                 else:
@@ -902,6 +905,7 @@ while running:
     for npc in npcs:
         if npc.interacting:
             display.blit(npc_surface, (0, 0))
+            display.blit(talk_surface, (30, 45))
             if not npc.talk(display, npc_input, player, display):
                 input["interact"] = False
         else:
@@ -1002,7 +1006,7 @@ while running:
                 bodyB.health_bar.damage(bodyA.damage)
                 bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
                 delete_arrow(arrows, bodyA)
-                damage.play()
+                # damage.play()
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
                     # screen_shake = 10
@@ -1017,7 +1021,7 @@ while running:
             if collided:
                 bodyB.health_bar.damage(bodyA.damage)
                 delete_arrow(arrows, bodyA)
-                damage.play()
+                # damage.play()
                 del collidables["Arrows"][i]
                 if bodyB.health_bar.health <= 0:
                     if not Tifanie.dead:
@@ -1079,19 +1083,20 @@ while running:
 
 # ------------------------------------------------------- Rendering text / images ------------------------------------------------------------------
 
-    render_text((12, 20), FPS_text, display)
+    render_text((12, 12), FPS_text, display)
 
     if input["stats"]: # hold tab to see stats
-        render_text((150, 330), "Barrels busted:" + str(player.barrels_busted), display)
-        render_text((150, 345), "Watermelons holding:" + str(len(player.inventory["Watermelons"])), display)
-        render_text((150, 360), "Arrow multiplier:" + str(player.stats['M']), display)
-        render_text((150, 375), "Range:" + str(player.stats['R']), display)
+        display.blit(tab_surface, (30, 50))
+        render_text((200 - len("Barrels busted:" + str(player.barrels_busted)) * 7 / 2, 100), "Barrels busted:" + str(player.barrels_busted), display, "white")
+        render_text((200 - len("Watermelons holding:" + str(len(player.inventory["Watermelons"]))) * 7 / 2, 115), "Watermelons holding:" + str(len(player.inventory["Watermelons"])), display, "white")
+        render_text((200 - len("Arrow multiplier:" + str(player.stats['M'])) * 7 / 2, 130), "Arrow multiplier:" + str(player.stats['M']), display, "white")
+        render_text((200 - len("Range:" + str(player.stats['R'])) * 7 / 2, 145), "Range:" + str(player.stats['R']), display, "white")
 
 
 
 
 
-    # arrow on thej top left
+    # arrow on thej top right
     arrow_count = str(len(player.inventory["Arrows"]))
     UI_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
     display.blit(UI_arrow.convert_alpha(), (310 - (UI_arrow.get_width() / 2 + 3), 30 - (UI_arrow.get_height() / 2) + 3))

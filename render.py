@@ -1,8 +1,6 @@
 import pygame
 import os
 
-
-
 green = (0, 161, 82)
 heather = (210, 145, 255)
 indigo = (75, 0, 130)

@@ -66,7 +66,7 @@ class Player(Hitbox):
         self.quest_complete_text_speed = 2
         self.quest_complete_text_friction = .05
 
-        self.bomber = True # can throw bombs
+        self.bomber = False # can throw bombs
  
         self.power_up = False
         self.power_up_text_start = 0
@@ -75,8 +75,8 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 1000,
-            'R' : 200
+            'M' : 1,
+            'R' : 50
         }
 
         # self.arrow_multiplier = 1
@@ -90,6 +90,8 @@ class Player(Hitbox):
 
     def player_death(self):
         self.health_bar.set_health(self.original_health)
+        self.inventory["Arrows"] = self.inventory["Arrows"][:len(self.inventory["Arrows"])//2]
+        self.inventory["Watermelons"] = self.inventory["Watermelons"][:len(self.inventory["Watermelons"])//2]
 
         # probably reset their stats or something
         # keep barrels busted the same
@@ -177,16 +179,15 @@ class Player(Hitbox):
 
     def powerup_collected(self, surface, powerup):
         if self.power_up:
-            print("yuep")
             powerup.render(surface)
             npc_surface = pygame.Surface((mid_x * 2, mid_y * 2), pygame.SRCALPHA).convert_alpha()
             npc_surface.fill(npc_color)
             surface.blit(npc_surface, (0, 0))
             render_text((mid_x - len("POWERUP") * 7 / 2, mid_y - 100), "POWERUP", surface, "white")
+            render_text((mid_x - len("PRESS SPACE TO USE") * 7 / 2, mid_y - 50), "PRESS SPACE TO USE", surface, "white")
             self.power_up_text_start += self.power_up_text_inc
             
         if self.power_up_text_start == self.power_up_text_end:
-            print("end")
             self.power_up = False
             self.power_up_text_start = 0
 
