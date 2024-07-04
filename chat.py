@@ -49,7 +49,7 @@ class TextBubble:
         self.reset()
 
     def key_input(self, input):
-        if self.current_dialogue >= 2:
+        if self.current_dialogue >= 2 and len(self.quests) > 0:
             if input["down"]:
                 if self.hovering < 3:
                     if self.hovering != len(self.quests) - 1:
@@ -101,9 +101,13 @@ class TextBubble:
 
     def trade(self, quest):
         try:
+            # if we are hovering over the last item and there are no more quests after, we hovering over the top after deleting
+            x = list(self.quests).index(quest)
             del self.quests[quest]
+            if len(self.quests) == x:
+                self.hovering -= 1
+            print(x)
         except:
-            print(quest)
             pass
 
     def show_quests(self, surface):
@@ -127,26 +131,47 @@ class TextBubble:
                 if self.hovering == i:
                     self.current_quest = code # change
                     # showing the quest
-                    surface.blit(quest_surface, (self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 2))
-                    self.show_text(surface, quest, [self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "white")
                     selected_box = pygame.transform.scale(quest_box, (quest_box.get_width() + 30, quest_box.get_height()))
                     surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 - 15, self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
+                    surface.blit(quest_surface, (self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 2))
+                    self.show_text(surface, quest, [self.location.x - (len(quest) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "white")
                     # showing the reward
                     surface.blit(reward_surface, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 25 - 2])
                     self.show_text(surface, reward, [self.location.x - (len(reward) * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 25], "white")
                     self.show_text(surface, "Enter to confirm", [self.location.x - (len("Enter to confirm") * 8 / 2), self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 45], "black")
+                    if code[1] == 'A':
+                        surface.blit(arrow_images[3].convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) - 5])
+                    elif code[1] == 'W':
+                        surface.blit(watermelon_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) - 2])
+                    elif code[1] == 'B':
+                        surface.blit(barrel_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) - 6])
 
                 # boxes below what is hovered on
                 elif i > self.hovering:
-                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 35], "black")
                     surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40) + 35))
+                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) + 35], "black")
+                    if code[1] == 'A':
+                        surface.blit(arrow_images[3].convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) + 30])
+                    elif code[1] == 'W':
+                        surface.blit(watermelon_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) + 33])
+                    elif code[1] == 'B':
+                        surface.blit(barrel_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 80 + (i * 40) + 29])
+
 
                 # boxes above what is hovered on
                 else:
-                    self.show_text(surface, quest, [self.location.x - 110, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "black")
                     surface.blit(selected_box.convert_alpha(), (self.location.x - quest_box.get_width() / 2 , self.location.y - quest_box.get_height() / 2 + 70 + (i * 40)))
-
+                    self.show_text(surface, quest, [self.location.x - 105, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40)], "black")
+                    if code[1] == 'A':
+                        surface.blit(arrow_images[3].convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 5])
+                    elif code[1] == 'W':
+                        surface.blit(watermelon_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 2])
+                    elif code[1] == 'B':
+                        surface.blit(barrel_img.convert_alpha(), [self.location.x + 105, self.location.y - quest_box.get_height() / 2 + 70 + 10 + (i * 40) - 6])
                 
+
+
+            
 
 
 

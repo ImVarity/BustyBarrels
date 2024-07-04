@@ -19,7 +19,6 @@ class Uno(Hitbox):
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
 
-        self.boss_angle_radians = 0
 
         self.shoot_angle_degrees = 45
         self.shoot_angle_radians = 0
@@ -60,6 +59,14 @@ class Uno(Hitbox):
         self.name = "Tifanie"
 
         self.barrels_busted = 0
+        
+
+        self.boss_looking = Vector((1, 0))
+        self.boss_angle_degrees_increment = 45
+        self.boss_angle_degrees = 0
+        self.s_x, self.s_y = self.boss_angle_degrees * math.pi / 180, self.boss_angle_degrees * math.pi / 180
+        self.s = Vector((math.cos(self.s_x), math.sin(self.s_y)))
+
 
 
     def check_if_summon(self):
@@ -132,7 +139,6 @@ class Uno(Hitbox):
         self.to_render.angle = self.angle
 
 
-
     def damage(self, dmg):
         if not self.summoned:
             pass
@@ -161,11 +167,35 @@ class Uno(Hitbox):
         shot_4.shuriken_angle_start = math.atan2(-self.last_looked.x, self.last_looked.y) + self.angle * math.pi / 180
         
         self.shurikens.append(shot_4)
+
+
+
+        
     def attack_two(self):
         self.locked = self.looking
         self.charging = True
 
         self.charge()
+
+
+    def directional_attack(self):
+        self.s = Vector((math.cos(self.s_x), math.sin(self.s_y)))
+        g = math.atan2(self.s.y, self.s.x) - self.angle * math.pi / 180
+        a = (360 + (g * 180 / math.pi)) * math.pi / 180
+        x, y = math.cos(a), math.sin(a)
+        self.s = Vector((x, y))
+
+
+        shot_5 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.s)
+        shot_5.shuriken_angle_start = math.atan2(self.s.y, self.s.x) + self.angle * math.pi / 180
+        
+        self.boss_angle_degrees += self.boss_angle_degrees_increment
+        self.s_x, self.s_y = self.boss_angle_degrees * math.pi / 180, self.boss_angle_degrees * math.pi / 180
+
+
+
+        self.shurikens.append(shot_5)
+
 
     def charge(self):
         if self.charging:
@@ -187,25 +217,24 @@ class Uno(Hitbox):
                 return
 
 
+
 class Shuriken(Hitbox):
     def __init__(self, center, width, height, color, looking):
         super().__init__(center, width, height, color)
+        
         self.images = shuriken_img.convert_alpha()
         self.shuriken_velocity = 1
         self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
-        self.shuriken_angle_start = self.shuriken_angle
-        # self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
-        self.damage = 50
-        self.to_render = Render(self.images, center, self.shuriken_angle)
+        self.shuriken_angle_start = 0
+        self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
+        self.spread = 1
+        self.damage = 5
+        self.to_render = Render(self.images, center, self.shuriken_angle, self.spread)
 
+        # for the spinning of the shuriken
         self.rotation_angle = 0
         self.spin_speed_degrees = 4
         self.spin_speed = self.spin_speed_degrees * math.pi / 180
-
-        self.distance_from_boss = 0
-
-        self.og_center = center
-        
 
     def set_angle(self, angle):
         for i in range(len(self.vertices)):
@@ -215,30 +244,6 @@ class Shuriken(Hitbox):
     def render(self, surface):
         self.to_render.render_single(surface)
 
-
-
-    def handle_rotation_shuriken(self, rotation_input):
-        if not rotation_input["reset"]:
-            self.handle_rotation(rotation_input)
-
-        if rotation_input["reset"]:
-            if self.shuriken_angle != self.shuriken_angle_start:
-                self.reset_rotation_shuriken()
-                self.shuriken_angle = self.shuriken_angle_start
-            return
-
-        if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
-            if rotation_input["counterclockwise"]:
-                self.shuriken_angle -= self.rotationspeed
-            elif rotation_input["clockwise"]:
-                self.shuriken_angle += self.rotationspeed
-
-    def reset_rotation_shuriken(self):
-        back = -(self.shuriken_angle - self.shuriken_angle_start)
-        self.center.x, self.center.y = (self.center.x - mid_x) * math.cos(back) + (self.center.y - mid_y) * -math.sin(back) + mid_x, (self.center.x - mid_x) * math.sin(back) + (self.center.y - mid_y) * math.cos(back) + mid_y
-        for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - mid_x) * math.cos(back) + (self.vertices[i].y - mid_y) * -math.sin(back) + mid_x, (self.vertices[i].x - mid_x) * math.sin(back) + (self.vertices[i].y - mid_y) * math.cos(back) + mid_y
-        
     def self_spin(self):
         self.rotation_angle -= self.spin_speed_degrees
 
@@ -246,13 +251,40 @@ class Shuriken(Hitbox):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.spin_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.spin_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.spin_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.spin_speed) + self.center.y
 
 
+    def handle_rotation_shuriken(self, rotation_input):
+        if not rotation_input["reset"]: # have to do this because it interferes with the shuriken rotation (might have to do it with everything else to make it cleaner)
+            self.handle_rotation(rotation_input)
+
+
+
+        if rotation_input["reset"]:
+            # print(self.shuriken_angle, self.shuriken_angle_start)
+            if self.shuriken_angle != self.shuriken_angle_start:
+                self.reset_shuriken_rotation()
+                self.shuriken_angle = self.shuriken_angle_start
+            return # so no continuous rotation
+
+
+        if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
+            if rotation_input["counterclockwise"]:
+                self.shuriken_angle -= self.rotationspeed
+            elif rotation_input["clockwise"]:
+                self.shuriken_angle += self.rotationspeed
+
+
+    def reset_shuriken_rotation(self):
+        back = -(self.shuriken_angle - self.shuriken_angle_start)
+        self.center.x, self.center.y = (self.center.x - mid_x) * math.cos(back) + (self.center.y - mid_y) * -math.sin(back) + mid_x, (self.center.x - mid_x) * math.sin(back) + (self.center.y - mid_y) * math.cos(back) + mid_y
+        for i in range(len(self.vertices)):
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - mid_x) * math.cos(back) + (self.vertices[i].y - mid_y) * -math.sin(back) + mid_x, (self.vertices[i].x - mid_x) * math.sin(back) + (self.vertices[i].y - mid_y) * math.cos(back) + mid_y
+        
     def update(self, rotation_input, direction):
         self.self_spin()
-        self.handle_rotation_shuriken(rotation_input)
+        self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
         self.translate(Vector((math.cos(self.shuriken_angle), math.sin(self.shuriken_angle))) * self.shuriken_velocity) # if i want to simulate shooting shurikens, remove this * self.shuriken_velocity and then put it into translate instead
-        self.translate(direction * -1 * self.velocity) # have to multiply player velocity as well???
-        self.to_render.angle = self.rotation_angle
+        self.handle_rotation_shuriken(rotation_input)
         self.to_render.loc = [self.center.x, self.center.y]
+        self.to_render.angle = -self.rotation_angle
 
 
     def translate(self, direction):
@@ -260,3 +292,5 @@ class Shuriken(Hitbox):
         for i in range(len(self.vertices)):
             self.vertices[i] += direction # * self.shuriken_velocity
 
+
+    

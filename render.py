@@ -15,6 +15,7 @@ grass_green = (142, 200, 64)
 red = (220, 20, 60)
 purple = (112, 41, 99)
 npc_color = (47,79,79, 100)
+damage_color = (255, 0, 0, 20)
 
 
 mid_x = 200
@@ -52,11 +53,14 @@ paused_controls_img = pygame.image.load('imgs/paused_screen/controls.png')
 Uno_images = convert_to_imgs('imgs/boss_uno/sprites')
 shuriken_img = pygame.image.load('imgs/boss_uno/attacks/shuriken.png')
 
+# Slime
+slime_images = convert_to_imgs('imgs/slime')
 
 # NPC
 dialogue_box = pygame.image.load('imgs/npc/dialogue_box.png')
 dialogue_box = pygame.transform.scale(dialogue_box, (350, dialogue_box.get_height()))
 quest_box = pygame.image.load('imgs/npc/quest_box.png')
+quest_box_o = pygame.image.load('imgs/npc/quest_box_o.png')
 
 # shuriken_img = pygame.transform.scale(shuriken_img, (3, 3)) # can use these for leave or soemthing
 
@@ -157,6 +161,8 @@ def render_text(loc, word, surface, color="black"):
             surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         elif color == "black":
             surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        elif color == "red":
+            surface.blit(abc_red[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         divider += 1
 
 def render_text_centered(loc, word, surface, color="black"):
@@ -175,6 +181,8 @@ def render_text_centered(loc, word, surface, color="black"):
             surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         elif color == "black":
             surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        elif color == "red":
+            surface.blit(abc_red[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
         divider += 1
 
 
@@ -362,3 +370,82 @@ flat_water_imgs = convert_to_imgs_t('imgs/water/flat')
 split_water_imgs = convert_to_imgs_t('imgs/water/split')
 hole_water_imgs = convert_to_imgs_t('imgs/water/hole')
 
+
+A_img_red = pygame.image.load('imgs/a_4/A.png')
+B_img_red = pygame.image.load('imgs/a_4/B.png')
+C_img_red = pygame.image.load('imgs/a_4/C.png')
+D_img_red = pygame.image.load('imgs/a_4/D.png')
+E_img_red = pygame.image.load('imgs/a_4/E.png')
+F_img_red = pygame.image.load('imgs/a_4/F.png')
+G_img_red = pygame.image.load('imgs/a_4/G.png')
+H_img_red = pygame.image.load('imgs/a_4/H.png')
+I_img_red = pygame.image.load('imgs/a_4/I.png')
+J_img_red = pygame.image.load('imgs/a_4/J.png')
+K_img_red = pygame.image.load('imgs/a_4/K.png')
+L_img_red = pygame.image.load('imgs/a_4/L.png')
+M_img_red = pygame.image.load('imgs/a_4/M.png')
+N_img_red = pygame.image.load('imgs/a_4/N.png')
+O_img_red = pygame.image.load('imgs/a_4/O.png')
+P_img_red = pygame.image.load('imgs/a_4/P.png')
+Q_img_red = pygame.image.load('imgs/a_4/Q.png')
+R_img_red = pygame.image.load('imgs/a_4/R.png')
+S_img_red = pygame.image.load('imgs/a_4/S.png')
+T_img_red = pygame.image.load('imgs/a_4/T.png')
+U_img_red = pygame.image.load('imgs/a_4/U.png')
+V_img_red = pygame.image.load('imgs/a_4/V.png')
+W_img_red = pygame.image.load('imgs/a_4/W.png')
+X_img_red = pygame.image.load('imgs/a_4/X.png')
+Y_img_red = pygame.image.load('imgs/a_4/Y.png')
+Z_img_red = pygame.image.load('imgs/a_4/Z.png')
+ZERO_img_red = pygame.image.load('imgs/a_4/0.png')
+ONE_img_red = pygame.image.load('imgs/a_4/1.png')
+TWO_img_red = pygame.image.load('imgs/a_4/2.png')
+THREE_img_red = pygame.image.load('imgs/a_4/3.png')
+FOUR_img_red = pygame.image.load('imgs/a_4/4.png')
+FIVE_img_red = pygame.image.load('imgs/a_4/5.png')
+SIX_img_red = pygame.image.load('imgs/a_4/6.png')
+SEVEN_img_red = pygame.image.load('imgs/a_4/7.png')
+EIGHT_img_red = pygame.image.load('imgs/a_4/8.png')
+NINE_img_red = pygame.image.load('imgs/a_4/9.png')
+COLON_img_red = pygame.image.load('imgs/a_4/colon.png')
+
+
+abc_red = {
+    "A": A_img_red,
+    "B": B_img_red,
+    "C": C_img_red,
+    "D": D_img_red,
+    "E": E_img_red,
+    "F": F_img_red,
+    "G": G_img_red,
+    "H": H_img_red,
+    "I": I_img_red,
+    "J": J_img_red,
+    "K": K_img_red,
+    "L": L_img_red,
+    "M": M_img_red,
+    "N": N_img_red,
+    "O": O_img_red,
+    "P": P_img_red,
+    "Q": Q_img_red,
+    "R": R_img_red,
+    "S": S_img_red,
+    "T": T_img_red,
+    "U": U_img_red,
+    "V": V_img_red,
+    "W": W_img_red,
+    "X": X_img_red,
+    "Y": Y_img_red,
+    "Z": Z_img_red,
+    "0": ZERO_img_red,
+    "1": ONE_img_red,
+    "2": TWO_img_red,
+    "3": THREE_img_red,
+    "4": FOUR_img_red,
+    "5": FIVE_img_red,
+    "6": SIX_img_red,
+    "7": SEVEN_img_red,
+    "8": EIGHT_img_red,
+    "9": NINE_img_red,
+    ":": COLON_img_red
+}

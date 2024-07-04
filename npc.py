@@ -35,6 +35,12 @@ class NPC(Hitbox):
         self.text.add_quests("Break 50 barrels:Plus 30 range", "2B50R30")
         self.text.add_quests("Deliver 30 watermelons:Plus 10 arrow multiplier", "1W30M10")
         self.text.add_quests("Break 100 barrels:Plus 100 range", "2B100R100")
+        # self.text.add_quests("Eat a banana:A slap", "1W0R1")
+        # self.text.add_quests("Sell your soul:A kiss", "1A0R1")
+        # self.text.add_quests("Eat a banana:A slap", "2B0R2")
+        # self.text.add_quests("Sell your soul:A kiss", "1A0R2")
+        # self.text.add_quests("Eat a banana:A slap", "1W0R3")
+        # self.text.add_quests("Sell your soul:A kiss", "2B0R3")
         self.text.add_quests("Eat a banana:A slap", "1W0R0")
         self.text.add_quests("Sell your soul:A kiss", "1A0R0")
 

@@ -13,6 +13,7 @@ from collectable import Collectable
 from npc import NPC
 from uno import Uno
 from particles import Particle
+from slime import Slime
 from bomb import Bomb
 from tile import Tile
 from render import *
@@ -86,7 +87,6 @@ input = {
     "left" : False,
     "down" : False,
     "up": False,
-    "lock" : False,
     "interact": False,
     "stats" : False
 }
@@ -98,6 +98,7 @@ rotation_input = {
 }
 
 action_input = {
+    "lock" : False,
     "ultimate" : False,
     "shoot" : False,
     "autofire": False,
@@ -181,6 +182,11 @@ Mikhail = NPC([0, -40], 64, 64, red, rock_images)
 
 npcs = [Mikhail]
 
+Bob = Slime([-40, -40], 12, 12, black, Vector((1, 0)), Vector((player.center.x, player.center.y)))
+
+random_slime_count = 120
+
+slimes = [Bob]
 
 # -------------------------------------------------- Map stuff that needs to be moved somewhere else ------------------------------------------------
 
@@ -302,7 +308,6 @@ def update_overlay(hour):
     else:
         # dark overlay
         alpha = min(255, int((hour - 36) / 12 * 60) if hour >= 36 else int((12 + hour) / 12 * 60))
-        print(alpha)
         color = (0, 0, 64, alpha)
     
     day_cycle.fill(color)
@@ -365,11 +370,10 @@ def delete_barrel(barrels, barrel_to_delete, watermelons, Tifanie, player):
 
 attack = False
 
-attack_end = 30
+attack_end = 8
 attack_start = 0
 attack_inc = 1
 
-start_of_game_pause = 0
 
 arrow_count = "0"
 
@@ -418,6 +422,8 @@ timer = 0
 hour = 6  # Starting at 6 AM
 last_time = time.time()
 
+shuris = []
+
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
 while running:
@@ -425,7 +431,6 @@ while running:
     dt = now_time - pre_time
     dt *= 60
     pre_time = time.perf_counter()
-    start_of_game_pause += 1
     timer += 1
 
     current_time = time.time()
@@ -453,8 +458,6 @@ while running:
         "confirm" : False
     }
 
-    # if start_of_game_pause == 60:
-        # paused = not paused
 
 
     for event in pygame.event.get():
@@ -504,6 +507,7 @@ while running:
     input["right"] = keys[pygame.K_d]
     input["lock"] = keys[pygame.K_l]
     input["stats"] = keys[pygame.K_TAB]
+
     
     if action_input["autofire"]:
         action_input["shoot"] = True
@@ -519,10 +523,15 @@ while running:
     if len(barrels) < random_barrel_count:
         barrels.append(Barrel([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 16, 16, pink, health=25))
 
+    
+    if len(slimes) < random_slime_count:
+        slimes.append(Slime([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, Vector((1, 0)), Vector((player.center.x, player.center.y))))
+        
+
 # ------------------------------------------------- Handling the rotation and direction and some updating -------------------------------------------------------
 # -------------------------------------------- Other updating happens in the z-positiong updating so less for loops ----------------------------------------
 
-
+    # direction that the player is moving
     direction = player.get_direction(input)
     direction *= dt
     player.direction = direction
@@ -547,20 +556,22 @@ while running:
         player.move(difference_vec * player.scroll_speed)
         direction -= difference_vec * player.scroll_speed
 
-
     if action_input["shoot"] and not paused and len(player.inventory["Arrows"]) > 0:
         if player.arrow_counter < player.stats["M"]:
             player.shot = not player.shot
             if not player.shot:
                 player.knockback_power = 1
                 player.knockback = True
-                shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking)
-                shot.arrow_angle_start = player.angle_looking # based on rotation
+                # print("TRUE looking", player.looking)
+                # print("TRUE ANGLE", player.angle_looking)
+                shot = Arrow((player.center.x, player.center.y), 16, 1, blue, player.looking, player.angle_looking)
+                # shot.arrow_angle_start = player.angle_looking # based on rotation
                 arrows.append(shot)
                 player.arrow_counter += 1
         else:
             player.inventory["Arrows"].pop()
             player.arrow_counter = 0
+
 
     if action_input["throw"] and player.bomber:
         bomb = Bomb((player.center.x, player.center.y), 16, 16, black, player.looking)
@@ -577,7 +588,6 @@ while running:
 
 
 
-    player.update_actions(input)
     player.check_knockback()
 
     # NEED TO FIX
@@ -599,7 +609,7 @@ while running:
 
     # print(player.center)
     if not paused:
-        player_arrow.update(player.looking, player.center)
+        player_arrow.update(player.looking)
 
 
 
@@ -682,6 +692,18 @@ while running:
             to_render_sorted.insert(index, collectables[items][i])
 
 
+    for slime in slimes:
+        if not paused:
+            slime.update(rotation_input, direction, Vector((player.center.x, player.center.y)))
+
+            # dont want to put in collision or else might crash game
+            if abs(player.center.x - slime.center.x) <= player.width / 2 and abs(player.center.y - slime.center.y) <= player.height / 2:
+                player.damage(slime.damage, display)
+
+
+
+        index = bisect.bisect_left([o.center.y for o in to_render_sorted], slime.center.y)
+        to_render_sorted.insert(index, slime)
 
     # UNO sorting
     for b in bosses:
@@ -717,7 +739,7 @@ while running:
             # limits the render distance by not allowing things outside of range to be added to to_render
             if limit_render(barrel, render_radius):
                 continue
-            
+
             added = False
 
             for arrow in arrows:
@@ -733,13 +755,6 @@ while running:
                         if not added:
                             collidables["Barrels"].append(barrel)
                 
-                    
-            # breaking game :skull:
-            # if not added: # dont wanna add twie
-            #     for cbarrel in collidables["Barrels"]:
-            #         if cbarrel.center.x <= barrel.center.x + cbarrel.width / 2 and cbarrel.center.x >= barrel.center.x - cbarrel.width / 2 and cbarrel.center.y <= barrel.center.y + cbarrel.height / 2 and cbarrel.center.y >= barrel.center.y - cbarrel.height / 2:
-            #             collidables["Barrels"].append(barrel)
-            #             continue
             if not added:
                 limit_collision(barrel, player, collision_radius, collidables["Barrels"])
 
@@ -783,7 +798,7 @@ while running:
 
     # render tiles first
     for tile in tiles:
-        if abs(tile.center.x + 32) < display_width + 64 and abs(tile.center.y + 32) < display_height + 64:
+        if tile.center.x >= -32 and tile.center.x <= display_width + 32 and tile.center.y >= -32 and tile.center.y <= display_height + 32:
             if admin_input["hitboxes"]:
                 tile.draw_hitbox(display)
 
@@ -791,9 +806,7 @@ while running:
                 limit_collision(tile, player, collision_radius, collidables["Water"])
                 tile.to_render.animate(display, dt)
                 continue
-
             tile.render(display)
-
         
             
     # arrow should be below everythign except tiles
@@ -849,12 +862,16 @@ while running:
             object.draw_hitbox(display)
 
         
-
+        elif isinstance(object, Slime):
+            object.render(display)
+            object.draw_healthbar(display)
         
         if admin_input["hitboxes"]:
             object.draw_hitbox(display)
 
     # because rendering after, always on top of everything
+
+    player.draw_damage(display)
 
     for boundary in bounding_boxes:
         if admin_input["hitboxes"]:
@@ -902,7 +919,6 @@ while running:
     for npc in npcs:
         if npc.interacting:
             display.blit(npc_surface, (0, 0))
-            display.blit(talk_surface, (30, 45))
             if not npc.talk(display, npc_input, player, display):
                 input["interact"] = False
         else:
@@ -1021,7 +1037,7 @@ while running:
         collided, depth, normal = player.handle_collision(bodyB.normals(), player.normals(), bodyB)
 
         if collided:
-            player.health_bar.damage(bodyB.damage)
+            player.damage(bodyB.damage, display)
             Tifanie.delete_shuriken(bodyB)
             del collidables["Shurikens"][i]
             if player.health_bar.health <= 0:
@@ -1058,7 +1074,12 @@ while running:
 
     # print(counter)
 
-
+    if player.health_bar.health <= 0:
+        x_distance = math.sqrt((player_center_x - spawnpoint.center.x) ** 2 + (player.center.y - spawnpoint.center.y) ** 2)
+        v = Vector(((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
+        v.normalize()
+        player.move_distance(v * -1, x_distance)
+        player.player_death()
 
 
 
@@ -1068,29 +1089,38 @@ while running:
 
     if input["stats"]: # hold tab to see stats
         display.blit(tab_surface, (30, 50))
-        render_text_centered((200, 100), "Barrels busted:" + str(player.barrels_busted), display, "white")
-        render_text_centered((200, 115), "Watermelons holding:" + str(len(player.inventory["Watermelons"])), display, "white")
-        render_text_centered((200, 130), "Arrow multiplier:" + str(player.stats['M']), display, "white")
-        render_text_centered((200, 145), "Range:" + str(player.stats['R']), display, "white")
+        render_text_centered((200, 100), f'Barrels busted:{player.barrels_busted}', display, "white")
+        render_text_centered((200, 115), f'Watermelons holding:{str(len(player.inventory["Watermelons"]))}', display, "white")
+        render_text_centered((200, 130), f'Arrow multiplier:{str(player.stats['M'])}', display, "white")
+        render_text_centered((200, 145), f'Range:{str(player.stats['R'])}', display, "white")
 
 
 
 
 
-    # arrow on thej top right
-    arrow_count = str(len(player.inventory["Arrows"]))
-    icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
-    display.blit(icon_arrow.convert_alpha(), (310 - (icon_arrow.get_width() / 2 + 3), 30 - (icon_arrow.get_height() / 2) + 3))
-    render_text((320, 30), arrow_count, display)
-    render_text((320 + len(arrow_count) * 8 + 4, 30), "x" + str(player.stats["M"]), display)
     if not Mikhail.interacting:
+        arrow_count = str(len(player.inventory["Arrows"]))
+        icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
+        display.blit(icon_arrow.convert_alpha(), (310 - (icon_arrow.get_width() / 2 + 3), 30 - (icon_arrow.get_height() / 2) + 3))
+        render_text((320, 30), arrow_count, display)
+        render_text((320 + len(arrow_count) * 8 + 4, 30), "x" + str(player.stats["M"]), display)
+
         display.blit(watermelon_img.convert_alpha(), (310 - (watermelon_img.get_width() / 2 + 3), 30 - (watermelon_img.get_height() / 2) + 20))
         render_text((320, 47),str(len(player.inventory["Watermelons"])), display)
 
         display.blit(barrel_img.convert_alpha(), (310 - (barrel_img.get_width() / 2 + 3), 30 - (barrel_img.get_height() / 2) + 37))
         render_text((320, 64), str(player.barrels_busted), display)
+    else:
+        arrow_count = str(len(player.inventory["Arrows"]))
+        icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
+        display.blit(icon_arrow.convert_alpha(), (100, 350 - (icon_arrow.get_height() / 2) + 3))
+        render_text((115, 350), arrow_count + " x" + str(player.stats["M"]), display)
 
+        display.blit(watermelon_img.convert_alpha(), (180, 350 - 3))
+        render_text((200, 350),str(len(player.inventory["Watermelons"])), display)
 
+        display.blit(barrel_img.convert_alpha(), (245, 345))
+        render_text((270, 350), str(player.barrels_busted), display)
 
     if paused:
         display.blit(npc_surface, (0, 0))

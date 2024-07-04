@@ -5,9 +5,6 @@ from health import HealthBar
 import math
 
 
-mid_x = 200
-mid_y = 200
-
 
 class Player(Hitbox):
     def __init__(self, center, width, height, color, health=200):
@@ -75,8 +72,8 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 1,
-            'R' : 50
+            'M' : 1000,
+            'R' : 200
         }
 
         # self.arrow_multiplier = 1
@@ -87,6 +84,12 @@ class Player(Hitbox):
         self.in_water = False
 
         self.shot = False
+
+
+
+        self.damage_taken = []
+        self.damage_flash = False
+        self.damage_flash_counter = 0
 
     def player_death(self):
         self.health_bar.set_health(self.original_health)
@@ -108,6 +111,8 @@ class Player(Hitbox):
         self.handle_rotation(rotation_input, player=True)
         self.handle_dash(action_input, direction)
         self.collectables_follow(rotation_input, direction)
+        self.handle_damage()
+        self.update_actions(action_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
@@ -122,6 +127,10 @@ class Player(Hitbox):
     def update_spawnpoint(self, rotation_input, direction):
         self.spawnpoint.handle_rotation(rotation_input)
         self.spawnpoint.move(direction * -1)
+
+    def handle_damage(self):
+        for damage in self.damage_taken:
+            damage.update([self.center.x, self.center.y])
 
     def handle_dash(self, action_input, direction):
         if self.dash_start == self.dash_end:
@@ -152,9 +161,29 @@ class Player(Hitbox):
             self.knock_start += self.knock_increment
             self.move(self.looking * -1 * self.knockback_power)
 
-    def damage(self, damage):
+    def damage(self, damage, surface):
+        self.damage_taken.append(DamageNumber(damage, [self.center.x, self.center.y]))
         self.health -= damage
         self.health_bar.damage(damage)
+        self.damage_flash = True
+
+    
+    def draw_damage(self, surface):
+        for i in range(len(self.damage_taken) -1, -1, -1):
+            self.damage_taken[i].draw(surface)
+            if self.damage_taken[i].height >= self.damage_taken[i].disappear_counter:
+                del self.damage_taken[i]
+
+        if self.damage_flash:
+            damage_surface = pygame.Surface((mid_x * 2, mid_y * 2), pygame.SRCALPHA).convert_alpha()
+            damage_surface.fill(damage_color)
+            surface.blit(damage_surface, (0, 0))
+            self.damage_flash_counter += 1
+        if self.damage_flash_counter > 5:
+            self.damage_flash = False
+            self.damage_flash_counter = 0
+
+        
 
     def shoot(self, arrows):
         pass
@@ -164,7 +193,7 @@ class Player(Hitbox):
             for i in range(len(holder)):
                 diff_vec = Vector((self.center.x - holder[i].center.x, self.center.y - holder[i].center.y))
                 holder[i].move(diff_vec * holder[i].follow_speed)
-                holder[i].update(rotation_input, direction)
+                holder[i].update(rotation_input, direction,)
     
 
     def quest_complete_text(self, surface):
@@ -193,6 +222,28 @@ class Player(Hitbox):
 
 
 
+class DamageNumber:
+    def __init__(self, damage, loc) -> None:
+
+        self.loc = loc
+        self.number = damage
+
+        # how how above player numer starts
+        self.height = 5
+        self.width = 0
+        self.disappear_counter = 13
+        self.rise_speed = .5
+
+    def update(self, loc):
+        self.loc[0] = loc[0]
+        self.loc[1] = loc[1]
+        self.height += self.rise_speed
+        
+
+    def draw(self, surface):
+        render_text_centered((self.loc[0] + self.width, self.loc[1] - self.height), str(self.number), surface, "red")
+
+
 class PlayerArrow(Hitbox):
     def __init__(self, center, width, height, color):
         super().__init__(center, width, height, color)
@@ -203,7 +254,7 @@ class PlayerArrow(Hitbox):
 
         
 
-    def update(self, direction, player_center):
+    def update(self, direction):
         self.arrow_angle = math.atan2(direction.y, direction.x)
         self.arrow_angle_degrees = -self.arrow_angle * 180 / math.pi
         self.arrow_rotation(self.arrow_angle + self.arrow_difference)

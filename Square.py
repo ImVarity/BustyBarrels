@@ -26,8 +26,8 @@ class Hitbox:
             Vector((self.center.x - width / 2, self.center.y + height / 2))
         ]
         self.rotation_speed = 0
-        self.rotationspeed_degress = 2
-        self.rotationspeed = self.rotationspeed_degress * math.pi / 180
+        self.rotationspeed_degrees = 2
+        self.rotationspeed = self.rotationspeed_degrees * math.pi / 180
         self.rotation_speed = 0
         self.velocity = 2
         self.direction = Vector((0, 0))
@@ -125,11 +125,11 @@ class Hitbox:
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
             if rotation_input["counterclockwise"]:
                 self.rotation_speed = -self.rotationspeed
-                self.angle += self.rotationspeed_degress
+                self.angle += self.rotationspeed_degrees
 
             elif rotation_input["clockwise"]:
                 self.rotation_speed = self.rotationspeed
-                self.angle -= self.rotationspeed_degress
+                self.angle -= self.rotationspeed_degrees
 
             if player:
                 self.self_rotation()

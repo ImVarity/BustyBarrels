@@ -23,3 +23,4 @@ class Tile(Hitbox):
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
+

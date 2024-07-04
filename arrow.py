@@ -7,13 +7,13 @@ import math
 mid_x, mid_y = 200, 200
 
 class Arrow(Hitbox):
-    def __init__(self, center, width, height, color, looking):
+    def __init__(self, center, width, height, color, looking, arrow_angle_start):
         super().__init__(center, width, height, color)
         
         self.images = [img.convert_alpha() for img in arrow_images]
         self.arrow_velocity = 4
         self.arrow_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates arrow to point that direction
-        self.arrow_angle_start = 0
+        self.arrow_angle_start = arrow_angle_start
         self.set_angle(self.arrow_angle) # sets the direction of all the vertices to face the right way
         self.spread = 1
         self.damage = 5

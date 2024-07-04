@@ -6,7 +6,7 @@ class Barrel(Hitbox):
     def __init__(self, center, width, height, color, health=5):
         super().__init__(center, width, height, color)
         self.images = [img.convert_alpha() for img in barrel_images]
-        self.spread = 1.2
+        self.spread = 1
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
     
