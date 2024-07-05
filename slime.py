@@ -38,7 +38,7 @@ class Slime(Hitbox):
         self.pause_inc = 1
 
         self.locked = False
-        self.lock = Vector((0, 0))
+        self.lock = Vector(0, 0)
 
 
 

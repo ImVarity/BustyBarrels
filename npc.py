@@ -16,7 +16,7 @@ class NPC(Hitbox):
 
         self.interacting = False
 
-        self.text = TextBubble(Vector((200, 85)), 300, 75)
+        self.text = TextBubble(Vector(200, 85), 300, 75)
 
         self.text.add_dialogue("What is up gamer")
         self.text.add_dialogue("Complete some tasks for me would ya")

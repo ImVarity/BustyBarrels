@@ -18,11 +18,11 @@ from bomb import Bomb
 from tile import Tile
 from render import *
 import time
+
 flags = DOUBLEBUF
 
 
-screen_width = 800
-screen_height = 800
+screen_width, screen_height = 800, 800
 
 
 pygame.init()
@@ -88,7 +88,8 @@ input = {
     "down" : False,
     "up": False,
     "interact": False,
-    "stats" : False
+    "stats" : False,
+    "lock": False
 }
 
 rotation_input = {
@@ -375,8 +376,6 @@ attack_start = 0
 attack_inc = 1
 
 
-arrow_count = "0"
-
 
 tracking = player
 
@@ -537,6 +536,8 @@ while running:
     player.direction = direction
 
 
+
+
     if not paused:
         if tracking == player:
             player.update(rotation_input, action_input, direction)
@@ -692,18 +693,19 @@ while running:
             to_render_sorted.insert(index, collectables[items][i])
 
 
-    for slime in slimes:
-        if not paused:
-            slime.update(rotation_input, direction, Vector((player.center.x, player.center.y)))
+    # for slime in slimes:
+    #     pass
+    #     if not paused:
+    #         slime.update(rotation_input, direction, Vector((player.center.x, player.center.y)))
 
-            # dont want to put in collision or else might crash game
-            if abs(player.center.x - slime.center.x) <= player.width / 2 and abs(player.center.y - slime.center.y) <= player.height / 2:
-                player.damage(slime.damage, display)
+    #         # dont want to put in collision or else might crash game
+    #         if abs(player.center.x - slime.center.x) <= player.width / 2 and abs(player.center.y - slime.center.y) <= player.height / 2:
+    #             player.damage(slime.damage, display)
 
 
 
-        index = bisect.bisect_left([o.center.y for o in to_render_sorted], slime.center.y)
-        to_render_sorted.insert(index, slime)
+    #     index = bisect.bisect_left([o.center.y for o in to_render_sorted], slime.center.y)
+    #     to_render_sorted.insert(index, slime)
 
     # UNO sorting
     for b in bosses:
@@ -1011,6 +1013,8 @@ while running:
                     del collidables["Barrels"][j]
                 hit = True
                 break  # okay to break because the arrow already hit something and it wont hit anything else
+
+            
         # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
         if hit == False and len(collidables["Bosses"]) > 0: # check if it already hit something
             bodyB = Tifanie
@@ -1160,7 +1164,6 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 
-    to_render_sorted = []
 
 # Quit Pygame
 pygame.quit()

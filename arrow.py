@@ -56,7 +56,7 @@ class Arrow(Hitbox):
         
     def update(self, rotation_input, direction):
         self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
-        self.translate(Vector((math.cos(self.arrow_angle), math.sin(self.arrow_angle))) * self.arrow_velocity) # if i want to simulate shooting arrows, remove this * self.arrow_velocity and then put it into translate instead
+        self.translate(Vector(math.cos(self.arrow_angle), math.sin(self.arrow_angle)) * self.arrow_velocity) # if i want to simulate shooting arrows, remove this * self.arrow_velocity and then put it into translate instead
         self.handle_rotation_arrow(rotation_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = -self.arrow_angle * 180 / math.pi

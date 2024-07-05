@@ -72,6 +72,11 @@ watermelon_images = convert_to_imgs('imgs/watermelon')
 bomb_images = convert_to_imgs('imgs/bomb')
 
 
+images = {
+    "Arrows" : arrow_images,
+    "Barrels" : barrel_images
+}
+
 # arrow keys
 up_arrow = pygame.image.load('imgs/arrowkeys/up_arrow.png')
 down_arrow = pygame.image.load('imgs/arrowkeys/down_arrow.png')

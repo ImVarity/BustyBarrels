@@ -17,33 +17,33 @@ class Hitbox:
         self.color = color
         self.width = width
         self.height = height
-        self.center = Vector((center[0], center[1]))
+        self.center = Vector(center[0], center[1])
         
         self.vertices = [
-            Vector((self.center.x - width / 2, self.center.y - height / 2)),
-            Vector((self.center.x + width / 2, self.center.y - height / 2)),
-            Vector((self.center.x + width / 2, self.center.y + height / 2)),
-            Vector((self.center.x - width / 2, self.center.y + height / 2))
+            Vector(self.center.x - width / 2, self.center.y - height / 2),
+            Vector(self.center.x + width / 2, self.center.y - height / 2),
+            Vector(self.center.x + width / 2, self.center.y + height / 2),
+            Vector(self.center.x - width / 2, self.center.y + height / 2)
         ]
         self.rotation_speed = 0
         self.rotationspeed_degrees = 2
         self.rotationspeed = self.rotationspeed_degrees * math.pi / 180
         self.rotation_speed = 0
-        self.velocity = 2
-        self.direction = Vector((0, 0))
-        self.last_looked = Vector((0, 0))
+        self.direction = Vector(0, 0)
+        self.last_looked = Vector(0, 0)
         self.angle = 0
         self.angle_looking = 0
+        self.velocity = 2 # the speed the player moves at, so basically the speed the whole game moves at
 
         self.dt = 1
 
 
         
     def draw_hitbox(self, screen):
-        pygame.draw.line(screen, self.color, self.vertices[0].tail, self.vertices[1].tail, 1)
-        pygame.draw.line(screen, self.color, self.vertices[1].tail, self.vertices[2].tail, 1)
-        pygame.draw.line(screen, self.color, self.vertices[2].tail, self.vertices[3].tail, 1)
-        pygame.draw.line(screen, self.color, self.vertices[3].tail, self.vertices[0].tail, 1)
+        pygame.draw.line(screen, self.color, self.vertices[0].point, self.vertices[1].point, 1)
+        pygame.draw.line(screen, self.color, self.vertices[1].point, self.vertices[2].point, 1)
+        pygame.draw.line(screen, self.color, self.vertices[2].point, self.vertices[3].point, 1)
+        pygame.draw.line(screen, self.color, self.vertices[3].point, self.vertices[0].point, 1)
 
     def update(self, rotation_input, direction):
         self.handle_rotation(rotation_input)
@@ -51,54 +51,53 @@ class Hitbox:
 
     
     def get_direction(self, input):
-
         if not input["lock"]:
             if input["up"] and input["right"]:
-                self.direction = Vector((cos_45, -sin_45))
+                self.direction = Vector(cos_45, -sin_45)
                 self.last_looked = self.direction
             elif input["up"] and input["left"]:
-                self.direction = Vector((-cos_45, -sin_45))
+                self.direction = Vector(-cos_45, -sin_45)
                 self.last_looked = self.direction
             elif input["down"] and input["right"]:
-                self.direction = Vector((cos_45, sin_45))
+                self.direction = Vector(cos_45, sin_45)
                 self.last_looked = self.direction
             elif input["down"] and input["left"]:
-                self.direction = Vector((-cos_45, sin_45))
+                self.direction = Vector(-cos_45, sin_45)
                 self.last_looked = self.direction
             elif input["right"]:
-                self.direction = Vector((1, 0))
+                self.direction = Vector(1, 0)
                 self.last_looked = self.direction
             elif input["left"]:
-                self.direction = Vector((-1, 0))
+                self.direction = Vector(-1, 0)
                 self.last_looked = self.direction
             elif input["up"]:
-                self.direction = Vector((0, -1))
+                self.direction = Vector(0, -1)
                 self.last_looked = self.direction
             elif input["down"]:
-                self.direction = Vector((0, 1))
+                self.direction = Vector(0, 1)
                 self.last_looked = self.direction
             else:
-                self.direction = Vector((0, 0))
+                self.direction = Vector(0, 0)
         else:
             if input["up"] and input["right"]:
-                self.direction = Vector((cos_45, -sin_45))
+                self.direction = Vector(cos_45, -sin_45)
             elif input["up"] and input["left"]:
-                self.direction = Vector((-cos_45, -sin_45))
+                self.direction = Vector(-cos_45, -sin_45)
             elif input["down"] and input["right"]:
-                self.direction = Vector((cos_45, sin_45))
+                self.direction = Vector(cos_45, sin_45)
             elif input["down"] and input["left"]:
-                self.direction = Vector((-cos_45, sin_45))
+                self.direction = Vector(-cos_45, sin_45)
 
             elif input["right"]:
-                self.direction = Vector((1, 0))
+                self.direction = Vector(1, 0)
             elif input["left"]:
-                self.direction = Vector((-1, 0))
+                self.direction = Vector(-1, 0)
             elif input["up"]:
-                self.direction = Vector((0, -1))
+                self.direction = Vector(0, -1)
             elif input["down"]:
-                self.direction = Vector((0, 1))
+                self.direction = Vector(0, 1)
             else:
-                self.direction = Vector((0, 0))
+                self.direction = Vector(0, 0)
 
         self.angle_looking = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
         
@@ -115,6 +114,9 @@ class Hitbox:
         for i in range(len(self.vertices)):
             self.vertices[i] += direction * distance
 
+    def set_delta_time(self, dt):
+        self.dt = dt
+
 
     # moves everything opposite direction to simulate movement of a static player
     def handle_rotation(self, rotation_input, player=False):
@@ -124,20 +126,19 @@ class Hitbox:
                 self.angle = 0
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
             if rotation_input["counterclockwise"]:
-                self.rotation_speed = -self.rotationspeed
-                self.angle += self.rotationspeed_degrees
+                self.rotation_speed = -self.rotationspeed * self.dt
+                self.angle += self.rotationspeed_degrees * self.dt
 
             elif rotation_input["clockwise"]:
                 self.rotation_speed = self.rotationspeed
-                self.angle -= self.rotationspeed_degrees
+                self.angle -= self.rotationspeed_degrees * self.dt
 
             if player:
                 self.self_rotation()
             else:
                 self.rotation()
 
-    def get_arrow_angle(self):
-        return self.arrow_angle
+
 
     def translate(self, direction):
         self.center += direction * self.velocity
@@ -146,13 +147,13 @@ class Hitbox:
 
 
     def rotation(self):
-        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(self.rotation_speed) + (self.center.y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.center.x - display_center_x) * math.sin(self.rotation_speed) + (self.center.y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
+        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(self.rotation_speed * self.dt) + (self.center.y - display_center_x) * -math.sin(self.rotation_speed * self.dt) + display_center_x, (self.center.x - display_center_x) * math.sin(self.rotation_speed * self.dt) + (self.center.y - display_center_x) * math.cos(self.rotation_speed * self.dt) + display_center_x
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(self.rotation_speed) + (self.vertices[i].y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(self.rotation_speed) + (self.vertices[i].y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(self.rotation_speed * self.dt) + (self.vertices[i].y - display_center_x) * -math.sin(self.rotation_speed * self.dt) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(self.rotation_speed * self.dt) + (self.vertices[i].y - display_center_x) * math.cos(self.rotation_speed * self.dt) + display_center_x
 
     def self_rotation(self):
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed * self.dt) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed * self.dt) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed * self.dt) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed * self.dt) + self.center.y
 
     def reset_rotation(self):
         back = self.angle * math.pi / 180
@@ -160,35 +161,8 @@ class Hitbox:
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(back) + (self.vertices[i].y - display_center_x) * -math.sin(back) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(back) + (self.vertices[i].y - display_center_x) * math.cos(back) + display_center_x
         
-    def draw_projection(self, screen, normals):
-        push_out_0 = Vector((-normals[0].y, normals[0].x))
-        push_out_1 = Vector((-normals[1].y, normals[1].x))
-        push_out_2 = Vector((-normals[2].y, normals[2].x))
-        push_out_3 = Vector((-normals[3].y, normals[3].x))
-        
-        pygame.draw.line(screen, heather, (self.center + (push_out_0 * 250)).tail, (self.center + (push_out_0 * 250) + normals[0] * 500).tail)
-        pygame.draw.line(screen, heather, (self.center + (push_out_0 * 250)).tail, (self.center + (push_out_0 * 250) + normals[0] * -500).tail)
-
-        pygame.draw.line(screen, heather, (self.center + (push_out_1 * 250)).tail, (self.center + (push_out_1 * 250) + normals[1] * 500).tail)
-        pygame.draw.line(screen, heather, (self.center + (push_out_1 * 250)).tail, (self.center + (push_out_1 * 250) + normals[1] * -500).tail)
-
-        pygame.draw.line(screen, heather, (self.center + (push_out_2 * 250)).tail, (self.center + (push_out_2 * 250) + normals[2] * 500).tail)
-        pygame.draw.line(screen, heather, (self.center + (push_out_2 * 250)).tail, (self.center + (push_out_2 * 250) + normals[2] * -500).tail)
-
-        pygame.draw.line(screen, heather, (self.center + (push_out_3 * 250)).tail, (self.center + (push_out_3 * 250) + normals[3] * 500).tail)
-        pygame.draw.line(screen, heather, (self.center + (push_out_3 * 250)).tail, (self.center + (push_out_3 * 250) + normals[3] * -500).tail)
 
 
-
-    def draw_projection_intervals(self, screen, normal, length):
-
-
-        push_out_0 = Vector((-normal.y, normal.x))
-        
-        pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (length / 2)).tail)
-        pygame.draw.line(screen, self.color, (self.center + (push_out_0 * 230)).tail, (self.center + (push_out_0 * 230) + normal * (-length / 2)).tail)
-
-        
     def normals(self):
         edgeVectors = []
         normalVectors = []
@@ -211,7 +185,7 @@ class Hitbox:
 
         # returns normal vectors that are normalized
         for edge in edgeVectors:
-            v = Vector((-edge.y, edge.x))
+            v = Vector(-edge.y, edge.x)
             v = v.normalize()
             normalVectors.append(v)
 

@@ -40,8 +40,8 @@ class Uno(Hitbox):
         self.summoned = False
 
 
-        self.looking = Vector((0, 0))
-        self.locked = Vector((0, 0))
+        self.looking = Vector(0, 0)
+        self.locked = Vector(0, 0)
 
 
         self.charge_now = False
@@ -61,11 +61,11 @@ class Uno(Hitbox):
         self.barrels_busted = 0
         
 
-        self.boss_looking = Vector((1, 0))
+        self.boss_looking = Vector(1, 0)
         self.boss_angle_degrees_increment = 45
         self.boss_angle_degrees = 0
         self.s_x, self.s_y = self.boss_angle_degrees * math.pi / 180, self.boss_angle_degrees * math.pi / 180
-        self.s = Vector((math.cos(self.s_x), math.sin(self.s_y)))
+        self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
 

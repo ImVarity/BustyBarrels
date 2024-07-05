@@ -1,12 +1,11 @@
 import math
-# Vector class that allows to choose origin point to make things easier
+
 
 
 class Vector:
-    def __init__(self, tail, origin=[0, 0]) -> None:
-        self.origin = origin
-        self.x = tail[0]
-        self.y = tail[1]
+    def __init__(self, x, y) -> None:
+        self.x = x
+        self.y = y
 
 
     def dotproduct(self, other):
@@ -14,16 +13,16 @@ class Vector:
 
     def __mul__(self, other):
         if isinstance(other, int) or isinstance(other, float):
-            new_x = self.origin[0] + (self.x * other)
-            new_y = self.origin[1] + (self.y * other)
-            return Vector((new_x, new_y), origin=self.origin)
+            new_x = (self.x * other)
+            new_y = (self.y * other)
+            return Vector(new_x, new_y)
         return NotImplemented
 
     def __add__(self, other):
         if isinstance(other, Vector) or isinstance(other, float):
             new_x = self.x + other.x
             new_y = self.y + other.y
-            return Vector((new_x, new_y), origin=self.origin)
+            return Vector(new_x, new_y)
         return NotImplemented
 
             
@@ -31,7 +30,7 @@ class Vector:
         if isinstance(other, Vector):
             new_x = self.x - other.x
             new_y = self.y - other.y
-            return Vector((new_x, new_y), origin=self.origin)
+            return Vector(new_x, new_y)
         return NotImplemented
     
 
@@ -48,30 +47,24 @@ class Vector:
         if magnitude == 0: # To handle the case where p1 and p2 are the same point
             self.x = 0
             self.y = 0
-            return Vector((self.x, self.y), origin=self.origin)
+            return Vector(self.x, self.y)
             
         else:
             self.x = vx / magnitude
             self.y = vy / magnitude
-            return Vector((self.x, self.y), origin=self.origin)
+            return Vector(self.x, self.y)
 
         
-    def setorigin(self, x, y):
-        self.origin[0] = x
-        self.origin[1] = y
 
 
     @property
-    def tail(self):
+    def point(self):
         return list([self.x, self.y])
     
-    @property
-    def head(self):
-        return list(self.origin)
 
 
     def __str__(self):
-        return f"Vector(x={self.x}, y={self.y}, origin={self.origin})"
+        return f"Vector(x={self.x}, y={self.y}"
     
     def __repr__(self):
         return self.__str__()

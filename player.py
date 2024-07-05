@@ -11,15 +11,19 @@ class Player(Hitbox):
         super().__init__(center, width, height, color)
         self.images = [img.convert_alpha() for img in player_images]
         self.spread = 1
-        self.direction = Vector((0, 0))
+        self.direction = Vector(0, 0)
         self.to_render = Render(self.images, center, self.angle, self.spread)
         self.spawnpoint = Hitbox((0, 0), 1, 1, (0, 0, 0))
+
+        self.render_radius = 200
+        self.collision_radius = 33
+
 
         self.original_health = health
         self.health = health
 
         self.health_bar = HealthBar(self.health, color)
-        self.looking = Vector((0, 0))
+        self.looking = Vector(0, 0)
 
         # how fast the camera returns to the player
         self.scroll_speed = 0.02
@@ -124,6 +128,7 @@ class Player(Hitbox):
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
+
     def update_spawnpoint(self, rotation_input, direction):
         self.spawnpoint.handle_rotation(rotation_input)
         self.spawnpoint.move(direction * -1)
@@ -133,17 +138,17 @@ class Player(Hitbox):
             damage.update([self.center.x, self.center.y])
 
     def handle_dash(self, action_input, direction):
-        if self.dash_start == self.dash_end:
+        if self.dash_start >= self.dash_end:
             self.dash_start = 0
             self.dash_speed = 1
             action_input["dash"] = False
             return
         if action_input["dash"]:
-            self.dash_start += self.dash_increment
-            self.dash_speed -= self.dash_friction
+            self.dash_start += self.dt
+            self.dash_speed -= self.dash_friction * self.dt
             if direction.x == 0 and direction.y == 0:
-                direction *= self.dash_speed
-            self.move(direction)
+                direction *= self.dash_speed * self.dt
+            self.move(direction * self.dt)
         
 
     def update_actions(self, action_input):
@@ -191,7 +196,7 @@ class Player(Hitbox):
     def collectables_follow(self, rotation_input, direction):
         for items, holder in self.inventory.items():
             for i in range(len(holder)):
-                diff_vec = Vector((self.center.x - holder[i].center.x, self.center.y - holder[i].center.y))
+                diff_vec = Vector(self.center.x - holder[i].center.x, self.center.y - holder[i].center.y)
                 holder[i].move(diff_vec * holder[i].follow_speed)
                 holder[i].update(rotation_input, direction,)
     
