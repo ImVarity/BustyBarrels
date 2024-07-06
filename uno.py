@@ -35,7 +35,6 @@ class Uno(Hitbox):
         self.summoning = False
         self.summon_start = 0
         self.summon_end = self.num_images * self.summon_rise
-        self.summon_increment = 1
         self.summon_index = self.num_images
         self.summoned = False
 
@@ -68,6 +67,11 @@ class Uno(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
+        self.attack_start = 0
+        self.attack_end = 8
+
+
+
 
     def check_if_summon(self):
         if self.barrels_busted > 5 and not self.summoned:
@@ -75,9 +79,10 @@ class Uno(Hitbox):
             self.tracking = True
 
         if self.summoning:
-            self.summon_start += self.summon_increment
+            self.summon_start += self.dt
 
-            if self.summon_start % self.summon_rise == 0:
+            if self.summon_start >= self.summon_rise:
+                self.summon_start = 0
                 if self.summon_index > 0:
                     self.summon_index -= 1
                 else:
@@ -119,7 +124,7 @@ class Uno(Hitbox):
 
 
         width = self.health_bar.health / self.health_bar.maxhealth * 180
-        center = Vector((mid_x, 30))
+        center = Vector(mid_x, 30)
         
         margin_top_bottom = 2
         margin_left_right = 2
@@ -145,6 +150,16 @@ class Uno(Hitbox):
         else:
             self.health_bar.damage(dmg)
 
+    def attacks(self, dt):
+        self.attack_start += dt
+        if self.attack_start >= self.attack_end:
+            self.attack_start = 0
+            if self.summoned and not self.dead:
+                self.spiral_attack()
+        
+        if self.summoned and not self.dead and self.health_bar.health < self.health_bar.maxhealth // 2:
+            self.attack_two()
+
 
     def spiral_attack(self):
         
@@ -153,7 +168,7 @@ class Uno(Hitbox):
         
         self.shurikens.append(shot_1)
 
-        shot_2 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector((-self.last_looked.y, self.last_looked.x)))
+        shot_2 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(-self.last_looked.y, self.last_looked.x))
         shot_2.shuriken_angle_start = math.atan2(self.last_looked.x, -self.last_looked.y) + self.angle * math.pi / 180
         
         self.shurikens.append(shot_2)
@@ -163,7 +178,7 @@ class Uno(Hitbox):
         
         self.shurikens.append(shot_3)
 
-        shot_4 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector((self.last_looked.y, -self.last_looked.x)))
+        shot_4 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(self.last_looked.y, -self.last_looked.x))
         shot_4.shuriken_angle_start = math.atan2(-self.last_looked.x, self.last_looked.y) + self.angle * math.pi / 180
         
         self.shurikens.append(shot_4)
@@ -179,11 +194,11 @@ class Uno(Hitbox):
 
 
     def directional_attack(self):
-        self.s = Vector((math.cos(self.s_x), math.sin(self.s_y)))
+        self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
         g = math.atan2(self.s.y, self.s.x) - self.angle * math.pi / 180
         a = (360 + (g * 180 / math.pi)) * math.pi / 180
         x, y = math.cos(a), math.sin(a)
-        self.s = Vector((x, y))
+        self.s = Vector(x, y)
 
 
         shot_5 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.s)
@@ -199,9 +214,9 @@ class Uno(Hitbox):
 
     def charge(self):
         if self.charging:
-            self.charge_start += self.charge_inc
+            self.charge_start += self.dt
 
-            self.move(self.locked * -1 * .8)
+            self.move(self.locked * -1 * .8 * self.dt)
 
             shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
             shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
@@ -248,7 +263,7 @@ class Shuriken(Hitbox):
         self.rotation_angle -= self.spin_speed_degrees
 
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.spin_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.spin_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.spin_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.spin_speed) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.spin_speed * self.dt) + (self.vertices[i].y - self.center.y) * -math.sin(self.spin_speed * self.dt) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.spin_speed * self.dt) + (self.vertices[i].y - self.center.y) * math.cos(self.spin_speed * self.dt) + self.center.y
 
 
     def handle_rotation_shuriken(self, rotation_input):
@@ -281,7 +296,7 @@ class Shuriken(Hitbox):
     def update(self, rotation_input, direction):
         self.self_spin()
         self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
-        self.translate(Vector((math.cos(self.shuriken_angle), math.sin(self.shuriken_angle))) * self.shuriken_velocity) # if i want to simulate shooting shurikens, remove this * self.shuriken_velocity and then put it into translate instead
+        self.translate(Vector(math.cos(self.shuriken_angle), math.sin(self.shuriken_angle)) * self.shuriken_velocity * self.dt) # if i want to simulate shooting shurikens, remove this * self.shuriken_velocity and then put it into translate instead
         self.handle_rotation_shuriken(rotation_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = -self.rotation_angle

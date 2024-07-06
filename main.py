@@ -142,12 +142,8 @@ collectables = {
     "Powerups" : []
 }
 
-bigger_bomb_images = []
-for i in range(len(bomb_images)):
-    n = pygame.transform.scale(bomb_images[i], (bomb_images[i].get_width() + 20, bomb_images[i].get_height() + 20))
-    n.convert_alpha()
-    bigger_bomb_images.append(n)
-powerup = Collectable((mid_x, mid_x), 16, 16, black, bigger_bomb_images)
+
+powerup = Collectable((mid_x, mid_x), 16, 16, black, [img.convert_alpha() for img in bigger_bomb_images])
 
 
 random_barrel_count = 75
@@ -183,7 +179,7 @@ Mikhail = NPC([0, -40], 64, 64, red, rock_images)
 
 npcs = [Mikhail]
 
-Bob = Slime([-40, -40], 12, 12, black, Vector((1, 0)), Vector((player.center.x, player.center.y)))
+Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(player.center.x, player.center.y))
 
 random_slime_count = 120
 
@@ -490,7 +486,7 @@ while running:
             if event.key == pygame.K_c:
                 if input["interact"]:
                     menu_click.play()
-                    npc.next()
+                    Mikhail.next()
                     
 
 
@@ -524,7 +520,7 @@ while running:
 
     
     if len(slimes) < random_slime_count:
-        slimes.append(Slime([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, Vector((1, 0)), Vector((player.center.x, player.center.y))))
+        slimes.append(Slime([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, Vector(1, 0), Vector(player.center.x, player.center.y)))
         
 
 # ------------------------------------------------- Handling the rotation and direction and some updating -------------------------------------------------------
@@ -546,14 +542,14 @@ while running:
 
     if player.in_water:
         lower_player(player)
-        player.move(Vector((0, 1)) * .1)
+        player.move(Vector(0, 1) * .1)
         player.move(direction * -.5)
     else:
         raise_player(player)
         
     # camera tracking
     if not paused:
-        difference_vec = Vector((mid_x - tracking.center.x, mid_y - tracking.center.y))
+        difference_vec = Vector(mid_x - tracking.center.x, mid_y - tracking.center.y)
         player.move(difference_vec * player.scroll_speed)
         direction -= difference_vec * player.scroll_speed
 
@@ -981,7 +977,7 @@ while running:
 
             if collided:
                 bodyB.health_bar.damage(bodyA.damage)
-                bodyB.move(Vector((math.cos(bodyA.bomb_angle), math.sin(bodyA.bomb_angle))) * .1)
+                bodyB.move(Vector(math.cos(bodyA.bomb_angle), math.sin(bodyA.bomb_angle)) * .1)
                 delete_arrow(arrows, bodyA)
                 del collidables["Bombs"][i]
                 if bodyB.health_bar.health <= 0:
@@ -1003,7 +999,7 @@ while running:
 
             if collided:
                 bodyB.health_bar.damage(bodyA.damage)
-                bodyB.move(Vector((math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle))) * .1)
+                bodyB.move(Vector(math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle)) * .1)
                 delete_arrow(arrows, bodyA)
                 # damage.play()
                 del collidables["Arrows"][i]
@@ -1046,11 +1042,11 @@ while running:
             del collidables["Shurikens"][i]
             if player.health_bar.health <= 0:
                 x_distance = math.sqrt((player_center_x - spawnpoint.center.x) ** 2 + (player.center.y - spawnpoint.center.y) ** 2)
-                v = Vector(((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
+                v = Vector((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y))
                 v.normalize()
                 player.move_distance(v * -1, x_distance)
                 t_x_distance = math.sqrt((Tifanie.center.x- tif_spawnpoint.center.x) ** 2 + (Tifanie.center.y - tif_spawnpoint.center.y) ** 2)
-                t_v = Vector(((Tifanie.center.x - tif_spawnpoint.center.x), (Tifanie.center.y - tif_spawnpoint.center.y)))
+                t_v = Vector((Tifanie.center.x - tif_spawnpoint.center.x), (Tifanie.center.y - tif_spawnpoint.center.y))
                 t_v.normalize()
                 Tifanie.move_distance(t_v * -1, t_x_distance)
                 Tifanie.temp_death()
@@ -1080,7 +1076,7 @@ while running:
 
     if player.health_bar.health <= 0:
         x_distance = math.sqrt((player_center_x - spawnpoint.center.x) ** 2 + (player.center.y - spawnpoint.center.y) ** 2)
-        v = Vector(((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y)))
+        v = Vector((player_center_x - spawnpoint.center.x), (player.center.y - spawnpoint.center.y))
         v.normalize()
         player.move_distance(v * -1, x_distance)
         player.player_death()

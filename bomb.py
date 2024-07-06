@@ -42,8 +42,8 @@ class Bomb(Hitbox):
 
 
     def rise(self):
-        self.bomb_height += self.speed
-        self.speed -= self.gravity
+        self.bomb_height += self.speed * self.dt
+        self.speed -= self.gravity * self.dt
         if self.bomb_height < -3:
             self.landing = True
 
@@ -75,7 +75,7 @@ class Bomb(Hitbox):
         
     def update(self, rotation_input, direction):
         self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
-        self.translate(Vector((math.cos(self.bomb_angle), math.sin(self.bomb_angle))) * self.bomb_velocity)
+        self.translate(Vector(math.cos(self.bomb_angle), math.sin(self.bomb_angle)) * self.bomb_velocity * self.dt)
         self.handle_rotation_bomb(rotation_input)
         self.rise()
         self.to_render.loc = [self.center.x, self.center.y]

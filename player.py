@@ -67,7 +67,7 @@ class Player(Hitbox):
         self.quest_complete_text_speed = 2
         self.quest_complete_text_friction = .05
 
-        self.bomber = False # can throw bombs
+        self.bomber = True # can throw bombs
  
         self.power_up = False
         self.power_up_text_start = 0
@@ -125,6 +125,7 @@ class Player(Hitbox):
         self.handle_rotation(rotation_input)
         self.handle_dash(action_input, direction)
         self.collectables_follow(rotation_input, direction)
+        self.update_actions(action_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
 
@@ -145,10 +146,10 @@ class Player(Hitbox):
             return
         if action_input["dash"]:
             self.dash_start += self.dt
-            self.dash_speed -= self.dash_friction * self.dt
+            self.dash_speed -= self.dash_friction
             if direction.x == 0 and direction.y == 0:
-                direction *= self.dash_speed * self.dt
-            self.move(direction * self.dt)
+                direction *= self.dash_speed
+            self.move(direction)
         
 
     def update_actions(self, action_input):
@@ -164,7 +165,7 @@ class Player(Hitbox):
 
         if self.knockback == True:
             self.knock_start += self.knock_increment
-            self.move(self.looking * -1 * self.knockback_power)
+            self.move(self.looking * -1 * self.knockback_power * self.dt)
 
     def damage(self, damage, surface):
         self.damage_taken.append(DamageNumber(damage, [self.center.x, self.center.y]))

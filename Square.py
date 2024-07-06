@@ -130,7 +130,7 @@ class Hitbox:
                 self.angle += self.rotationspeed_degrees * self.dt
 
             elif rotation_input["clockwise"]:
-                self.rotation_speed = self.rotationspeed
+                self.rotation_speed = self.rotationspeed * self.dt
                 self.angle -= self.rotationspeed_degrees * self.dt
 
             if player:
@@ -147,13 +147,13 @@ class Hitbox:
 
 
     def rotation(self):
-        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(self.rotation_speed * self.dt) + (self.center.y - display_center_x) * -math.sin(self.rotation_speed * self.dt) + display_center_x, (self.center.x - display_center_x) * math.sin(self.rotation_speed * self.dt) + (self.center.y - display_center_x) * math.cos(self.rotation_speed * self.dt) + display_center_x
+        self.center.x, self.center.y = (self.center.x - display_center_x) * math.cos(self.rotation_speed) + (self.center.y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.center.x - display_center_x) * math.sin(self.rotation_speed) + (self.center.y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(self.rotation_speed * self.dt) + (self.vertices[i].y - display_center_x) * -math.sin(self.rotation_speed * self.dt) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(self.rotation_speed * self.dt) + (self.vertices[i].y - display_center_x) * math.cos(self.rotation_speed * self.dt) + display_center_x
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - display_center_x) * math.cos(self.rotation_speed) + (self.vertices[i].y - display_center_x) * -math.sin(self.rotation_speed) + display_center_x, (self.vertices[i].x - display_center_x) * math.sin(self.rotation_speed) + (self.vertices[i].y - display_center_x) * math.cos(self.rotation_speed) + display_center_x
 
     def self_rotation(self):
         for i in range(len(self.vertices)):
-            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed * self.dt) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed * self.dt) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed * self.dt) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed * self.dt) + self.center.y
+            self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.rotation_speed) + (self.vertices[i].y - self.center.y) * -math.sin(self.rotation_speed) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.rotation_speed) + (self.vertices[i].y - self.center.y) * math.cos(self.rotation_speed) + self.center.y
 
     def reset_rotation(self):
         back = self.angle * math.pi / 180

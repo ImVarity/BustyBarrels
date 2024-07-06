@@ -17,6 +17,8 @@ purple = (112, 41, 99)
 npc_color = (47,79,79, 100)
 damage_color = (255, 0, 0, 20)
 
+screen_width, screen_height = 800, 800
+display_width, display_height = 400, 400
 
 mid_x = 200
 mid_y = 200
@@ -71,6 +73,11 @@ arrow_images = convert_to_imgs('imgs/arrow')
 watermelon_images = convert_to_imgs('imgs/watermelon')
 bomb_images = convert_to_imgs('imgs/bomb')
 
+
+bigger_bomb_images = []
+for i in range(len(bomb_images)):
+    n = pygame.transform.scale(bomb_images[i], (bomb_images[i].get_width() + 20, bomb_images[i].get_height() + 20))
+    bigger_bomb_images.append(n)
 
 images = {
     "Arrows" : arrow_images,

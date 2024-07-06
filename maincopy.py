@@ -20,6 +20,7 @@ from render import *
 import time
 from game import GameLoop
 from map import Tilemap
+from sounds import SFX
 flags = DOUBLEBUF
 
 
@@ -29,22 +30,28 @@ screen_width, screen_height = 800, 800
 pygame.init()
 pygame.mixer.init()
 
-dash_sound = pygame.mixer.Sound('sfx/grabitem.wav')
-collect_sound_2 = pygame.mixer.Sound('sfx/collectitem2.wav')
-explosion_sound = pygame.mixer.Sound('sfx/explosion.wav')
-menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
-arrow_shot = pygame.mixer.Sound('sfx/arrow_shot.wav')
-arrow_shot.set_volume(3)
 
-arrow_shot2 = pygame.mixer.Sound('sfx/arrow_sound2.wav')
-# swing = pygame.mixer.Sound('sfx/swing_sound.wav')
-damage = pygame.mixer.Sound('sfx/damage.mp3')
-throw = pygame.mixer.Sound('sfx/throw.wav')
-stick = pygame.mixer.Sound('sfx/stick.wav')
 
-explosion_sound.set_volume(.2)
+# dash_sound = pygame.mixer.Sound('sfx/grabitem.wav')
+# collect_sound_2 = pygame.mixer.Sound('sfx/collectitem2.wav')
+# explosion_sound = pygame.mixer.Sound('sfx/explosion.wav')
+# menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
+# arrow_shot = pygame.mixer.Sound('sfx/arrow_shot.wav')
+# arrow_shot.set_volume(3)
+
+# arrow_shot2 = pygame.mixer.Sound('sfx/arrow_sound2.wav')
+# # swing = pygame.mixer.Sound('sfx/swing_sound.wav')
+# damage = pygame.mixer.Sound('sfx/damage.mp3')
+# throw = pygame.mixer.Sound('sfx/throw.wav')
+# stick = pygame.mixer.Sound('sfx/stick.wav')
+
+# explosion_sound.set_volume(.2)
+# pygame.mixer.music.load('sfx/bgm.mp3')
+
+# pygame.mixer.music.play(loops=-1)
+
+sounds = SFX()
 pygame.mixer.music.load('sfx/bgm.mp3')
-
 pygame.mixer.music.play(loops=-1)
 
 
@@ -106,25 +113,20 @@ inputs = {
         "hitboxes" : False
     },
     "HUD" : {
-        "stats" : False
+        "stats" : False,
+        "next" : False
     }
 }
 
 
 # ------------------------------------------------------------ Player ------------------------------------------------------------------------
 
-player = Player([0, 0], 8, 8, blue, health=500)
-player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
-spawnpoint = Barrel((0, 0), 8, 8, black)
-tif_spawnpoint = Barrel([mid_x + 16, mid_y + 16], 8, 8, black)
 
 
 
 
 # ------------------------------------------------------------ Radius ------------------------------------------------------------------
 
-render_radius = 200
-collision_radius = 33
 
 
 # -------------------------------------------------- Where items and objects are held --------------------------------------------------------------------------------
@@ -161,13 +163,6 @@ barrels = [
 ]
 
 
-for i in range(random_arrow_count):
-    collectables["Arrows"].append(Collectable([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 12, 12, black, arrow_images))
-
-
-for i in range(random_barrel_count):
-        barrels.append(Barrel([random.randrange(int(spawnpoint.center.x - 400), int(spawnpoint.center.x + 400)), random.randrange(int(spawnpoint.center.y - 400), int(spawnpoint.center.y + 400))], 16, 16, pink, health=25))
-
 
 
 # ------------------------------------------------- Bosses and NPCS ----------------------------------------------------------------------
@@ -181,11 +176,11 @@ Mikhail = NPC([0, -40], 64, 64, red, rock_images)
 
 npcs = [Mikhail]
 
-Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(player.center.x, player.center.y))
+# Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(player.center.x, player.center.y))
 
 random_slime_count = 120
 
-slimes = [Bob]
+# slimes = [Bob]
 
 # -------------------------------------------------- Map stuff that needs to be moved somewhere else ------------------------------------------------
 
@@ -227,12 +222,13 @@ quest_encryption = {
 }
 
 
-
+screen_shake = 0
 last_time = time.time()
 
 
 Game = GameLoop()
-Map = Tilemap()
+Game.sounds = sounds
+# Map = Tilemap()
 
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
@@ -240,7 +236,7 @@ while running:
     now_time = time.perf_counter()
     dt = now_time - pre_time
     dt *= 60
-    dt = min(1.5, dt) # dont want to go over
+    # dt = min(1.2, dt) # dont want to go over
     pre_time = time.perf_counter()
 
 
@@ -274,7 +270,7 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 paused = not paused
             if event.key == pygame.K_t:
-                inputs["Movements"]["interact"] = not inputs["Movements"]["interact"]
+                inputs["Action"]["interact"] = not inputs["Action"]["interact"]
             if event.key == pygame.K_k:
                 inputs["Action"]["dash"] = True
             if event.key == pygame.K_UP:
@@ -295,9 +291,9 @@ while running:
             if event.key == pygame.K_BACKQUOTE:
                 inputs["Admin"]["hitboxes"] = not inputs["Admin"]["hitboxes"]
             if event.key == pygame.K_c:
-                if inputs["Movements"]["interact"]:
-                    menu_click.play()
-                    npc.next()
+                inputs["HUD"]["next"] = True
+                if inputs["Action"]["interact"]:
+                    sounds.menu_click.play()
                     
 
     inputs["Rotation"]["counterclockwise"] = keys[pygame.K_e]
@@ -317,11 +313,8 @@ while running:
     else:
         inputs["Action"]["shoot"] = keys[pygame.K_j]
 
-
-    # direction that the player is moving
-    # print(direction)
-
-
+    
+    Game.npc_input = npc_input
     Game.inputs = inputs
     Game.to_render_sorted = [Game.player]
 
@@ -331,31 +324,29 @@ while running:
 
     # print(Game.dt)
     direction = Game.direction
-    player.direction = direction
+    # player.direction = direction
 
 
-    for tile in Map.tiles:
-        if not paused:
-            tile.update(inputs["Rotation"], direction)
 
-    # render tiles first
-    for tile in Map.tiles:
-        if tile.center.x >= -32 and tile.center.x <= display_width + 32 and tile.center.y >= -32 and tile.center.y <= display_height + 32:
-            if inputs["Admin"]["hitboxes"]:
-                tile.draw_hitbox(display)
-
-            if tile.type == "water":
-                tile.to_render.animate(display, dt)
-                continue
-            tile.render(display)
-        
+    Game.update_and_render_tiles(display)
             
     Game.render_all(display)
 
+    render_text((12, 12), FPS_text, display)
 
-        
+
+    screen_shake = Game.screen_shake
+
+    if screen_shake > 0:
+        screen_shake -= 1
+    
     render_offset = [0, 0]
 
+    if screen_shake:
+        render_offset[0] = random.randint(0, 8) - 4
+        render_offset[1] = random.randint(0, 8) - 4
+    
+    Game.screen_shake = screen_shake
         
     
     if not paused:
