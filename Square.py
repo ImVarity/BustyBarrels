@@ -37,7 +37,13 @@ class Hitbox:
 
         self.dt = 1
 
-
+    def set_vertices(self):
+        self.vertices = [
+            Vector(self.center.x - self.width / 2, self.center.y - self.height / 2),
+            Vector(self.center.x + self.width / 2, self.center.y - self.height / 2),
+            Vector(self.center.x + self.width / 2, self.center.y + self.height / 2),
+            Vector(self.center.x - self.width / 2, self.center.y + self.height / 2)
+        ]
         
     def draw_hitbox(self, screen):
         pygame.draw.line(screen, self.color, self.vertices[0].point, self.vertices[1].point, 1)
@@ -279,3 +285,7 @@ class Hitbox:
     def get_angle(self):
         return self.angle
 
+    
+    @property
+    def location(self):
+        return [self.center.x, self.center.y]

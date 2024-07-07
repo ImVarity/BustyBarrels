@@ -25,7 +25,7 @@ import time
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
-MAX_BARREL_COUNT_COLLECTABLES = 0
+MAX_BARREL_COUNT_COLLECTABLES = 50
 
 
 
@@ -75,9 +75,7 @@ class GameLoop:
 
 
         self.barrels = [
-            Barrel([250, 150], 16, 16, pink, health=500),
-            Barrel([150, 250], 16, 16, pink, health=500),
-            Barrel([250, 250], 16, 16, pink, health=500)
+
         ]
 
         self.collectables = {
@@ -138,6 +136,8 @@ class GameLoop:
         # VFX
         self.particles = []
 
+
+
     # Gets the direction that the player is moving
     def initialize_direction(self):
         self.direction = self.player.get_direction(self.inputs["Movements"]) * self.dt
@@ -147,65 +147,62 @@ class GameLoop:
         self.set_delta_time(dt)
         self.initialize_direction()
 
-        if not self.paused:
-
-            self.update_player()
-            self.camera_tracking()
-            self.update_arrows()
-            self.update_barrels()
-            self.update_enemies()
+        self.update_player()
+        self.camera_tracking()
+        self.update_arrows()
+        self.update_barrels()
+        self.update_enemies()
 
 
 
-            self.spawnpoint.update(self.inputs["Rotation"], self.direction)
-            self.tif_spawnpoint.update(self.inputs["Rotation"], self.direction)
+        self.spawnpoint.update(self.inputs["Rotation"], self.direction)
+        self.tif_spawnpoint.update(self.inputs["Rotation"], self.direction)
 
 
 
-            # checks if player shoots the arrow
-            self.shoot_arrow()
+        # checks if player shoots the arrow
+        self.shoot_arrow()
 
-            # checks if player throws  abomb
-            self.throw_bomb()
-
-
-            # Spawn barrels
-            self.add_barrels(MAX_BARREL_COUNT_COLLECTABLES)
-
-            # Spawning collectables
-            self.add_collectables("Arrows", MAX_ARROW_COUNT_COLLECTABLES)
-            self.update_collectables()
-
-            # Bombs
-            self.update_bombs()
+        # checks if player throws  abomb
+        self.throw_bomb()
 
 
+        # Spawn barrels
+        self.add_barrels(MAX_BARREL_COUNT_COLLECTABLES)
 
-            # NPC
-            self.update_npc()
+        # Spawning collectables
+        self.add_collectables("Arrows", MAX_ARROW_COUNT_COLLECTABLES)
+        self.update_collectables()
 
-
-            # Boss
-            self.update_bosses()
-            self.update_shurikens()
-            self.Tifanie.attacks(dt)
-            self.Tifanie.check_if_summon()
-            if self.Tifanie.tracking:
-                self.camera_follow = self.Tifanie
-            else:
-                self.camera_follow = self.player
-            
-
-            # Collision
-            self.player_and_barrels()
-            self.player_and_shurikens(display)
-            self.arrows_and_all()
-            self.bombs_and_barrels()
+        # Bombs
+        self.update_bombs()
 
 
-            # Deletion
-            self.delete_objects()
 
+        # NPC
+        self.update_npc()
+
+
+        # Boss
+        self.update_bosses()
+        self.update_shurikens()
+        self.Tifanie.attacks(dt)
+        self.Tifanie.check_if_summon()
+        if self.Tifanie.tracking:
+            self.camera_follow = self.Tifanie
+        else:
+            self.camera_follow = self.player
+        
+
+        # Collision
+        self.player_and_barrels()
+        self.player_and_shurikens(display)
+        self.arrows_and_all()
+        self.bombs_and_barrels()
+
+
+        # Deletion
+        self.delete_objects()
 
 
         
@@ -221,7 +218,6 @@ class GameLoop:
 
 
 
-        # self.to_render_sorted = []
 
 
 
@@ -309,57 +305,65 @@ class GameLoop:
         if len(self.barrels) < MAX:
             self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 16, 16, pink, health=25))
 
+        
+    def load_barrels(self, loc, health):
+        b = Barrel(loc, 16, 16, pink, health=25)
+        b.health_bar.set_health(health)
+        self.barrels.append(b)
+
+
     def update_arrows(self):
         for arrow in self.arrows:
-            arrow.set_delta_time(self.dt)
-            arrow.update(self.inputs["Rotation"], self.direction)
-            index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], arrow.center.y)
-            self.to_render_sorted.insert(index, arrow)
+            if not self.paused:
+                arrow.set_delta_time(self.dt)
+                arrow.update(self.inputs["Rotation"], self.direction)
+
+            self.to_render.append(arrow)
 
     
     def update_barrels(self):
         for barrel in self.barrels:
-            barrel.set_delta_time(self.dt)
-            barrel.update(self.inputs["Rotation"], self.direction)
-        
-            # limits the render distance by not allowing things outside of range to be added to to_render
-            if limit_render(barrel, self.player.render_radius):
-                continue
+            if not self.paused:
+                barrel.set_delta_time(self.dt)
+                barrel.update(self.inputs["Rotation"], self.direction)
             
-            added = False
-
-            for arrow in self.arrows:
-                if abs(barrel.center.x - arrow.center.x) <= barrel.width / 2 and abs(barrel.center.y - arrow.center.y) <= barrel.height / 2:
-                    self.collidables["Arrows"].append(arrow)
-                    self.collidables["Barrels"].append(barrel)
-                    added = True
-
-            for bomb in self.bombs:
-                if bomb.landing:
-                    if abs(barrel.center.x - bomb.center.x) <= barrel.width / 2 + bomb.width / 2 and abs(barrel.center.y - bomb.center.y) <= barrel.height / 2 + bomb.height / 2:
-                        self.collidables["Bombs"].append(bomb)
-                        if not added:
-                            self.collidables["Barrels"].append(barrel)
+                # limits the render distance by not allowing things outside of range to be added to to_render
+                if limit_render(barrel, self.player.render_radius):
+                    continue
                 
-            if not added:
-                limit_collision(barrel, self.player, self.player.collision_radius, self.collidables["Barrels"])
+                added = False
 
-            index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], barrel.center.y)
-            self.to_render_sorted.insert(index, barrel)
+                for arrow in self.arrows:
+                    if abs(barrel.center.x - arrow.center.x) <= barrel.width / 2 and abs(barrel.center.y - arrow.center.y) <= barrel.height / 2:
+                        self.collidables["Arrows"].append(arrow)
+                        self.collidables["Barrels"].append(barrel)
+                        added = True
+
+                for bomb in self.bombs:
+                    if bomb.landing:
+                        if abs(barrel.center.x - bomb.center.x) <= barrel.width / 2 + bomb.width / 2 and abs(barrel.center.y - bomb.center.y) <= barrel.height / 2 + bomb.height / 2:
+                            self.collidables["Bombs"].append(bomb)
+                            if not added:
+                                self.collidables["Barrels"].append(barrel)
+                    
+                if not added:
+                    limit_collision(barrel, self.player, self.player.collision_radius, self.collidables["Barrels"])
+
+            self.to_render.append(barrel)
 
     def update_bosses(self):
         for b in self.bosses:
-            b.set_delta_time(self.dt)
-            b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
-            b.follow_player(self.player.center)
-            if b.summoned:
-                for arrow in self.arrows:
-                    if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
-                        self.collidables["Arrows"].append(arrow)
-                        self.collidables["Bosses"].append(b)
+            if not self.paused:
+                b.set_delta_time(self.dt)
+                b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
+                b.follow_player(self.player.center)
+                if b.summoned:
+                    for arrow in self.arrows:
+                        if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
+                            self.collidables["Arrows"].append(arrow)
+                            self.collidables["Bosses"].append(b)
 
-            index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], b.center.y)
-            self.to_render_sorted.insert(index, b)
+            self.to_render.append(b)
     
     def handle_npc_inputs(self):
         if self.inputs["HUD"]["next"]:
@@ -376,70 +380,73 @@ class GameLoop:
     def update_npc(self):
 
         for npc in self.npcs:
-            npc.set_delta_time(self.dt)
-            npc.update(self.inputs["Rotation"], self.direction)
-            limit_render(npc, self.player.render_radius)
-            if self.player.center.x >= npc.center.x - npc.width / 2 and self.player.center.x <= npc.center.x + npc.width / 2 and self.player.center.y >= npc.center.y - npc.width / 2 and self.player.center.y <= npc.center.y + npc.width / 2:
-                if self.inputs["Action"]["interact"]:
-                    npc.interacting = True
+            if not self.paused:
+                npc.set_delta_time(self.dt)
+                npc.update(self.inputs["Rotation"], self.direction)
+                limit_render(npc, self.player.render_radius)
+                if self.player.center.x >= npc.center.x - npc.width / 2 and self.player.center.x <= npc.center.x + npc.width / 2 and self.player.center.y >= npc.center.y - npc.width / 2 and self.player.center.y <= npc.center.y + npc.width / 2:
+                    if self.inputs["Action"]["interact"]:
+                        npc.interacting = True
+                    else:
+                        npc.interacting = False
                 else:
                     npc.interacting = False
-            else:
-                npc.interacting = False
-                self.inputs["Action"]["interact"] = False
+                    self.inputs["Action"]["interact"] = False
 
-            # if not input["interact"]:
-            index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], npc.center.y)
-            self.to_render_sorted.insert(index, npc)
+                # if not input["interact"]:
+            self.to_render.append(npc)
 
     def update_enemies(self):
         pass
 
     def update_bombs(self):
         for bomb in self.bombs:
-            bomb.set_delta_time(self.dt)
             if not self.paused:
-                bomb.update(self.inputs["Rotation"], self.direction)
+                bomb.set_delta_time(self.dt)
+                if not self.paused:
+                    bomb.update(self.inputs["Rotation"], self.direction)
 
-            index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], bomb.center.y)
-            self.to_render_sorted.insert(index, bomb)
+            self.to_render.append(bomb)
 
 
     def update_collectables(self):
         for items, holder in self.collectables.items():
             
             for i in range (len(holder) - 1, -1, -1):
-                holder[i].set_delta_time(self.dt)
-                if abs(holder[i].center.x - self.player.center.x) < 8 and abs(holder[i].center.y - self.player.center.y) < 8:
-                    if holder[i].powerup:
-                        self.player.power_up = True
-                        # celebrate(particles)
-                        del holder[i]
-                        break
-                    holder[i].follow_player = True
-                    holder[i].follow_speed = random.randrange(50, 200) / 10000
-                    self.player.inventory[items].append(holder[i])
-                    # self.sounds.stick.play()
-                    self.sounds.arrow_shot.play()
-                    del holder[i]
-                    continue
-                else:
-                    if holder[i].timer >= holder[i].despawn_time:
+                if not self.paused:
+                    holder[i].set_delta_time(self.dt)
+                    if abs(holder[i].center.x - self.player.center.x) < 8 and abs(holder[i].center.y - self.player.center.y) < 8:
+                        if holder[i].powerup:
+                            self.player.power_up = True
+                            # celebrate(particles)
+                            del holder[i]
+                            break
+                        holder[i].follow_player = True
+                        holder[i].follow_speed = random.randrange(50, 200) / 10000
+                        self.player.inventory[items].append(holder[i])
+                        # self.sounds.stick.play()
+                        self.sounds.arrow_shot.play()
                         del holder[i]
                         continue
-                
-                holder[i].update(self.inputs["Rotation"], self.direction)
-                
-                index = bisect.bisect_left([o.center.y for o in self.to_render_sorted], self.collectables[items][i].center.y)
-                self.to_render_sorted.insert(index, self.collectables[items][i])
+                    else:
+                        if holder[i].timer >= holder[i].despawn_time:
+                            del holder[i]
+                            continue
+                    
+                    holder[i].update(self.inputs["Rotation"], self.direction)
 
+                self.to_render.append(self.collectables[items][i])
+    
 
     
     def render_all(self, display):
-
+        # sorting all the things to render by y value
+        self.to_render = sorted(self.to_render, key=lambda x : x.center.y)
+        # arrow comes below everything else
         self.player_arrow.render(display)
+
         # every item including player
-        for object in self.to_render_sorted:
+        for object in self.to_render:
             
             if isinstance(object, Player):
                 object.render(display)
@@ -485,6 +492,9 @@ class GameLoop:
         self.completion_text(display)
 
         self.draw_HUD(display)
+
+        # if self.paused:
+        #     self.paused_screen(display)
 
 
     def render_npc_hud(self, display):
@@ -586,7 +596,7 @@ class GameLoop:
                     self.sounds.damage.play()
                     del self.collidables["Arrows"][i]
                     if bodyB.health_bar.health <= 0:
-                        # self.screen_shake = 10
+                        self.screen_shake = 10
                         self.delete_barrel(bodyB)
                         del self.collidables["Barrels"][j]
                     hit = True
@@ -695,6 +705,28 @@ class GameLoop:
             display.blit(barrel_img.convert_alpha(), (245, 345))
             render_text((270, 350), str(self.player.barrels_busted), display)
 
+    def paused_screen(self, display):
+
+        npc_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
+        npc_surface.fill(npc_color)
+        display.blit(npc_surface, (0, 0))
+        display.blit(paused_img.convert_alpha(), (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2 - 150))
+
+        start = -30
+        render_text((mid_x - len("controls") * 7 / 2, mid_y + start - 100), "controls", display)
+        render_text((mid_x - len("WASD to move") * 7 / 2, mid_y + start - 70), "WASD to move", display, "white")
+        render_text((mid_x - len("Q and E to rotate") * 7 / 2, mid_y + start - 50), "Q and E to rotate", display, "white")
+        render_text((mid_x - len("T to interact") * 7 / 2, mid_y + start - 30), "T to interact", display, "white")
+        render_text((mid_x - len("J to shoot") * 7 / 2, mid_y + start - 10), "J to shoot", display, "white")
+        render_text((mid_x - len("K to dash") * 7 / 2, mid_y + start + 10), "K to dash", display, "white")
+        render_text((mid_x - len("L to lock look direction") * 7 / 2, mid_y + start + 30), "L to lock look direction", display, "white")
+        render_text((mid_x - len("I to autoshoot") * 7 / 2, mid_y + start + 50), "I to autoshoot", display, "white")
+        render_text((mid_x - len("Arrow keys to navigate") * 7 / 2, mid_y + start + 70), "Arrow keys to navigate", display, "white")
+        render_text((mid_x - len("Enter to confirm") * 7 / 2, mid_y + start + 90), "Enter to confirm", display, "white")
+        render_text((mid_x - len("Tab for stats") * 7 / 2, mid_y + start + 110), "Tab for stats", display, "white")
+        render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
+
+
     def draw_particles(self, display):
         for i in range(len(self.particles) - 1, -1, -1):
             particle = self.particles[i]
@@ -713,3 +745,22 @@ class GameLoop:
         self.dt = dt
 
     
+
+
+
+    def load_data(self, data):
+        self.player.center.x, self.player.center.y = data["player_location"][0], data["player_location"][1]
+        self.player.set_vertices()
+        for i in range(len(data["barrels"]["locations"])):
+            self.load_barrels(data["barrels"]["locations"][i], data["barrels"]["health"][i])
+
+        data["barrels"]["locations"] = []
+        data["barrels"]["health"] = []
+
+    def save_data(self, data):
+        data["player_location"] = [self.player.center.x - self.spawnpoint.center.x, self.player.center.y - self.spawnpoint.center.y]
+        for barrel in self.barrels:
+            data["barrels"]["locations"].append((barrel.location[0] - self.spawnpoint.location[0], barrel.location[1] - self.spawnpoint.location[1]))
+            data["barrels"]["health"].append(barrel.health_bar.health)
+
+        return data

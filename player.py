@@ -125,6 +125,7 @@ class Player(Hitbox):
         self.handle_rotation(rotation_input)
         self.handle_dash(action_input, direction)
         self.collectables_follow(rotation_input, direction)
+        self.handle_damage()
         self.update_actions(action_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
