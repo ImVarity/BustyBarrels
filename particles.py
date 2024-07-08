@@ -114,3 +114,18 @@ class Particle:
         self.color()
         self.draw(surface)
     
+
+
+
+def dust(particles, loc, direction):
+
+    # v_x = random.randint(-200, 400) / 500 * direction.x * -2 * 2
+    # v_y = random.randint(0, 400) / 500 * direction.y * -1 * 2
+
+    for i in range(2):
+        v_x = random.randint(-100, 400) / 500 * direction.x * -2 * 2
+        v_y = random.randint(0, 400) / 500 * direction.y * -1 * 2
+        p = Particle([loc[0], loc[1] + 4], [v_x, v_y], random.randint(3, 5), "dust")
+        p.gravity = -.02
+        p.shrink_rate = .08
+        particles.append(p)

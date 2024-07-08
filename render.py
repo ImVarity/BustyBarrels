@@ -73,6 +73,15 @@ arrow_images = convert_to_imgs('imgs/arrow')
 watermelon_images = convert_to_imgs('imgs/watermelon')
 bomb_images = convert_to_imgs('imgs/bomb')
 
+# Butterfly
+butterfly_images_stack = [convert_to_imgs('imgs/butterfly_stack/butterfly'),
+                          convert_to_imgs('imgs/butterfly_stack/b_c_1'),
+                          convert_to_imgs('imgs/butterfly_stack/b_c_2'),
+                          convert_to_imgs('imgs/butterfly_stack/b_c_3'),
+                          convert_to_imgs('imgs/butterfly_stack/b_c_4'),
+                          convert_to_imgs('imgs/butterfly_stack/b_c_5')]
+
+
 
 bigger_bomb_images = []
 for i in range(len(bomb_images)):
@@ -109,8 +118,10 @@ class Render:
         except:
             self.frames = 1
 
-        self.frame_duration = 60
+        self.frame_duration = 10
         self.current_frame = 0
+
+        self.reversing = 1
 
 
 
@@ -124,17 +135,39 @@ class Render:
         rotated_img = pygame.transform.rotate(self.images, self.angle)
         surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
 
-    def animate(self, surface, dt):
+    def animate(self, surface, dt, type="single"):
         self.timer += dt
+        
+
         if self.timer >= self.frame_duration:
             self.timer = 0
-            self.current_frame = (self.current_frame + 1) % self.frames
+            
+            # if self.current_frame == self.frames - 1:
+            #     self.images = self.images[::-1]
+            self.current_frame = (self.current_frame + self.reversing) % self.frames
 
-        self.render_single_animation(surface)
+
+                
+        
+
+
+
+        if type == "single":
+            self.render_single_animation(surface)
+        elif type == "stack":
+            self.render_stack_animation(surface)
     
     def render_single_animation(self, surf):
         rotated_img = pygame.transform.rotate(self.images[self.current_frame], self.angle)
         surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
+
+    def render_stack_animation(self, surf):
+        for i, img in enumerate(self.images[self.current_frame]):
+            rotated_img = pygame.transform.rotate(img, self.angle)
+            rotated_img.convert_alpha()
+            surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2 - i * self.spread))
+
+
 
 
 
@@ -204,6 +237,39 @@ def lower_player(player):
 
 def raise_player(player):
     player.to_render.images = player.images
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 A_img = pygame.image.load('imgs/a_2/A.png')
 B_img = pygame.image.load('imgs/a_2/B.png')

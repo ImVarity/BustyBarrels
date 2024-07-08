@@ -5,9 +5,15 @@ from health import HealthBar
 class Barrel(Hitbox):
     def __init__(self, center, width, height, color, health=5):
         super().__init__(center, width, height, color)
+
         self.images = [img.convert_alpha() for img in barrel_images]
+        # self.images = []
+        # for i in range(len(butterfly_images_stack)):
+        #     self.images.append([img.convert_alpha() for img in butterfly_images_stack[i]])
+
+
         self.spread = 1
-        self.to_render = Render(self.images, self.center, self.angle, self.spread)
+        self.to_render = Render(self.images, center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
     
     def render(self, surface):

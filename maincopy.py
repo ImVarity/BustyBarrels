@@ -110,8 +110,8 @@ bounding_boxes = [
  
 
 
-with open('save_files.txt') as save_file:
-    data = json.load(save_file)
+# with open('save_files.txt') as save_file:
+#     data = json.load(save_file)
 
 screen_shake = 0
 pre_time = time.perf_counter()
@@ -121,7 +121,7 @@ running = True
 paused = False
 Game = GameLoop()
 Game.sounds = sounds
-Game.load_data(data)
+# Game.load_data(data)
 
 saving_game = False
 
@@ -225,8 +225,6 @@ while running:
     direction = Game.direction
 
 
-    print([Game.player.center.x - Game.spawnpoint.center.x, Game.player.center.y - Game.spawnpoint.center.y])
-
 
     Game.update_and_render_tiles(display)
     Game.render_all(display)
@@ -280,9 +278,9 @@ while running:
 # Quit Pygame
 
 
-data = Game.save_data(data)
-with open('save_files.txt', 'w') as save_file:
-    json.dump(data, save_file, indent=4)
+# data = Game.save_data(data)
+# with open('save_files.txt', 'w') as save_file:
+#     json.dump(data, save_file, indent=4)
 
 pygame.quit()
 

@@ -49,7 +49,7 @@ class Uno(Hitbox):
         self.charge_end = 45
         self.charge_inc = 1
 
-        self.shurikens = []
+        self.bullets = []
 
         self.tracking = False
 
@@ -70,11 +70,11 @@ class Uno(Hitbox):
         self.attack_start = 0
         self.attack_end = 8
 
-
+        self.activate = 3
 
 
     def check_if_summon(self):
-        if self.barrels_busted > 5 and not self.summoned:
+        if self.barrels_busted > self.activate and not self.summoned:
             self.summoning = True
             self.tracking = True
 
@@ -166,22 +166,22 @@ class Uno(Hitbox):
         shot_1 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked * -1)
         shot_1.shuriken_angle_start = math.atan2(self.last_looked.y * -1, self.last_looked.x * -1) + self.angle * math.pi / 180
         
-        self.shurikens.append(shot_1)
+        self.bullets.append(shot_1)
 
         shot_2 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(-self.last_looked.y, self.last_looked.x))
         shot_2.shuriken_angle_start = math.atan2(self.last_looked.x, -self.last_looked.y) + self.angle * math.pi / 180
         
-        self.shurikens.append(shot_2)
+        self.bullets.append(shot_2)
 
         shot_3 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
         shot_3.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
         
-        self.shurikens.append(shot_3)
+        self.bullets.append(shot_3)
 
         shot_4 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(self.last_looked.y, -self.last_looked.x))
         shot_4.shuriken_angle_start = math.atan2(-self.last_looked.x, self.last_looked.y) + self.angle * math.pi / 180
         
-        self.shurikens.append(shot_4)
+        self.bullets.append(shot_4)
 
 
 
@@ -209,7 +209,7 @@ class Uno(Hitbox):
 
 
 
-        self.shurikens.append(shot_5)
+        self.bullets.append(shot_5)
 
 
     def charge(self):
@@ -221,14 +221,14 @@ class Uno(Hitbox):
             shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
             shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
             shot.shuriken_velocity = 4
-            self.shurikens.append(shot)
+            self.bullets.append(shot)
 
 
 
     def delete_shuriken(self, shuriken_to_delete):
-        for i in range(len(self.shurikens)):
-            if self.shurikens[i] == shuriken_to_delete:
-                del self.shurikens[i]
+        for i in range(len(self.bullets)):
+            if self.bullets[i] == shuriken_to_delete:
+                del self.bullets[i]
                 return
 
 

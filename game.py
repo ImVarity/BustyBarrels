@@ -14,18 +14,19 @@ from player import PlayerArrow
 from collectable import Collectable
 from npc import NPC
 from uno import Uno
-from particles import Particle
+from particles import Particle, dust
 from slime import Slime
 from bomb import Bomb
 from tile import Tile
 from map import Tilemap
 from render import *
+from butterfly import Butterfly
 import time
 
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
-MAX_BARREL_COUNT_COLLECTABLES = 50
+MAX_BARREL_COUNT_COLLECTABLES = 10
 
 
 
@@ -47,11 +48,13 @@ class GameLoop:
         self.player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
         self.spawnpoint = Barrel((0, 0), 8, 8, black)
         self.tif_spawnpoint = Barrel([mid_x + 16, mid_y + 16], 8, 8, black)
+        self.syl_spawnpoint = Barrel([-mid_x - 16, -mid_y - 16], 8, 8, black)
         self.powerup = Collectable((mid_x, mid_x), 16, 16, black, [img.convert_alpha() for img in bigger_bomb_images])
 
         # Bosses
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple)
-        self.bosses = [self.Tifanie]
+        self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue)
+        self.bosses = [self.Tifanie, self.Sylvia]
 
         # NPCS
         self.Mikhail = NPC([0, -40], 64, 64, red, rock_images)
@@ -72,6 +75,7 @@ class GameLoop:
         self.arrows = []
         self.bombs = []
         self.watermelons = []
+        self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint]
 
 
         self.barrels = [
@@ -123,6 +127,7 @@ class GameLoop:
             "Barrels": [],
             "Arrows" : [],
             "Shurikens" : [],
+            "Leaves" : [],
             "Bombs" : [],
             "Bosses" : [],
             "Water" : [],
@@ -155,13 +160,16 @@ class GameLoop:
 
 
 
-        self.spawnpoint.update(self.inputs["Rotation"], self.direction)
-        self.tif_spawnpoint.update(self.inputs["Rotation"], self.direction)
-
+        # Update spawnpoints
+        self.update_spawnpoints()
 
 
         # checks if player shoots the arrow
         self.shoot_arrow()
+
+        # player dash
+        self.dash()
+        
 
         # checks if player throws  abomb
         self.throw_bomb()
@@ -184,12 +192,15 @@ class GameLoop:
 
 
         # Boss
-        self.update_bosses()
-        self.update_shurikens()
-        self.Tifanie.attacks(dt)
-        self.Tifanie.check_if_summon()
+        self.update_bosses(dt)
+        
+
+
+
         if self.Tifanie.tracking:
             self.camera_follow = self.Tifanie
+        elif self.Sylvia.tracking:
+            self.camera_follow = self.Sylvia
         else:
             self.camera_follow = self.player
         
@@ -197,6 +208,7 @@ class GameLoop:
         # Collision
         self.player_and_barrels()
         self.player_and_shurikens(display)
+        self.player_and_leaves(display)
         self.arrows_and_all()
         self.bombs_and_barrels()
 
@@ -210,6 +222,7 @@ class GameLoop:
             "Barrels": [],
             "Arrows" : [],
             "Shurikens" : [],
+            "Leaves" : [],
             "Bombs" : [],
             "Bosses" : [],
             "Water" : [],
@@ -217,9 +230,15 @@ class GameLoop:
         }
 
 
+    def update_spawnpoints(self):
+        for spawnpoint in self.spawnpoints:
+            spawnpoint.set_delta_time(self.dt)
+            spawnpoint.update(self.inputs["Rotation"], self.direction)
 
-
-
+    def dash(self):
+        if self.inputs["Action"]["dash"] and self.player.dash_start <= self.dt:
+            self.sounds.dash_sound.play()
+            dust(self.particles, self.player.location, self.direction)
 
     def completion_text(self, display):
         # text that appears when something happens
@@ -262,6 +281,10 @@ class GameLoop:
                     continue
                 tile.render(display)
 
+    def render_butterflies(self, display):
+        for barrel in self.barrels:
+            barrel.to_render.animate(display, self.dt, type="stack")
+
 
     def shoot_arrow(self):
         if self.inputs["Action"]["shoot"] and not self.paused: #and len(self.player.inventory["Arrows"]) > 0:
@@ -286,15 +309,22 @@ class GameLoop:
             self.sounds.throw.play()
             self.bombs.append(bomb)
 
-    def update_shurikens(self):
+    def update_boss_bullets(self, boss):
         # dont need to fix z position of shurikens because always on top
-        for i, shuriken in enumerate(self.Tifanie.shurikens):
+        for i, shuriken in enumerate(boss.bullets):
             shuriken.set_delta_time(self.dt)
             shuriken.update(self.inputs["Rotation"], self.direction)
             # limit render distance
             if limit_render(shuriken, self.player.render_radius):
                 continue
-            limit_collision(shuriken, self.player, self.player.collision_radius, self.collidables["Shurikens"])
+            
+            if boss == self.Tifanie:
+                bullet = "Shurikens"
+            elif boss == self.Sylvia:
+                bullet = "Leaves"
+            else:
+                bullet = "Shurikens"
+            limit_collision(shuriken, self.player, self.player.collision_radius, self.collidables[bullet])
 
     def add_collectables(self, item, MAX):
         if len(self.collectables[item]) < MAX:
@@ -333,6 +363,7 @@ class GameLoop:
                 
                 added = False
 
+
                 for arrow in self.arrows:
                     if abs(barrel.center.x - arrow.center.x) <= barrel.width / 2 and abs(barrel.center.y - arrow.center.y) <= barrel.height / 2:
                         self.collidables["Arrows"].append(arrow)
@@ -351,10 +382,22 @@ class GameLoop:
 
             self.to_render.append(barrel)
 
-    def update_bosses(self):
+    def update_bosses(self, dt):
+
         for b in self.bosses:
             if not self.paused:
                 b.set_delta_time(self.dt)
+
+                # checks what attacks to attack with
+                b.attacks(dt)
+
+                # obvious
+                if not b.summoned:
+                    b.check_if_summon()
+
+                # updates the bullets that the boss shoots
+                self.update_boss_bullets(b)
+
                 b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
                 b.follow_player(self.player.center)
                 if b.summoned:
@@ -451,9 +494,10 @@ class GameLoop:
             if isinstance(object, Player):
                 object.render(display)
                 # object.draw_hitbox(display)
-                object.draw_healthbar(display)
+                # object.draw_healthbar(display)
             
             if isinstance(object, Barrel):
+                # object.to_render.animate(display, self.dt, type="stack")
                 object.render(display)
                 object.draw_healthbar(display)
 
@@ -474,24 +518,45 @@ class GameLoop:
                     object.draw_healthbar(display)
                 if object.dead:
                     object.draw_hitbox(display)
+            
+            elif isinstance(object, Butterfly):
+
+                if object.summoning:
+                    object.render(display)
+                if object.summoned and not object.dead:
+                    object.to_render.animate(display, self.dt, type="stack")
+                    object.draw_healthbar(display)
+                if object.dead:
+                    object.draw_hitbox(display)
 
             elif isinstance(object, Bomb):
                 object.render(display)
                 object.draw_hitbox(display)
 
             if self.inputs["Admin"]["hitboxes"]:
+                for s in self.spawnpoints:
+                    s.draw_hitbox(display)
                 object.draw_hitbox(display)
 
+        # things that need to drawn on top of everything
+
+        # whatever the player is holding on to
         self.render_player_inventory(display)
-        self.render_Tifanie_shurikens(display)
-        self.player.draw_damage(display)
+
+        # all the bosses bullets
+        self.render_boss_bullets(display)
+
+        # the damage number above the player
         self.draw_particles(display)
 
+        self.player.draw_damage(display)
+
+        # when talking to mikhail
         self.render_npc_hud(display)
-
         self.completion_text(display)
-
         self.draw_HUD(display)
+
+        self.Sylvia.locked.draw_hitbox(display)
 
         # if self.paused:
         #     self.paused_screen(display)
@@ -528,9 +593,11 @@ class GameLoop:
         for i in range(max(len(self.player.inventory["Arrows"]) - 10, 0), len(self.player.inventory["Arrows"])):
             self.player.inventory["Arrows"][i].render(display)
 
-    def render_Tifanie_shurikens(self, display):
-        for shuriken in self.Tifanie.shurikens:
-            shuriken.render(display)
+    def render_boss_bullets(self, display):
+        for boss in self.bosses:
+            for bullet in boss.bullets:
+                bullet.render(display)
+
 
 
     def camera_tracking(self):
@@ -579,6 +646,31 @@ class GameLoop:
                     self.player.player_death()
                     break
                 self.player.move(normal * .05)
+
+    def player_and_leaves(self, display):
+        # Player colliding with Leaves
+        for i in range(len(self.collidables["Leaves"]) - 1, -1, -1):
+            bodyB = self.collidables["Leaves"][i]
+            collided, depth, normal = self.player.handle_collision(bodyB.normals(), self.player.normals(), bodyB)
+
+            if collided:
+                self.player.damage(bodyB.damage, display)
+                self.Sylvia.delete_shuriken(bodyB)
+                del self.collidables["Leaves"][i]
+                if self.player.health_bar.health <= 0:
+                    x_distance = math.sqrt((self.player.center.x - self.spawnpoint.center.x) ** 2 + (self.player.center.y - self.spawnpoint.center.y) ** 2)
+                    v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
+                    v.normalize()
+                    self.player.move_distance(v * -1, x_distance)
+                    t_x_distance = math.sqrt((self.Sylvia.center.x- self.syl_spawnpoint.center.x) ** 2 + (self.Sylvia.center.y - self.syl_spawnpoint.center.y) ** 2)
+                    t_v = Vector((self.Sylvia.center.x - self.syl_spawnpoint.center.x), (self.Sylvia.center.y - self.syl_spawnpoint.center.y))
+                    t_v.normalize()
+                    self.Sylvia.move_distance(t_v * -1, t_x_distance)
+                    self.Sylvia.temp_death()
+                    self.player.player_death()
+                    break
+                self.player.move(normal * .05)
+
 
     def arrows_and_all(self):
         # Arrows colliding with Barrels
@@ -650,7 +742,9 @@ class GameLoop:
 
     def delete_barrel(self, barrel_to_delete): # (barrels, barrel_to_delete, watermelons, Tifanie, player):
         try:
-            self.Tifanie.barrels_busted += 1
+            for boss in self.bosses:
+                boss.barrels_busted += 1
+
             self.player.barrels_busted += 1
             if self.player.inQuest:
                 self.player.quest_barrels_busted += 1
@@ -669,10 +763,12 @@ class GameLoop:
             # if arrows[i].center.x < 0 or arrows[i].center.x > display_width or arrows[i].center.y < 0 or arrows[i].center.y > display_height:
             #     del arrows[i]
 
-        # deletes all the Tifanie shots that pass a certain radius
-        for i in range(len(self.Tifanie.shurikens) - 1, -1, -1):
-            if math.hypot(self.Tifanie.center.x - self.Tifanie.shurikens[i].center.x, self.Tifanie.center.y - self.Tifanie.shurikens[i].center.y) > self.Tifanie.delete_radius:
-                del self.Tifanie.shurikens[i]
+
+        # deletes all the shots that bosses shoot past their deletion radius
+        for boss in self.bosses:
+            for i in range(len(boss.bullets) - 1, -1, -1):
+                if math.hypot(boss.center.x - boss.bullets[i].center.x, boss.center.y - boss.bullets[i].center.y) > boss.delete_radius:
+                    del boss.bullets[i]
 
         # checks if the bomb height is lower enough then explodes it
         for i in range(len(self.bombs) -1, -1, -1):
