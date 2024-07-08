@@ -2,6 +2,7 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
+from timer import Timer
 import random
 import math
 
@@ -10,7 +11,7 @@ mid_y = 200
 
 
 class Butterfly(Hitbox):
-    def __init__(self, center, width, height, color, health=1000):
+    def __init__(self, center, width, height, color, name, health=1000):
         super().__init__(center, width, height, color)
         self.health = health
 
@@ -51,16 +52,12 @@ class Butterfly(Hitbox):
         self.charge_towards = Vector(0, 0)
 
 
-        self.charge_now = False
-        self.charging = False
-        self.charge_start = 0
-        self.charge_end = 45
         self.charge_speed = 2 # how fast it charges at the player
         self.max_charge_distance = 200
 
-        self.paused = False
-        self.charge_pause_end = 45
-        self.charge_pause_start = 0
+        self.charging_timer = Timer(45)
+        self.pausing_timer = Timer(45)
+
 
         self.bullets = []
 
@@ -68,7 +65,7 @@ class Butterfly(Hitbox):
 
         self.dead = False
 
-        self.name = "Sylvia"
+        self.name = name
 
         self.barrels_busted = 0
         
@@ -80,8 +77,6 @@ class Butterfly(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.attack_start = 0
-        self.attack_end = 8
 
 
         self.activate = 1 # activates after breaking this many barrels
@@ -172,12 +167,6 @@ class Butterfly(Hitbox):
             self.health_bar.damage(dmg)
 
     def attacks(self, dt):
-        # self.attack_start += dt
-        # if self.attack_start >= self.attack_end:
-        #     self.attack_start = 0
-        #     if self.summoned and not self.dead:
-        #         self.spiral_attack()
-        
         if self.summoned and not self.dead:
             self.attack_two()
 
@@ -208,14 +197,6 @@ class Butterfly(Hitbox):
 
         
     def attack_two(self):
-        if self.paused:
-            self.locked.center = Vector(self.location[0], self.location[1]) + (self.looking * -self.max_charge_distance)
-            self.locked.set_vertices()
-            self.charge_end = random.randint(20, 50)
-            self.attack_damage = 0
-        self.attack_damage = 0
-
-
         self.charge_towards = self.locked.center - self.center
         self.charge_towards.normalize()
 
@@ -224,30 +205,35 @@ class Butterfly(Hitbox):
 
 
     def charge(self):
-        self.charge_start += self.dt
-        
-
-        if self.charging and not self.paused:
+        self.charging_timer.start_timer(self.dt)
+        # if there isnt an alarm, keep charging
+        if not self.charging_timer.alarm:
+            
+            self.attack_damage = 20
             self.move(self.charge_towards * self.charge_speed * self.dt)
-
-            # shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-            # shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-            # shot.shuriken_velocity = 4
-            # self.bullets.append(shot)
         else:
+            self.locked.center = Vector(self.location[0], self.location[1]) + (self.looking * -self.max_charge_distance)
+            self.locked.set_vertices()
+
+            self.attack_damage = 0
+
             self.move(self.looking * -1 * .6 * self.dt)
 
-        if self.charge_start < self.charge_end:
-            self.charging = True
-        else:
-            self.charging = False
-            self.charge_pause_start += self.dt
-            self.paused = True
-        
-        if self.charge_pause_start >= self.charge_pause_end:
-            self.charge_start = 0
-            self.charge_pause_start = 0
-            self.paused = False
+            # when the charging timer ends, deactivate it
+            self.charging_timer.active = False
+            self.pausing_timer.active = True # activate pausing timer
+            self.pausing_timer.start_timer(self.dt)
+
+            # when the pausing timer ends,
+            if self.pausing_timer.alarm: # reset all timers
+                self.charging_timer.end = random.randint(25, 55)
+                self.charging_timer.reset_timer()
+                self.pausing_timer.reset_timer()
+                self.pausing_timer.active = False
+                self.charging_timer.active = True
+
+
+
             
             
     def directional_attack(self):

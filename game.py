@@ -55,8 +55,8 @@ class GameLoop:
 
         # Bosses
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple)
-        self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue)
-        self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue)
+        self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue, "Sylvia")
+        self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue, "Crystal")
         self.bosses = [self.Tifanie, self.Sylvia, self.Crystal]
 
         # NPCS
@@ -72,6 +72,7 @@ class GameLoop:
         # Camera
         self.camera_follow = self.player
         self.screen_shake = 0
+        self.shake_magnitude = 8
 
         self.to_render = []
         self.boxes = []
@@ -421,7 +422,7 @@ class GameLoop:
 
                 b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
                 b.follow_player(self.player.center)
-                if b.summoned:
+                if b.summoned and not b.dead:
                     added = False
                     for arrow in self.arrows:
                         if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
@@ -596,8 +597,6 @@ class GameLoop:
         self.completion_text(display)
         self.draw_HUD(display)
 
-        self.Sylvia.locked.draw_hitbox(display)
-
         # if self.paused:
         #     self.paused_screen(display)
 
@@ -767,6 +766,7 @@ class GameLoop:
                     del self.collidables["Arrows"][i]
                     if bodyB.health_bar.health <= 0:
                         self.screen_shake = 10
+                        self.shake_magnitude = 8
                         self.delete_barrel(bodyB)
                         del self.collidables["Barrels"][j]
                     hit = True
@@ -788,13 +788,14 @@ class GameLoop:
                     self.sounds.damage.play()
                     del self.collidables["Arrows"][i]
                     if bodyB.health_bar.health <= 0:
-                        self.screen_shake = 30
+                        self.screen_shake = 10
+                        self.shake_magnitude = 12
                         # if not self.b.dead:
                         #     p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
                         #     p.powerup = True
                         #     self.player.bomber = True
                         #     self.collectables["Powerups"].append(p)
-                        self.b.death()
+                        bodyB.death()
                     break  # okay to break because the arrow already hit something and it wont hit anything else
 
             # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
@@ -809,6 +810,7 @@ class GameLoop:
                     if bodyB.health_bar.health <= 0:
                         if not self.Tifanie.dead:
                             self.screen_shake = 30
+                            self.shake_magnitude = 12
                             p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
                             p.powerup = True
                             self.player.bomber = True
@@ -831,6 +833,7 @@ class GameLoop:
                     del self.collidables["Bombs"][i]
                     if bodyB.health_bar.health <= 0:
                         self.screen_shake = 10
+                        self.shake_magnitude = 8
                         self.delete_barrel(bodyB)
                         del self.collidables["Barrels"][j]
                     break  # okay to break because the arrow already hit something and it wont hit anything else
