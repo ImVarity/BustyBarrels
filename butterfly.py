@@ -2,6 +2,7 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
+import random
 import math
 
 mid_x = 200
@@ -18,6 +19,8 @@ class Butterfly(Hitbox):
             self.images.append([img.convert_alpha() for img in butterfly_images_stack[i]])
 
         self.num_images = len(self.images[0])
+
+        self.attack_damage = 50
 
         self.spread = 1.3
         self.to_render = Render(self.images, center, self.angle, self.spread)
@@ -52,7 +55,8 @@ class Butterfly(Hitbox):
         self.charging = False
         self.charge_start = 0
         self.charge_end = 45
-        self.charge_speed = 5
+        self.charge_speed = 2 # how fast it charges at the player
+        self.max_charge_distance = 200
 
         self.paused = False
         self.charge_pause_end = 45
@@ -145,8 +149,9 @@ class Butterfly(Hitbox):
 
         render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
         pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
-        pygame.draw.rect(surface, purple, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
+        pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
         
+
         self.health_bar.draw(surface, self.center, self.height)
 
 
@@ -204,11 +209,15 @@ class Butterfly(Hitbox):
         
     def attack_two(self):
         if self.paused:
-            self.locked.center = Vector(self.location[0], self.location[1]) + (self.looking * -100)
-            self.charge_towards = self.locked.center - self.center
+            self.locked.center = Vector(self.location[0], self.location[1]) + (self.looking * -self.max_charge_distance)
             self.locked.set_vertices()
-        else:
-            self.charge_towards.normalize()
+            self.charge_end = random.randint(20, 50)
+            self.attack_damage = 0
+        self.attack_damage = 0
+
+
+        self.charge_towards = self.locked.center - self.center
+        self.charge_towards.normalize()
 
         self.charge()
 
@@ -216,16 +225,18 @@ class Butterfly(Hitbox):
 
     def charge(self):
         self.charge_start += self.dt
+        
 
-        if self.charging:
-            
+        if self.charging and not self.paused:
             self.move(self.charge_towards * self.charge_speed * self.dt)
 
-            shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-            shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-            shot.shuriken_velocity = 4
-            self.bullets.append(shot)
-    
+            # shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
+            # shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
+            # shot.shuriken_velocity = 4
+            # self.bullets.append(shot)
+        else:
+            self.move(self.looking * -1 * .6 * self.dt)
+
         if self.charge_start < self.charge_end:
             self.charging = True
         else:

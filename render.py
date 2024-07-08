@@ -36,6 +36,19 @@ def convert_to_imgs(directory):
 
     return images
 
+def extract_number(s):
+    return int(s[11:-4])
+
+def convert_to_imgs_bridge(directory):
+    directory = directory
+    files = [img for img in os.listdir(directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+    files_sorted = sorted(files, key=extract_number)
+    images = [pygame.image.load(os.path.join(directory, img)) for img in files_sorted]
+
+    return images
+
+
+
 
 # Icons
 watermelon_img = pygame.image.load('imgs/icons/melon_c.png')
@@ -72,6 +85,10 @@ player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
 watermelon_images = convert_to_imgs('imgs/watermelon')
 bomb_images = convert_to_imgs('imgs/bomb')
+
+
+# bridge
+bridge_part_0_images = convert_to_imgs_bridge('imgs/bridge/part_0')
 
 # Butterfly
 butterfly_images_stack = [convert_to_imgs('imgs/butterfly_stack/butterfly'),

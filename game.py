@@ -21,6 +21,7 @@ from tile import Tile
 from map import Tilemap
 from render import *
 from butterfly import Butterfly
+from bridge import BridgePart
 import time
 
 
@@ -49,12 +50,14 @@ class GameLoop:
         self.spawnpoint = Barrel((0, 0), 8, 8, black)
         self.tif_spawnpoint = Barrel([mid_x + 16, mid_y + 16], 8, 8, black)
         self.syl_spawnpoint = Barrel([-mid_x - 16, -mid_y - 16], 8, 8, black)
+        self.cry_spawnpoint = Barrel([mid_x + 16, -mid_y - 16], 8, 8, blue)
         self.powerup = Collectable((mid_x, mid_x), 16, 16, black, [img.convert_alpha() for img in bigger_bomb_images])
 
         # Bosses
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple)
         self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue)
-        self.bosses = [self.Tifanie, self.Sylvia]
+        self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue)
+        self.bosses = [self.Tifanie, self.Sylvia, self.Crystal]
 
         # NPCS
         self.Mikhail = NPC([0, -40], 64, 64, red, rock_images)
@@ -75,7 +78,11 @@ class GameLoop:
         self.arrows = []
         self.bombs = []
         self.watermelons = []
-        self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint]
+        self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint, self.cry_spawnpoint]
+        self.bridge = [
+            BridgePart([0, -500], 99, 48, 0, red),
+            BridgePart([90, -500], 99, 48, 180, red)
+        ]
 
 
         self.barrels = [
@@ -129,7 +136,10 @@ class GameLoop:
             "Shurikens" : [],
             "Leaves" : [],
             "Bombs" : [],
-            "Bosses" : [],
+            "Bosses" : {
+                "Butterflies" : [],
+                "Bunny" : []
+            },
             "Water" : [],
             "Boundary": []
         }
@@ -162,6 +172,8 @@ class GameLoop:
 
         # Update spawnpoints
         self.update_spawnpoints()
+
+        self.update_bridge()
 
 
         # checks if player shoots the arrow
@@ -209,6 +221,7 @@ class GameLoop:
         self.player_and_barrels()
         self.player_and_shurikens(display)
         self.player_and_leaves(display)
+        self.player_and_butterflies(display)
         self.arrows_and_all()
         self.bombs_and_barrels()
 
@@ -217,23 +230,36 @@ class GameLoop:
         self.delete_objects()
 
 
-        
+
         self.collidables = { # in here so collidables get emptied every loop
             "Barrels": [],
             "Arrows" : [],
             "Shurikens" : [],
             "Leaves" : [],
             "Bombs" : [],
-            "Bosses" : [],
+            "Bosses" : {
+                "Butterflies" : [],
+                "Bunny" : []
+            },
             "Water" : [],
             "Boundary": []
         }
 
+    def update_bridge(self):
+        for part in self.bridge:
+            part.set_delta_time(self.dt)
+            part.update(self.inputs["Rotation"], self.direction)
+
+            if part.center.x >= -32 and part.center.x <= display_width + 32 and part.center.y >= -32 and part.center.y <= display_height + 32:
+
+                self.to_render.append(part)
+
 
     def update_spawnpoints(self):
         for spawnpoint in self.spawnpoints:
-            spawnpoint.set_delta_time(self.dt)
-            spawnpoint.update(self.inputs["Rotation"], self.direction)
+            if not self.paused:
+                spawnpoint.set_delta_time(self.dt)
+                spawnpoint.update(self.inputs["Rotation"], self.direction)
 
     def dash(self):
         if self.inputs["Action"]["dash"] and self.player.dash_start <= self.dt:
@@ -247,12 +273,9 @@ class GameLoop:
 
     def update_player(self):
         self.player.set_delta_time(self.dt)
+        
+        # just update away the whole time because the player is moving away from the middle of the screen constantly
         self.player.update_away(self.inputs["Rotation"], self.inputs["Action"], self.direction) # apparently i had handle rotation for a player and objects, so i can just do this so that the player doesnt rotate around the camera when tracking something else. i am such a genius
-
-        # if self.camera_follow == self.player:
-        #     self.player.update(self.inputs["Rotation"], self.inputs["Action"], self.direction)
-        # else:
-        #     self.player.update_away(self.inputs["Rotation"], self.inputs["Action"], self.direction) # apparently i had handle rotation for a player and objects, so i can just do this so that the player doesnt rotate around the camera when tracking something else. i am such a genius
 
 
         if self.player.in_water:
@@ -263,6 +286,7 @@ class GameLoop:
             raise_player(self.player)
         self.player_arrow.update(self.player.looking)
         self.player.check_knockback()
+
 
     def update_and_render_tiles(self, display):
         for tile in self.Map.tiles:
@@ -281,9 +305,6 @@ class GameLoop:
                     continue
                 tile.render(display)
 
-    def render_butterflies(self, display):
-        for barrel in self.barrels:
-            barrel.to_render.animate(display, self.dt, type="stack")
 
 
     def shoot_arrow(self):
@@ -320,7 +341,7 @@ class GameLoop:
             
             if boss == self.Tifanie:
                 bullet = "Shurikens"
-            elif boss == self.Sylvia:
+            elif boss == self.Sylvia or boss == self.Crystal:
                 bullet = "Leaves"
             else:
                 bullet = "Shurikens"
@@ -401,10 +422,23 @@ class GameLoop:
                 b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
                 b.follow_player(self.player.center)
                 if b.summoned:
+                    added = False
                     for arrow in self.arrows:
                         if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
                             self.collidables["Arrows"].append(arrow)
-                            self.collidables["Bosses"].append(b)
+                            if isinstance(b, Butterfly):
+                                self.collidables["Bosses"]["Butterflies"].append(b)
+                            elif isinstance(b, Uno):
+                                self.collidables["Bosses"]["Bunny"].append(b)
+                            added = True
+                    if not added:
+                        if abs(b.center.x - self.player.center.x) <= b.width / 2 and abs(b.center.y - self.player.center.y) <= b.height / 2:
+                            if isinstance(b, Butterfly):
+                                self.collidables["Bosses"]["Butterflies"].append(b)
+                            elif isinstance(b, Uno):
+                                self.collidables["Bosses"]["Bunny"].append(b)
+                        
+                    
 
             self.to_render.append(b)
     
@@ -483,21 +517,24 @@ class GameLoop:
 
     
     def render_all(self, display):
+
+
         # sorting all the things to render by y value
         self.to_render = sorted(self.to_render, key=lambda x : x.center.y)
+
         # arrow comes below everything else
         self.player_arrow.render(display)
 
         # every item including player
         for object in self.to_render:
+
             
             if isinstance(object, Player):
                 object.render(display)
                 # object.draw_hitbox(display)
-                # object.draw_healthbar(display)
+                object.draw_healthbar(display)
             
             if isinstance(object, Barrel):
-                # object.to_render.animate(display, self.dt, type="stack")
                 object.render(display)
                 object.draw_healthbar(display)
 
@@ -532,6 +569,9 @@ class GameLoop:
             elif isinstance(object, Bomb):
                 object.render(display)
                 object.draw_hitbox(display)
+
+            elif isinstance(object, BridgePart):
+                object.render(display)
 
             if self.inputs["Admin"]["hitboxes"]:
                 for s in self.spawnpoints:
@@ -656,21 +696,59 @@ class GameLoop:
             if collided:
                 self.player.damage(bodyB.damage, display)
                 self.Sylvia.delete_shuriken(bodyB)
+                self.Crystal.delete_shuriken(bodyB)
                 del self.collidables["Leaves"][i]
                 if self.player.health_bar.health <= 0:
                     x_distance = math.sqrt((self.player.center.x - self.spawnpoint.center.x) ** 2 + (self.player.center.y - self.spawnpoint.center.y) ** 2)
                     v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
                     v.normalize()
                     self.player.move_distance(v * -1, x_distance)
+
                     t_x_distance = math.sqrt((self.Sylvia.center.x- self.syl_spawnpoint.center.x) ** 2 + (self.Sylvia.center.y - self.syl_spawnpoint.center.y) ** 2)
                     t_v = Vector((self.Sylvia.center.x - self.syl_spawnpoint.center.x), (self.Sylvia.center.y - self.syl_spawnpoint.center.y))
                     t_v.normalize()
                     self.Sylvia.move_distance(t_v * -1, t_x_distance)
                     self.Sylvia.temp_death()
+
+                    s_x_distance = math.sqrt((self.Crystal.center.x- self.cry_spawnpoint.center.x) ** 2 + (self.Crystal.center.y - self.cry_spawnpoint.center.y) ** 2)
+                    s_v = Vector((self.Crystal.center.x - self.cry_spawnpoint.center.x), (self.Crystal.center.y - self.cry_spawnpoint.center.y))
+                    s_v.normalize()
+                    self.Crystal.move_distance(s_v * -1, s_x_distance)
+                    self.Crystal.temp_death()
+
                     self.player.player_death()
                     break
                 self.player.move(normal * .05)
+        
+    def player_and_butterflies(self, display):
+        for i in range(len(self.collidables["Bosses"]["Butterflies"])):
+            bodyB = self.collidables["Bosses"]["Butterflies"][i]
+            collided, depth, normal = self.player.handle_collision(bodyB.normals(), self.player.normals(), bodyB)
 
+            if collided:
+                self.player.damage(bodyB.attack_damage, display)
+                if self.player.health_bar.health <= 0:
+                    x_distance = math.sqrt((self.player.center.x - self.spawnpoint.center.x) ** 2 + (self.player.center.y - self.spawnpoint.center.y) ** 2)
+                    v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
+                    v.normalize()
+                    self.player.move_distance(v * -1, x_distance)
+
+                    t_x_distance = math.sqrt((self.Sylvia.center.x- self.syl_spawnpoint.center.x) ** 2 + (self.Sylvia.center.y - self.syl_spawnpoint.center.y) ** 2)
+                    t_v = Vector((self.Sylvia.center.x - self.syl_spawnpoint.center.x), (self.Sylvia.center.y - self.syl_spawnpoint.center.y))
+                    t_v.normalize()
+                    self.Sylvia.move_distance(t_v * -1, t_x_distance)
+                    self.Sylvia.temp_death()
+
+                    s_x_distance = math.sqrt((self.Crystal.center.x- self.cry_spawnpoint.center.x) ** 2 + (self.Crystal.center.y - self.cry_spawnpoint.center.y) ** 2)
+                    s_v = Vector((self.Crystal.center.x - self.cry_spawnpoint.center.x), (self.Crystal.center.y - self.cry_spawnpoint.center.y))
+                    s_v.normalize()
+                    self.Crystal.move_distance(s_v * -1, s_x_distance)
+                    self.Crystal.temp_death()
+
+                    self.player.player_death()
+                    break
+                self.player.move(normal * .05)
+        
 
     def arrows_and_all(self):
         # Arrows colliding with Barrels
@@ -694,10 +772,33 @@ class GameLoop:
                     hit = True
                     break  # okay to break because the arrow already hit something and it wont hit anything else
 
+        
+        # Arrows colliding with bosses
+        for i in range(len(self.collidables["Arrows"]) - 1, -1, -1):
+            bodyA = self.collidables["Arrows"][i]
+            hit = False
+            for j in range(len(self.collidables["Bosses"]["Butterflies"]) - 1, -1, -1):
+                bodyB = self.collidables["Bosses"]["Butterflies"][j]
+                collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
 
+                if collided:
+                    bodyB.health_bar.damage(bodyA.damage)
+                    bodyB.move(Vector(math.cos(bodyA.arrow_angle), math.sin(bodyA.arrow_angle)) * .1 * self.dt)
+                    self.delete_arrow(bodyA)
+                    self.sounds.damage.play()
+                    del self.collidables["Arrows"][i]
+                    if bodyB.health_bar.health <= 0:
+                        self.screen_shake = 30
+                        # if not self.b.dead:
+                        #     p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
+                        #     p.powerup = True
+                        #     self.player.bomber = True
+                        #     self.collectables["Powerups"].append(p)
+                        self.b.death()
+                    break  # okay to break because the arrow already hit something and it wont hit anything else
 
             # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
-            if hit == False and len(self.collidables["Bosses"]) > 0: # check if it already hit something
+            if hit == False and len(self.collidables["Bosses"]["Bunny"]) > 0: # check if it already hit something
                 bodyB = self.Tifanie
                 collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
                 if collided:
@@ -707,13 +808,14 @@ class GameLoop:
                     del self.collidables["Arrows"][i]
                     if bodyB.health_bar.health <= 0:
                         if not self.Tifanie.dead:
+                            self.screen_shake = 30
                             p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
                             p.powerup = True
                             self.player.bomber = True
                             self.collectables["Powerups"].append(p)
                         self.Tifanie.death()
                     break
-    
+
     def bombs_and_barrels(self):
         # Bombs colliding with Barrels
         for i in range(len(self.collidables["Bombs"]) - 1, -1, -1):
