@@ -1,17 +1,15 @@
 
-
 from render import *
 from Square import Hitbox
 from health import HealthBar
 
-class BridgePart(Hitbox):
-    def __init__(self, center, width, height, angle, color, health=5):
+class Alpha(Hitbox):
+    def __init__(self, center, width, height, color, health=5):
         super().__init__(center, width, height, color)
-        self.adjusted_rotation = angle
-        self.images = [img.convert_alpha() for img in barrel_images]
 
+        self.images = [img.convert_alpha() for img in alpha_images]
 
-        self.spread = 1.5
+        self.spread = 1
         self.to_render = Render(self.images, center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
     
@@ -22,10 +20,9 @@ class BridgePart(Hitbox):
         self.health_bar.draw(surface, self.center, self.height)
 
 
-
     def update(self, rotation_input, direction):
         self.handle_rotation(rotation_input)
         self.move(direction * -1)
         self.to_render.loc = [self.center.x, self.center.y]
-        self.to_render.angle = self.angle - self.adjusted_rotation
+        self.to_render.angle = self.angle
 

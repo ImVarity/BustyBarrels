@@ -6,20 +6,13 @@ from timer import Timer
 import random
 import math
 
-mid_x = 200
-mid_y = 200
 
-
-class Butterfly(Hitbox):
-    def __init__(self, center, width, height, color, name, health=1000):
+class King(Hitbox):
+    def __init__(self, center, width, height, color, name, health=500):
         super().__init__(center, width, height, color)
         self.health = health
 
-        self.images = []
-        for i in range(len(butterfly_images_stack)):
-            self.images.append([img.convert_alpha() for img in butterfly_images_stack[i]])
-
-        self.num_images = len(self.images[0])
+        self.images = [img.convert_alpha() for img in slime_images]
 
         self.attack_damage = 50
 
@@ -27,6 +20,7 @@ class Butterfly(Hitbox):
         self.to_render = Render(self.images, center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
 
+        self.num_images = len(self.images)
 
         self.shoot_angle_degrees = 45
         self.shoot_angle_radians = 0
@@ -35,7 +29,7 @@ class Butterfly(Hitbox):
 
         self.turn_angle_degrees = 1
 
-        self.delete_radius = 200
+        self.delete_radius = 1000
 
         
         self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
@@ -77,9 +71,24 @@ class Butterfly(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-
-
         self.activate = 1 # activates after breaking this many barrels
+
+
+        self.closest_to_player = False
+
+
+        self.bullets = []
+        self.sword_show_timer = Timer(75)
+        self.sword_attack_timer = Timer(120)
+
+        self.throwing_point = 0
+        self.throwing_points = [[mid_x - 100, mid_y + 100],
+                                [mid_x - 100, mid_y - 100]]
+        self.throwing_points_vertical = [[mid_x + 100, mid_y - 100],
+                                        [mid_x - 100, mid_y - 100]]
+        
+        self.throw_swords = False
+        self.throwing_timer = Timer(120)
 
 
 
@@ -119,7 +128,7 @@ class Butterfly(Hitbox):
         self.dead = True
 
     def render(self, surface):
-        self.to_render.images = self.images[0][self.summon_index:self.num_images]
+        self.to_render.images = self.images[self.summon_index:self.num_images]
         self.to_render.render_stack(surface)
     
     def follow_player(self, player_center):
@@ -132,20 +141,21 @@ class Butterfly(Hitbox):
 
 
     def draw_healthbar(self, surface):
-        white_bar_width = 180
-        white_bar_height = 16
+        if self.closest_to_player:
+            white_bar_width = 180
+            white_bar_height = 16
 
 
-        width = self.health_bar.health / self.health_bar.maxhealth * 180
-        center = Vector(mid_x, 30)
-        
-        margin_top_bottom = 2
-        margin_left_right = 2
+            width = self.health_bar.health / self.health_bar.maxhealth * 180
+            center = Vector(mid_x, 30)
+            
+            margin_top_bottom = 2
+            margin_left_right = 2
 
-        render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
-        pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
-        pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
-        
+            render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
+            pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
+            pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
+            
 
         self.health_bar.draw(surface, self.center, self.height)
 
@@ -159,17 +169,55 @@ class Butterfly(Hitbox):
         self.locked.update(rotation_input, direction)
 
 
-
     def damage(self, dmg):
         if not self.summoned:
             pass
         else:
             self.health_bar.damage(dmg)
 
-    def attacks(self, dt):
+    def attacks(self, dt, display):
         if self.summoned and not self.dead:
-            self.attack_two()
+            self.sword_attack_timer.start_timer(dt)
+            self.sword_show_timer.start_timer(dt)
+            if self.sword_show_timer.alarm:
+                self.sword_show()
+                self.sword_show_timer.reset_timer()
+                self.sword_show_timer.active = False
 
+            if self.sword_attack_timer.alarm:
+                for sword in self.bullets:
+                    sword.sword_velocity = sword.sword_velocity_og
+                self.sword_attack_timer.reset_timer()
+                self.sword_show_timer.active = True
+
+
+    def sword_show(self):
+            self.throwing_point = random.randint(0, 1)
+            num_of_swords = 9 # how many swords per side are summoned
+            skip = random.randint(1, 7) # creates a gap that players can pass through
+
+            for i in range(num_of_swords):
+                if i == skip:
+                    continue
+                point = [self.throwing_points[self.throwing_point][0] + i * 25, self.throwing_points[self.throwing_point][1]]
+                upright = self.vec_to_mid(point)
+                shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
+                shot.sword_velocity = 0
+                self.bullets.append(shot)
+            self.throwing_point = random.randint(0, 1)
+            for i in range(num_of_swords):
+                if i == skip or i == skip + 1:
+                    continue
+                point = [self.throwing_points_vertical[self.throwing_point][0], self.throwing_points_vertical[self.throwing_point][1] + i * 25]
+                upright = self.vec_to_mid(point)
+                shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
+                shot.sword_velocity = 0
+                self.bullets.append(shot)
+
+
+    def vec_to_mid(self, point):
+        return Vector(200 - point[0], 200 - point[1]).normalize()
+        
 
     def spiral_attack(self):
         
@@ -250,8 +298,6 @@ class Butterfly(Hitbox):
         self.boss_angle_degrees += self.boss_angle_degrees_increment
         self.s_x, self.s_y = self.boss_angle_degrees * math.pi / 180, self.boss_angle_degrees * math.pi / 180
 
-
-
         self.bullets.append(shot_5)
 
 
@@ -263,20 +309,21 @@ class Butterfly(Hitbox):
 
 
 
-class Shuriken(Hitbox):
-    def __init__(self, center, width, height, color, looking):
+class SwordShot(Hitbox):
+    def __init__(self, center, width, height, color, looking, sword_angle_start):
         super().__init__(center, width, height, color)
         
-        self.images = shuriken_img.convert_alpha()
-        self.shuriken_velocity = 1
-        self.shuriken_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates shuriken to point that direction
-        self.shuriken_angle_start = 0
-        self.set_angle(self.shuriken_angle) # sets the direction of all the vertices to face the right way
+        self.images = swordshot_image.convert_alpha()
+        self.sword_velocity = 10
+        self.sword_velocity_og = 10
+        self.sword_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates sword to point that direction
+
+        self.sword_angle_start = sword_angle_start
+        self.set_angle(self.sword_angle) # sets the direction of all the vertices to face the right way
         self.spread = 1
         self.damage = 5
-        self.to_render = Render(self.images, center, self.shuriken_angle, self.spread)
-
-        # for the spinning of the shuriken
+        self.to_render = Render(self.images, center, self.sword_angle, self.spread)
+        # for the spinning of the sword
         self.rotation_angle = 0
         self.spin_speed_degrees = 4
         self.spin_speed = self.spin_speed_degrees * math.pi / 180
@@ -296,46 +343,47 @@ class Shuriken(Hitbox):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - self.center.x) * math.cos(self.spin_speed * self.dt) + (self.vertices[i].y - self.center.y) * -math.sin(self.spin_speed * self.dt) + self.center.x, (self.vertices[i].x - self.center.x) * math.sin(self.spin_speed * self.dt) + (self.vertices[i].y - self.center.y) * math.cos(self.spin_speed * self.dt) + self.center.y
 
 
-    def handle_rotation_shuriken(self, rotation_input):
-        if not rotation_input["reset"]: # have to do this because it interferes with the shuriken rotation (might have to do it with everything else to make it cleaner)
+    def handle_rotation_sword(self, rotation_input):
+        if not rotation_input["reset"]: # have to do this because it interferes with the sword rotation (might have to do it with everything else to make it cleaner)
             self.handle_rotation(rotation_input)
 
 
 
         if rotation_input["reset"]:
-            # print(self.shuriken_angle, self.shuriken_angle_start)
-            if self.shuriken_angle != self.shuriken_angle_start:
-                self.reset_shuriken_rotation()
-                self.shuriken_angle = self.shuriken_angle_start
+            # print(self.sword_angle, self.sword_angle_start)
+            if self.sword_angle != self.sword_angle_start:
+                self.reset_sword_rotation()
+                self.sword_angle = self.sword_angle_start
             return # so no continuous rotation
 
 
         if rotation_input["counterclockwise"] or rotation_input["clockwise"]:
             if rotation_input["counterclockwise"]:
-                self.shuriken_angle -= self.rotationspeed
+                self.sword_angle -= self.rotationspeed
             elif rotation_input["clockwise"]:
-                self.shuriken_angle += self.rotationspeed
+                self.sword_angle += self.rotationspeed
 
 
-    def reset_shuriken_rotation(self):
-        back = -(self.shuriken_angle - self.shuriken_angle_start)
+    def reset_sword_rotation(self):
+        back = -(self.sword_angle - self.sword_angle_start)
         self.center.x, self.center.y = (self.center.x - mid_x) * math.cos(back) + (self.center.y - mid_y) * -math.sin(back) + mid_x, (self.center.x - mid_x) * math.sin(back) + (self.center.y - mid_y) * math.cos(back) + mid_y
         for i in range(len(self.vertices)):
             self.vertices[i].x, self.vertices[i].y = (self.vertices[i].x - mid_x) * math.cos(back) + (self.vertices[i].y - mid_y) * -math.sin(back) + mid_x, (self.vertices[i].x - mid_x) * math.sin(back) + (self.vertices[i].y - mid_y) * math.cos(back) + mid_y
         
     def update(self, rotation_input, direction):
-        self.self_spin()
         self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
-        self.translate(Vector(math.cos(self.shuriken_angle), math.sin(self.shuriken_angle)) * self.shuriken_velocity * self.dt) # if i want to simulate shooting shurikens, remove this * self.shuriken_velocity and then put it into translate instead
-        self.handle_rotation_shuriken(rotation_input)
+        self.translate(Vector(math.cos(self.sword_angle), math.sin(self.sword_angle)) * self.sword_velocity * self.dt) # if i want to simulate shooting swords, remove this * self.sword_velocity and then put it into translate instead
+        self.handle_rotation_sword(rotation_input)
         self.to_render.loc = [self.center.x, self.center.y]
-        self.to_render.angle = -self.rotation_angle
+        self.to_render.angle = -self.sword_angle * 180 / math.pi
+
+
 
 
     def translate(self, direction):
-        self.center += direction # * self.shuriken_velocity // simulates pull back of shurikens
+        self.center += direction # * self.sword_velocity // simulates pull back of swords
         for i in range(len(self.vertices)):
-            self.vertices[i] += direction # * self.shuriken_velocity
+            self.vertices[i] += direction # * self.sword_velocity
 
 
     

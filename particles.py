@@ -129,3 +129,17 @@ def dust(particles, loc, direction):
         p.gravity = -.02
         p.shrink_rate = .08
         particles.append(p)
+
+def celebrate(particles):
+    for j in range(20):
+        loc = [random.randint(0, 400), random.randint(0, 400)]
+        for i in range(20):
+            p = Particle([loc[0], loc[1]], [random.randint(-324, 324) / 100 / 2, random.randint(-324, 0) / 100], random.randint(10, 20), "celebrate")
+            p.shrink_rate = .04
+            p.gravity = 0.00
+            particles.append(p)
+
+
+def explode(particles, loc):
+    for i in range(30):
+        particles.append(Particle([loc[0], loc[1]], [random.randint(-628, 628) / 100 / 2, random.randint(-628, 0) / 100], random.randint(10, 20), "explosion", lighting=True))

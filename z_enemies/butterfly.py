@@ -2,21 +2,29 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
+from timer import Timer
+import random
 import math
 
 mid_x = 200
 mid_y = 200
 
 
-class Uno(Hitbox):
-    def __init__(self, center, width, height, color, name, health=1000):
+class Butterfly(Hitbox):
+    def __init__(self, center, width, height, color, name, health=500):
         super().__init__(center, width, height, color)
         self.health = health
-        self.images = [img.convert_alpha() for img in Uno_images]
-        self.num_images = len(self.images)
+
+        self.images = []
+        for i in range(len(butterfly_images_stack)):
+            self.images.append([img.convert_alpha() for img in butterfly_images_stack[i]])
+
+        self.num_images = len(self.images[0])
+
+        self.attack_damage = 50
 
         self.spread = 1.3
-        self.to_render = Render(self.images, self.center, self.angle, self.spread)
+        self.to_render = Render(self.images, center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
 
 
@@ -40,14 +48,16 @@ class Uno(Hitbox):
 
 
         self.looking = Vector(0, 0)
-        self.locked = Vector(0, 0)
+        self.locked = Hitbox([0, 0], 4, 4, black)
+        self.charge_towards = Vector(0, 0)
 
 
-        self.charge_now = False
-        self.charging = False
-        self.charge_start = 0
-        self.charge_end = 45
-        self.charge_inc = 1
+        self.charge_speed = 2 # how fast it charges at the player
+        self.max_charge_distance = 200
+
+        self.charging_timer = Timer(45)
+        self.pausing_timer = Timer(45)
+
 
         self.bullets = []
 
@@ -67,17 +77,17 @@ class Uno(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.attack_start = 0
-        self.attack_end = 8
-
-        self.activate = 10
+        self.activate = 100 # activates after breaking this many barrels
 
 
         self.closest_to_player = False
 
 
+
+
+
     def check_if_summon(self):
-        if self.barrels_busted > self.activate and not self.summoned:
+        if self.barrels_busted >= self.activate and not self.summoned:
             self.summoning = True
             self.tracking = True
 
@@ -89,6 +99,7 @@ class Uno(Hitbox):
                 if self.summon_index > 0:
                     self.summon_index -= 1
                 else:
+                    self.to_render.images = self.images
                     self.summoned = True
                     self.summoning = False
                     self.tracking = False
@@ -101,7 +112,7 @@ class Uno(Hitbox):
         self.summon_index = self.num_images
         self.barrels_busted = 0
 
-
+    
 
 
     def death(self):
@@ -109,7 +120,7 @@ class Uno(Hitbox):
         self.dead = True
 
     def render(self, surface):
-        self.to_render.images = self.images[self.summon_index:self.num_images]
+        self.to_render.images = self.images[0][self.summon_index:self.num_images]
         self.to_render.render_stack(surface)
     
     def follow_player(self, player_center):
@@ -118,7 +129,7 @@ class Uno(Hitbox):
         self.looking = v
         angle = math.atan2(v.x, v.y)
         angle = angle * 180 / math.pi
-        self.to_render.angle = angle - 90
+        self.to_render.angle = angle
 
 
     def draw_healthbar(self, surface):
@@ -135,8 +146,9 @@ class Uno(Hitbox):
 
             render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
             pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
-            pygame.draw.rect(surface, purple, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
+            pygame.draw.rect(surface, self.color, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
             
+
         self.health_bar.draw(surface, self.center, self.height)
 
 
@@ -146,6 +158,8 @@ class Uno(Hitbox):
         self.move(direction * -1)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
+        self.locked.update(rotation_input, direction)
+
 
 
     def damage(self, dmg):
@@ -155,13 +169,7 @@ class Uno(Hitbox):
             self.health_bar.damage(dmg)
 
     def attacks(self, dt):
-        self.attack_start += dt
-        if self.attack_start >= self.attack_end:
-            self.attack_start = 0
-            if self.summoned and not self.dead:
-                self.spiral_attack()
-        
-        if self.summoned and not self.dead and self.health_bar.health < self.health_bar.maxhealth // 2:
+        if self.summoned and not self.dead:
             self.attack_two()
 
 
@@ -191,12 +199,45 @@ class Uno(Hitbox):
 
         
     def attack_two(self):
-        self.locked = self.looking
-        self.charging = True
+        self.charge_towards = self.locked.center - self.center
+        self.charge_towards.normalize()
 
         self.charge()
 
 
+
+    def charge(self):
+        self.charging_timer.start_timer(self.dt)
+        # if there isnt an alarm, keep charging
+        if not self.charging_timer.alarm:
+            
+            self.attack_damage = 20
+            self.move(self.charge_towards * self.charge_speed * self.dt)
+        else:
+            self.locked.center = Vector(self.location[0], self.location[1]) + (self.looking * -self.max_charge_distance)
+            self.locked.set_vertices()
+
+            self.attack_damage = 0
+
+            self.move(self.looking * -1 * .6 * self.dt)
+
+            # when the charging timer ends, deactivate it
+            self.charging_timer.active = False
+            self.pausing_timer.active = True # activate pausing timer
+            self.pausing_timer.start_timer(self.dt)
+
+            # when the pausing timer ends,
+            if self.pausing_timer.alarm: # reset all timers
+                self.charging_timer.end = random.randint(25, 55)
+                self.charging_timer.reset_timer()
+                self.pausing_timer.reset_timer()
+                self.pausing_timer.active = False
+                self.charging_timer.active = True
+
+
+
+            
+            
     def directional_attack(self):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
         g = math.atan2(self.s.y, self.s.x) - self.angle * math.pi / 180
@@ -214,19 +255,6 @@ class Uno(Hitbox):
 
 
         self.bullets.append(shot_5)
-
-
-    def charge(self):
-        if self.charging:
-            self.charge_start += self.dt
-
-            self.move(self.locked * -1 * .8 * self.dt)
-
-            shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-            shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-            shot.shuriken_velocity = 4
-            self.bullets.append(shot)
-
 
 
     def delete_shuriken(self, shuriken_to_delete):

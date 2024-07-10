@@ -36,16 +36,19 @@ def convert_to_imgs(directory):
 
     return images
 
-def extract_number(s):
-    return int(s[11:-4])
+def extract_number(s, beginning):
+    return int(s[len(beginning):-4])
 
-def convert_to_imgs_bridge(directory):
+def convert_to_imgs_numbers(directory, beginning):
     directory = directory
     files = [img for img in os.listdir(directory) if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
-    files_sorted = sorted(files, key=extract_number)
+    files_sorted = sorted(files, key=lambda img: extract_number(img, beginning))
     images = [pygame.image.load(os.path.join(directory, img)) for img in files_sorted]
 
     return images
+
+
+
 
 
 
@@ -59,6 +62,8 @@ barrel_img = pygame.image.load('imgs/icons/barrel_icon.png')
 grass_img = pygame.image.load('imgs/terrain/grass_patch.png')
 rock_images = convert_to_imgs('imgs/rock')
 
+# Car
+alpha_images = convert_to_imgs_numbers('imgs/car', "car")
 
 # Paused
 paused_img = pygame.image.load('imgs/paused_screen/paused.png')
@@ -70,6 +75,9 @@ shuriken_img = pygame.image.load('imgs/boss_uno/attacks/shuriken.png')
 
 # Slime
 slime_images = convert_to_imgs('imgs/slime')
+
+# King
+swordshot_image = pygame.image.load('imgs/swordshot/swordshot.png')
 
 # NPC
 dialogue_box = pygame.image.load('imgs/npc/dialogue_box.png')
@@ -88,7 +96,7 @@ bomb_images = convert_to_imgs('imgs/bomb')
 
 
 # bridge
-bridge_part_0_images = convert_to_imgs_bridge('imgs/bridge/part_0')
+# bridge_part_0_images = convert_to_imgs_bridge('imgs/bridge/part_0')
 
 # Butterfly
 butterfly_images_stack = [convert_to_imgs('imgs/butterfly_stack/butterfly'),

@@ -85,6 +85,9 @@ inputs = {
     "HUD" : {
         "stats" : False,
         "next" : False
+    },
+    "Tests" : {
+        "click" : False
     }
 }
 
@@ -107,7 +110,6 @@ bounding_boxes = [
     Hitbox((-624, -24), 40, 624 * 2, red)
 ]
 
- 
 
 
 # with open('save_files.txt') as save_file:
@@ -125,6 +127,8 @@ Game.sounds = sounds
 
 saving_game = False
 
+background_color = (grass_green)
+
 # --------------------------------------------------------------- Main loop ------------------------------------------------------------------
 
 while running:
@@ -139,7 +143,8 @@ while running:
 
 
     screen.fill(white)
-    display.fill(grass_green)
+    
+    display.fill(background_color)
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
@@ -150,6 +155,7 @@ while running:
 # ------------------------------------------------------- Handling input ------------------------------------------------------------------
     inputs["Action"]["shoot"] = False
     inputs["Action"]["throw"] = False
+    inputs["Tests"]["click"] = False
 
     npc_input = { # in main loop so that it only registers once per click
         "up" : False,
@@ -179,6 +185,9 @@ while running:
                 npc_input["confirm"] = True
             if event.key == pygame.K_SPACE:
                 inputs["Action"]["throw"] = True
+            if event.key == pygame.K_0:
+                inputs["Tests"]["click"] = True
+            
 
 
         if event.type == pygame.KEYUP:
@@ -225,8 +234,12 @@ while running:
     direction = Game.direction
 
 
+    if Game.stage == "grasslands":
+        Game.update_and_render_tiles(display)
+    elif Game.stage == "blank":
+        background_color = white
 
-    Game.update_and_render_tiles(display)
+    
     Game.render_all(display)
 
 

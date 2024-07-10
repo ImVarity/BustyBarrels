@@ -25,7 +25,7 @@ class NPC(Hitbox):
         
         self.text.add_quests("Deliver 10 arrows:Plus 10 arrow multiplier", "1A10M10")
         self.text.add_quests("Break 5 barrels:Plus 10 range", "2B5R10")
-        self.text.add_quests("Deliver 15 arrows:Plus 15 arrow multiplier", "1A10M15")
+        self.text.add_quests("Deliver 15 arrows:Plus 15 arrow multiplier", "1A15M15")
         self.text.add_quests("Break 10 barrels:Plus 20 range", "2B10R20")
         self.text.add_quests("Deliver 20 arrows:Plus 15 arrow multiplier", "1A20M15")
         self.text.add_quests("Break 20 barrels:Plus 25 range", "2B20R25")
