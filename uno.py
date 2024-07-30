@@ -70,16 +70,18 @@ class Uno(Hitbox):
         self.attack_start = 0
         self.attack_end = 8
 
-        self.activate = 10
+        self.activate = 2
 
 
         self.closest_to_player = False
 
 
     def check_if_summon(self):
-        if self.barrels_busted > self.activate and not self.summoned:
-            self.summoning = True
-            self.tracking = True
+        if not self.summoned and not self.summoning:
+            if self.barrels_busted >= self.activate and not self.summoned:
+                self.summoning = True
+                self.tracking = True
+                return True
 
         if self.summoning:
             self.summon_start += self.dt
@@ -89,9 +91,12 @@ class Uno(Hitbox):
                 if self.summon_index > 0:
                     self.summon_index -= 1
                 else:
+                    self.to_render.images = self.images
                     self.summoned = True
                     self.summoning = False
                     self.tracking = False
+        return False
+        
 
     def temp_death(self):
 

@@ -31,8 +31,9 @@ screen = pygame.display.set_mode((screen_width, screen_height), flags, 32)
 pygame.display.set_caption('Busty Barrels')
 
 display_width, display_height = 400, 400
+display_width_c, display_height_c = display_width, display_height
 mid_x, mid_y = display_width / 2, display_height /2
-display = pygame.Surface((display_width, display_height))
+display = pygame.Surface([display_width_c, display_height_c])
 
 pause_color = (169, 169, 169, 100)
 pause_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
@@ -41,6 +42,14 @@ pause_surface.fill(pause_color)
 overlay_color = (250, 240, 230, 45)
 overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 overlay_surface.fill(overlay_color)
+
+white_overlay_color = (255, 255, 255, 45)
+white_overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+white_overlay_surface.fill(white_overlay_color)
+
+black_overlay_color = (0, 0, 0, 45)
+black_overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+black_overlay_surface.fill(black_overlay_color)
 
 npc_color = (47,79,79, 100)
 npc_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
@@ -87,7 +96,8 @@ inputs = {
         "next" : False
     },
     "Tests" : {
-        "click" : False
+        "click" : False,
+        "hold" : False
     }
 }
 
@@ -138,13 +148,14 @@ while running:
     dt = now_time - pre_time
     dt *= 60
 
+    # dt *= 1.5 # could do this when fighting a boss?
+
     pre_time = time.perf_counter()
 
 
-
-    screen.fill(white)
-    
-    display.fill(background_color)
+    screen.fill(background_color)
+    if Game.stage == "grasslands":
+        display.fill(background_color)
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
@@ -155,6 +166,7 @@ while running:
 # ------------------------------------------------------- Handling input ------------------------------------------------------------------
     inputs["Action"]["shoot"] = False
     inputs["Action"]["throw"] = False
+    inputs["Action"]["interact"] = False
     inputs["Tests"]["click"] = False
 
     npc_input = { # in main loop so that it only registers once per click
@@ -221,7 +233,9 @@ while running:
     else:
         inputs["Action"]["shoot"] = keys[pygame.K_j]
 
-    
+    inputs["Tests"]["hold"] = keys[pygame.K_8]
+
+
 
     Game.npc_input = npc_input
     Game.inputs = inputs
@@ -234,10 +248,13 @@ while running:
     direction = Game.direction
 
 
+    Game.update_tiles()
+
     if Game.stage == "grasslands":
-        Game.update_and_render_tiles(display)
+        background_color = grass_green
+        Game.render_tiles(display)
     elif Game.stage == "blank":
-        background_color = white
+        background_color = black
 
     
     Game.render_all(display)
@@ -266,6 +283,7 @@ while running:
     screen_shake = Game.screen_shake
 
 
+
     if screen_shake > 0:
         screen_shake -= 1
     render_offset = [0, 0]
@@ -276,7 +294,7 @@ while running:
         
     
     if not paused:
-        display.blit(overlay_surface, (0, 0))
+        display.blit(black_overlay_surface, (0, 0))
 
     if saving_game:
         print(inputs["Rotation"]["reset"])

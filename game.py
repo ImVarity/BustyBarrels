@@ -17,19 +17,20 @@ from uno import Uno
 from particles import Particle, dust, explode, celebrate
 from z_enemies.slime import Slime
 from z_throwables.bomb import Bomb
-from king import King
+from king import King, SwordShot
 from tile import Tile
 from map import Tilemap
 from render import *
 from z_enemies.butterfly import Butterfly
 from bridge import BridgePart
 from car import Alpha
+from gambler import Gambler
 import time
 
 
 
 
-MAX_ARROW_COUNT_COLLECTABLES = 20
+MAX_ARROW_COUNT_COLLECTABLES = 75
 MAX_BARREL_COUNT_COLLECTABLES = 10
 
 
@@ -70,6 +71,8 @@ class GameLoop:
         self.Mikhail = NPC([0, -40], 64, 64, red, rock_images)
         self.npcs = [self.Mikhail]
 
+        self.Jack = Gambler([0, 60], 64, 64, red, player_images)
+
         # Enemies
         self.Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(self.player.center.x, self.player.center.y))
         self.random_slime_count = 120
@@ -99,6 +102,7 @@ class GameLoop:
         self.collectables = {
             "Arrows" : [],
             "Watermelons" : [],
+            "Bananas" : [],
             "Powerups" : []
         }
 
@@ -169,15 +173,16 @@ class GameLoop:
         self.stage = "grasslands"
 
         self.size = 0
-        self.end = 400
+        self.end = display_width
         self.reached = False
+        self.sized_reached = False
         self.entering_blank = False
 
 
 
     def enter_blank(self, display):
         if self.reached:
-            self.size += 35
+            self.size += 25
         self.end -= 40
 
         if self.end <= -1000:
@@ -190,9 +195,14 @@ class GameLoop:
             pygame.draw.rect(display, white, pygame.Rect(0, display_height / 2 - self.size, display_width, self.size))
             pygame.draw.rect(display, white, pygame.Rect(0, display_height / 2, display_width, self.size))
         
-        if self.size >= display_height / 2 + 200:
+
+        if self.size >= display_height / 2 + 400:
             self.entering_blank = False
+            self.size = 0
+            self.end = display_width
+            self.reached = False
             self.stage = "blank"
+
 
 
     # Gets the direction that the player is moving
@@ -203,9 +213,10 @@ class GameLoop:
     def main(self, dt, display): # -> dict[str]:
         self.set_delta_time(dt)
         self.initialize_direction()
-
-        self.update_player()
-        self.camera_tracking()
+        
+        if not self.paused:
+            self.update_player()
+            self.camera_tracking()
 
 
         self.update_arrows()
@@ -221,10 +232,10 @@ class GameLoop:
 
 
         # checks if player shoots the arrow
-        self.shoot_arrow()
+        self.shoot_arrow(dt)
 
-        # player dash
-        self.dash()
+        # player dash effects
+        self.dash_effects()
         
 
         # checks if player throws  abomb
@@ -236,6 +247,7 @@ class GameLoop:
 
         # Spawning collectables
         self.add_collectables("Arrows", MAX_ARROW_COUNT_COLLECTABLES)
+        self.add_collectables("Bananas", MAX_ARROW_COUNT_COLLECTABLES)
         self.update_collectables()
 
         # Bombs
@@ -244,6 +256,7 @@ class GameLoop:
 
         # NPC
         self.update_npc()
+        self.update_gambler()
 
 
         # Boss
@@ -302,10 +315,11 @@ class GameLoop:
             return
 
     def update_car(self):
-        self.Alpha.set_delta_time(self.dt)
-        self.Alpha.update(self.inputs["Rotation"], self.direction)
-        if limit_render(self.Alpha, self.player.render_radius):
-            return
+        if not self.paused:
+            self.Alpha.set_delta_time(self.dt)
+            self.Alpha.update(self.inputs["Rotation"], self.direction)
+            if limit_render(self.Alpha, self.player.render_radius):
+                return
         self.to_render.append(self.Alpha)
 
 
@@ -338,10 +352,11 @@ class GameLoop:
                 spawnpoint.set_delta_time(self.dt)
                 spawnpoint.update(self.inputs["Rotation"], self.direction)
 
-    def dash(self):
-        if self.inputs["Action"]["dash"] and self.player.dash_start <= self.dt:
-            self.sounds.dash_sound.play()
-            dust(self.particles, self.player.location, self.direction)
+    def dash_effects(self):
+        if not self.paused:
+            if self.inputs["Action"]["dash"] and self.player.dash_start <= self.dt:
+                self.sounds.dash_sound.play()
+                dust(self.particles, self.player.location, self.direction)
 
     def completion_text(self, display):
         # text that appears when something happens
@@ -365,12 +380,14 @@ class GameLoop:
         self.player.check_knockback()
 
 
-    def update_and_render_tiles(self, display):
+    def update_tiles(self):
         for tile in self.Map.tiles:
             tile.set_delta_time(self.dt)
             if not self.paused:
                 tile.update(self.inputs["Rotation"], self.direction)
 
+        
+    def render_tiles(self, display):
         # render tiles first
         for tile in self.Map.tiles:
             if tile.center.x >= -32 and tile.center.x <= display_width + 32 and tile.center.y >= -32 and tile.center.y <= display_height + 32:
@@ -384,11 +401,11 @@ class GameLoop:
 
 
 
-    def shoot_arrow(self):
-        if self.inputs["Action"]["shoot"] and not self.paused:# and len(self.player.inventory["Arrows"]) > 0:
+    def shoot_arrow(self, dt):
+        self.player.dexterity_check(dt)
+        if self.inputs["Action"]["shoot"] and not self.paused and len(self.player.inventory["Arrows"]) > 0:
             if self.player.arrow_counter < self.player.stats["M"]:
-                self.player.shot = not self.player.shot
-                if not self.player.shot:
+                if self.player.can_shoot():
                     self.player.knockback_power = 1
                     self.player.knockback = True
                     shot = Arrow((self.player.center.x, self.player.center.y), 16, 1, blue, self.player.looking, self.player.angle_looking) # self.player.angle_looking based on rotation
@@ -407,11 +424,13 @@ class GameLoop:
             self.sounds.throw.play()
             self.bombs.append(bomb)
 
-    def update_boss_bullets(self, boss):
+    def update_boss_bullets(self, boss, display):
         # dont need to fix z position of shurikens because always on top
         for i, shuriken in enumerate(boss.bullets):
             shuriken.set_delta_time(self.dt)
             shuriken.update(self.inputs["Rotation"], self.direction)
+            if isinstance(shuriken, SwordShot):
+                shuriken.update_particles(display)
             # limit render distance
             if limit_render(shuriken, self.player.render_radius):
                 continue
@@ -490,16 +509,18 @@ class GameLoop:
 
                 # checks what attacks to attack with
                 if isinstance(b, King):
-                    b.attacks(dt, display)
+                    b.attacks(dt, self.particles)
                 else:
                     b.attacks(dt)
 
                 # obvious
                 if not b.summoned:
-                    b.check_if_summon()
+                    # checks if just summoned
+                    if b.check_if_summon() and isinstance(b, King):
+                        self.entering_blank = True
 
                 # updates the bullets that the boss shoots
-                self.update_boss_bullets(b)
+                self.update_boss_bullets(b, display)
 
                 b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
                 b.follow_player(self.player.center)
@@ -526,8 +547,10 @@ class GameLoop:
     
     def handle_npc_inputs(self):
         if self.inputs["HUD"]["next"]:
-            if self.inputs["Action"]["interact"]:
+            if self.Mikhail.interacting:
                 self.Mikhail.next()
+            if self.Jack.interacting:
+                self.Jack.next()
         self.inputs["HUD"]["next"] = False
 
         self.npc_input = {
@@ -542,18 +565,29 @@ class GameLoop:
             if not self.paused:
                 npc.set_delta_time(self.dt)
                 npc.update(self.inputs["Rotation"], self.direction)
-                limit_render(npc, self.player.render_radius)
+                if limit_render(npc, self.player.render_radius):
+                    continue
                 if self.player.center.x >= npc.center.x - npc.width / 2 and self.player.center.x <= npc.center.x + npc.width / 2 and self.player.center.y >= npc.center.y - npc.width / 2 and self.player.center.y <= npc.center.y + npc.width / 2:
                     if self.inputs["Action"]["interact"]:
                         npc.interacting = True
-                    else:
-                        npc.interacting = False
                 else:
                     npc.interacting = False
-                    self.inputs["Action"]["interact"] = False
 
-                # if not input["interact"]:
             self.to_render.append(npc)
+    
+    def update_gambler(self):
+        if not self.paused:
+            self.Jack.set_delta_time(self.dt)
+            self.Jack.update(self.inputs["Rotation"], self.direction)
+            if limit_render(self.Jack, self.player.render_radius):
+                return
+            if self.player.center.x >= self.Jack.center.x - self.Jack.width / 2 and self.player.center.x <= self.Jack.center.x + self.Jack.width / 2 and self.player.center.y >= self.Jack.center.y - self.Jack.width / 2 and self.player.center.y <= self.Jack.center.y + self.Jack.width / 2:
+                if self.inputs["Action"]["interact"]:
+                    self.Jack.interacting = True
+            else:
+                self.Jack.interacting = False
+        self.to_render.append(self.Jack)
+
 
     def update_enemies(self):
         pass
@@ -607,6 +641,9 @@ class GameLoop:
         # arrow comes below everything else
         self.player_arrow.render(display)
 
+        # whatever the player is holding on to
+        self.render_player_inventory(display)
+
         # every item including player
         for object in self.to_render:            
             if isinstance(object, Player):
@@ -629,6 +666,8 @@ class GameLoop:
 
 
             elif isinstance(object, NPC):
+                object.render(display)
+            elif isinstance(object, Gambler):
                 object.render(display)
 
             elif isinstance(object, Uno):
@@ -673,8 +712,7 @@ class GameLoop:
 
         # things that need to drawn on top of everything
 
-        # whatever the player is holding on to
-        self.render_player_inventory(display)
+
 
         # all the bosses bullets
         self.render_boss_bullets(display)
@@ -688,6 +726,9 @@ class GameLoop:
         self.render_npc_hud(display)
         self.completion_text(display)
         self.draw_HUD(display)
+
+        # when talking to jack
+        self.render_gambler_hud(display)
 
         if self.entering_blank:
             self.enter_blank(display)
@@ -704,6 +745,7 @@ class GameLoop:
                 display.blit(npc_surface, (0, 0))
                 
                 if not npc.talk(display, self.npc_input, self.player, display):
+                    npc.interacting = False
                     self.inputs["Action"]["interact"] = False
             else:
                 npc.check_funds(display)
@@ -717,15 +759,35 @@ class GameLoop:
                     render_text_centered((self.player.center.x, self.player.center.y - 40), "T to talk to Mikhail", display, "white")
                 npc.reset_talk()
         self.handle_npc_inputs()
+    
+    def render_gambler_hud(self, display):
+        if self.Jack.interacting:
+            npc_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
+            npc_surface.fill(npc_color)
+            display.blit(npc_surface, (0, 0))
+            
+            if not self.Jack.talk(self.player, self.npc_input, display):
+                self.inputs["Action"]["interact"] = False
+        else:
+            self.Jack.reset_talk()
 
 
     def render_player_inventory(self, display):
-        # renders max of 30 things
-        for i in range(max(len(self.player.inventory["Watermelons"]) - 10, 0), len(self.player.inventory["Watermelons"])):
+        # render max of 1 thing
+        max_hold = 5
+        # can put into one loop 
+
+
+        for i in range(max(len(self.player.inventory["Watermelons"]) - max_hold, 0), len(self.player.inventory["Watermelons"])):
             self.player.inventory["Watermelons"][i].render(display)
-        # renders max of 30 things
-        for i in range(max(len(self.player.inventory["Arrows"]) - 10, 0), len(self.player.inventory["Arrows"])):
+
+        for i in range(max(len(self.player.inventory["Arrows"]) - max_hold, 0), len(self.player.inventory["Arrows"])):
             self.player.inventory["Arrows"][i].render(display)
+
+        for i in range(max(len(self.player.inventory["Bananas"]) - max_hold, 0), len(self.player.inventory["Bananas"])):
+            self.player.inventory["Bananas"][i].render(display)
+
+
 
     def render_boss_bullets(self, display):
         for boss in self.bosses:
@@ -796,6 +858,7 @@ class GameLoop:
                     self.Tifanie.move_distance(t_v * -1, t_x_distance)
                     self.Tifanie.temp_death()
                     self.player.player_death()
+                    self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
 
@@ -820,6 +883,7 @@ class GameLoop:
                     self.King.move_distance(t_v * -1, t_x_distance)
                     self.King.temp_death()
                     self.player.player_death()
+                    self.stage = "grasslands"
                     break
                 # self.player.move(normal * .05)
 
@@ -853,6 +917,7 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
+                    self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
         
@@ -882,6 +947,7 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
+                    self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
         
@@ -1019,7 +1085,17 @@ class GameLoop:
                 del self.bombs[i]
 
     def draw_HUD(self, display):
+        margin = 0
+        start_x = 320
+        start_y = 20
+
+
+
         if not self.Mikhail.interacting:
+            coin_count = self.player.coins
+            display.blit(coin_img.convert_alpha(), (310 - (coin_img.get_width() / 2 + 3), (coin_img.get_height() / 2) + 3))
+            render_text((320, 16), str(coin_count), display)
+
             arrow_count = str(len(self.player.inventory["Arrows"]))
             icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
             display.blit(icon_arrow.convert_alpha(), (310 - (icon_arrow.get_width() / 2 + 3), 30 - (icon_arrow.get_height() / 2) + 3))

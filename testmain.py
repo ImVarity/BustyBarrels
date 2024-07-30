@@ -7,6 +7,7 @@ from render import *
 from array import array
 import moderngl
 import math
+from timer import Timer
 
 # Initialize Pygame
 pygame.init()
@@ -14,54 +15,11 @@ pygame.init()
 # Set up the display
 screen_width, screen_height = 800, 800
 display_width, display_height = 400, 400
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
-screen = pygame.display.set_mode((screen_width, screen_height), pygame.OPENGL | pygame.DOUBLEBUF)
+screen = pygame.display.set_mode((screen_width, screen_height))
 display = pygame.Surface((display_width, display_height))
-ctx = moderngl.create_context()
 
 clock = pygame.time.Clock()
 
-
-quad_buffer = ctx.buffer(data=array('f', [
-    # position (x, y), uv coords (x, y)
-    -1.0, 1.0, 0.0, 0.0,  # topleft
-    1.0, 1.0, 1.0, 0.0,   # topright
-    -1.0, -1.0, 0.0, 1.0, # bottomleft
-    1.0, -1.0, 1.0, 1.0,  # bottomright
-]))
-
-vert_shader = '''
-#version 330 core
-
-in vec2 vert;
-in vec2 texcoord;
-out vec2 uvs;
-
-void main() {
-    uvs = texcoord;
-    gl_Position = vec4(vert, 0.0, 1.0);
-}
-'''
-
-frag_shader = '''
-#version 330 core
-
-uniform sampler2D tex;
-uniform float time;
-
-in vec2 uvs;
-out vec4 f_color;
-
-void main() {
-    f_color = vec4(texture(tex, uvs).r * time, texture(tex, uvs).gb, 1.0);
-}
-'''
-
-program = ctx.program(vertex_shader=vert_shader, fragment_shader=frag_shader)
-render_object = ctx.vertex_array(program, [(quad_buffer, '2f 2f', 'vert', 'texcoord')])
 
 
 def render_stack(surf, images, pos, rotation, spread):
@@ -70,12 +28,7 @@ def render_stack(surf, images, pos, rotation, spread):
         surf.blit(rotated_img, (pos[0] - rotated_img.get_width() // 2 , pos[1] - rotated_img.get_height() // 2 - i * spread))
 
 
-def surf_to_texture(surf):
-    tex = ctx.texture(surf.get_size(), 4)
-    tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
-    tex.swizzle = 'BGRA'
-    tex.write(surf.get_view('1'))
-    return tex
+
 
     
 # Define colors
@@ -113,21 +66,32 @@ size = 0
 end = 400
 reached = False
 
-print(math.sqrt(2) / 2)
+angle = 0
+# print(math.sqrt(2) / 2)
+
+hue = 0
+sat = 0
+light = 0
+
+
+
+get = [7, 7, 7]
+roller = [1, 1, 1]
+slot_1_timer = Timer(20)
+slot_2_timer = Timer(20)
+slot_3_timer = Timer(20)
+roller_timers = [slot_1_timer, slot_2_timer, slot_3_timer]
+pointer = 0
+ 
+filler = 1
+filler_timer = Timer(1)
+
+
+
 
 while running:
-    if t <= 0:
-        multiplier *= -1
-    elif t >= 255:
-        multiplier *= -1
-    # t += multiplier
-    if reached:
-        size += 35
-    end -= 40
-    display.fill(background_color)
-
-    render_stack(display, butterfly_images_stack[0], [200, 200], rotation, 1)
-
+    display.fill((0, 0, 0))
+    
     mouse_x, mouse_y = pygame.mouse.get_pos()
     pos = (mouse_x * display_width // screen_width, mouse_y * display_height // screen_height)
     for event in pygame.event.get():
@@ -135,65 +99,108 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                t = 87
+                roller_timers[pointer].active = False
+                pointer += 1
             if event.key == pygame.K_RETURN:
-                t = 0
+                sat -= .1
             if event.key == pygame.K_i:
                 size += 1
+
+
+    # display.blit(a_o_d_img.convert_alpha(), [200, 200])
+
+
+    slot_1_timer.start_timer(1)
+    slot_2_timer.start_timer(1)
+    slot_3_timer.start_timer(1)
+    filler_timer.start_timer(1)
+
+    if filler_timer.alarm:
+        filler += 1
+
     
-    if end <= -1000:
-        reached = True
+    if slot_1_timer.alarm:
+        roller[0] += 1
+        slot_1_timer.reset_timer()
+    if slot_2_timer.alarm:
+        roller[1] += 1
+        slot_2_timer.reset_timer()
+    if slot_3_timer.alarm:
+        roller[2] += 1
+        slot_3_timer.reset_timer()
 
-    pygame.draw.line(display, (255, 255, 255), (display_width, display_height / 2), [end, display_height / 2], 2)
-    pygame.draw.line(display, (255, 255, 255), (display_width, display_height / 2), [end, display_height / 2], 2)
+    for i in range(len(roller)):
+        if roller[i] > 9:
+            roller[i] = 1
+    if filler > 9:
+        filler = 1
+    print(roller)
 
-    if reached:
-        pygame.draw.rect(display, white, pygame.Rect(0, display_height / 2 - size, display_width, size))
-        pygame.draw.rect(display, white, pygame.Rect(0, display_height / 2, display_width, size))
 
-    # pygame.draw.line(display, (255, 0, 0), (display_width, display_height / 2 - 2), [0, display_height / 2 - 2], 1)
+    if slot_1_timer.start > 12 and slot_1_timer.active:
+        render_text_centered([200, 200], f'{filler}', display, "white")
+    else:
+        render_text_centered([200, 200], f'{roller[0]}', display, "white")
+    
+    if slot_2_timer.start > 12 and slot_2_timer.active:
+        render_text_centered([210, 200], f'{filler}', display, "white")
+    else:
+        render_text_centered([210, 200], f'{roller[1]}', display, "white")
+
+    
+    if slot_3_timer.start > 12 and slot_3_timer.active:
+        render_text_centered([220, 200], f'{filler}', display, "white")
+    else:
+        render_text_centered([220, 200], f'{roller[2]}', display, "white")
+
+
+    render_text_centered([50, 50], f'{filler}', display, "white")
+
+    tracker += 1
+    if tracker % 120 == 0:
+        direction_x = -1
+        direction_y = 0
+
+
+        for i in range(20):
+            # print(pos[0], pos[1])
+            p = Particle([pos[0], pos[1]], [random.randint(-324, 324) / 1000 / 2, random.randint(-324, 0) / 1000], random.randint(10, 20), "explosion", lighting=True)
+            p.shrink_rate = .01
+            p.gravity = 0.00
+            particles.append(p)
+
+
+    for i in range(len(particles) -1, -1, -1):
+        particle = particles[i]
+        particle.angle = angle
+        particle.all(display)
+
+        if particle.dead():
+            particles.remove(particle)
+
+    
+
     rotation += 1
-        
-    frame_tex = surf_to_texture(display)
-    frame_tex.use(0)
-    program['tex'] = 0
-    program['time'] = t
-    render_object.render(mode=moderngl.TRIANGLE_STRIP)
+
 
 
     # Update the display
-    # screen.blit(pygame.transform.scale(display, screen.get_size()), [0, 0])
+    screen.blit(pygame.transform.scale(display, screen.get_size()), [0, 0])
 
     pygame.display.flip()
 
     
     clock.tick(60)
 
-# Quit Pygame
-frame_tex.release()
+# Quit Pygamex
+
+
+
 pygame.quit()
 sys.exit()
 
-# #     # tracker += 1
-# #     # # pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(pos[0], pos[1], 50, 50))
-# #     # if tracker % 120 == 0:
-# #     #     direction_x = -1
-# #     #     direction_y = 0
 
 
-# #     #     for i in range(20):
-# #     #         p = Particle([pos[0], pos[1]], [random.randint(-324, 324) / 100 / 2, random.randint(-324, 0) / 100], random.randint(10, 20), "explosion")
-# #     #         p.shrink_rate = .01
-# #     #         p.gravity = 0.00
-# #     #         particles.append(p)
-
-
-# #     # for i in range(len(particles) -1, -1, -1):
-# #     #     particle = particles[i]
-# #     #     particle.all(display)
-
-# #     #     if particle.dead():
-# #     #         particles.remove(particle)
 
 
 
@@ -555,3 +562,5 @@ sys.exit()
     
 #     clock.tick(60)
     
+
+

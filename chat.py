@@ -18,6 +18,8 @@ class TextBubble:
         self.width = width
         self.height = height
 
+        self.sounds = None
+
         self.rect = pygame.Rect(position.x - width / 2, position.y - height / 2, width, height)
 
         self.dialogue = []
@@ -40,6 +42,9 @@ class TextBubble:
         self.current_quest = ""
 
 
+        self.inputs = {'up': False, 'down': False, 'confirm': False}
+
+
     def reset(self):
         self.c_l = 0
         self.show_dialogue = ""
@@ -49,6 +54,7 @@ class TextBubble:
         self.reset()
 
     def key_input(self, input):
+        print(input)
         if self.current_dialogue >= 2 and len(self.quests) > 0:
             if input["down"]:
                 if self.hovering < 3:
@@ -65,16 +71,15 @@ class TextBubble:
 
         return ""
         
-    def display_text_bubble(self, surface, input):
-        
+    def display_text_bubble(self, surface, input, person="Mikhail"):
         quest = self.key_input(input)
-
         if len(quest) > 0:
             return quest
         
-        surface.blit(dialogue_box.convert_alpha(), (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
-
-        
+        if person == "Mikhail":
+            surface.blit(dialogue_box.convert_alpha(), (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
+        elif person == "Jack":
+            surface.blit(dialogue_box.convert_alpha(), (self.location.x - dialogue_box.get_width() / 2 - 14, self.location.y - dialogue_box.get_height() / 2 - 7))
         
 
         if self.current_dialogue >= self.dialogue_count:
@@ -93,9 +98,6 @@ class TextBubble:
         self.show_dialogue += self.dialogue[self.current_dialogue][self.c_l]
         self.c_l += 1
 
-        
-        
-
 
         return ""
 
@@ -106,7 +108,7 @@ class TextBubble:
             del self.quests[quest]
             if len(self.quests) == x:
                 self.hovering -= 1
-            print(x)
+            # print(x)
         except:
             pass
 
@@ -172,9 +174,6 @@ class TextBubble:
 
 
             
-
-
-
     def show_text(self, surface, text, loc, color):
 
         col = loc[0]
@@ -228,7 +227,6 @@ class TextBubble:
                 enter += word + " "
 
         self.dialogue.append(enter)
-        # print(self.dialogue)
         self.dialogue_count += 1
 
 
@@ -258,3 +256,8 @@ class TextBubble:
 
             self.quests[code].append(enter)
         self.quests_count += 1
+
+
+
+    def give_inputs(self, inputs):
+        self.inputs = inputs

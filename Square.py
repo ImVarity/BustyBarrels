@@ -34,6 +34,7 @@ class Hitbox:
         self.angle = 0
         self.angle_looking = 0
         self.velocity = 2 # the speed the player moves at, so basically the speed the whole game moves at
+        # recommended 2 but can increase to speed up character
 
         self.dt = 1
 

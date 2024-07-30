@@ -3,6 +3,7 @@ from Square import Hitbox
 from vector import Vector
 from health import HealthBar
 from timer import Timer
+import particles as particles
 import random
 import math
 
@@ -29,7 +30,7 @@ class King(Hitbox):
 
         self.turn_angle_degrees = 1
 
-        self.delete_radius = 1000
+        self.delete_radius = 500
 
         
         self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
@@ -71,21 +72,27 @@ class King(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.activate = 1 # activates after breaking this many barrels
+        self.activate = 10 # activates after breaking this many barrels
 
 
         self.closest_to_player = False
 
 
         self.bullets = []
-        self.sword_show_timer = Timer(75)
-        self.sword_attack_timer = Timer(120)
+        self.sword_show_timer = Timer(75) # 75
+        self.sword_attack_timer = Timer(120) # 120
+
+        self.spiral_show_timer = Timer(1)
+        self.sprial_attack_timer = Timer(1)
 
         self.throwing_point = 0
-        self.throwing_points = [[mid_x - 100, mid_y + 100],
-                                [mid_x - 100, mid_y - 100]]
-        self.throwing_points_vertical = [[mid_x + 100, mid_y - 100],
-                                        [mid_x - 100, mid_y - 100]]
+        self.throwing_points = [[mid_x - 150, mid_y + 150],
+                                [mid_x - 150, mid_y - 150]]
+        self.throwing_points_vertical = [[mid_x + 150, mid_y - 150],
+                                        [mid_x - 150, mid_y - 150]]
+        
+
+        self.throwing_point_spiral = pygame.Vector2(1, 0)
         
         self.throw_swords = False
         self.throwing_timer = Timer(120)
@@ -93,11 +100,12 @@ class King(Hitbox):
 
 
 
-
     def check_if_summon(self):
-        if self.barrels_busted >= self.activate and not self.summoned:
-            self.summoning = True
-            self.tracking = True
+        if not self.summoned and not self.summoning:
+            if self.barrels_busted >= self.activate and not self.summoned:
+                self.summoning = True
+                self.tracking = True
+                return True
 
         if self.summoning:
             self.summon_start += self.dt
@@ -111,6 +119,9 @@ class King(Hitbox):
                     self.summoned = True
                     self.summoning = False
                     self.tracking = False
+        return False
+        
+            
 
     def temp_death(self):
 
@@ -175,7 +186,14 @@ class King(Hitbox):
         else:
             self.health_bar.damage(dmg)
 
-    def attacks(self, dt, display):
+    def attacks(self, dt, particles):
+        if self.summoned and not self.dead:
+            # self.half_square_attack(dt)
+            self.spiral_attack(dt)
+
+        
+
+    def half_square_attack(self, dt):
         if self.summoned and not self.dead:
             self.sword_attack_timer.start_timer(dt)
             self.sword_show_timer.start_timer(dt)
@@ -190,59 +208,62 @@ class King(Hitbox):
                 self.sword_attack_timer.reset_timer()
                 self.sword_show_timer.active = True
 
+    def spiral_attack(self, dt):
+        self.sprial_attack_timer.start_timer(dt)
+        self.spiral_show_timer.start_timer(dt)
+
+        if self.spiral_show_timer.alarm:
+            self.spiral_attack_show()
+            self.spiral_show_timer.reset_timer()
+            self.spiral_show_timer.active = False
+        if self.sprial_attack_timer.alarm:
+            for sword in self.bullets:
+                sword.sword_velocity = sword.sword_velocity_og
+            self.sprial_attack_timer.reset_timer()
+            self.spiral_show_timer.active = True
+
+
+
+
+    def spiral_attack_show(self):
+        radius = 100 # distance sword is thrown from player
+        throw_point = self.throwing_point_spiral * radius + pygame.Vector2(200, 200)
+        direction = -self.throwing_point_spiral
+        self.throwing_point_spiral = self.throwing_point_spiral.rotate(12)  
+        shot = SwordShot(throw_point, 24, 11, black, direction, math.atan2(direction.y, direction.x) + self.angle * math.pi /180)
+        shot.sword_velocity = 0
+        shot.damage = 0
+
+        self.bullets.append(shot)
+
+        
 
     def sword_show(self):
-            self.throwing_point = random.randint(0, 1)
-            num_of_swords = 9 # how many swords per side are summoned
-            skip = random.randint(1, 7) # creates a gap that players can pass through
+        self.throwing_point = random.randint(0, 1)
+        num_of_swords = 11 # how many swords per side are summoned
+        skip = random.randint(1, num_of_swords - 2) # creates a gap that players can pass through
 
-            for i in range(num_of_swords):
-                if i == skip:
-                    continue
-                point = [self.throwing_points[self.throwing_point][0] + i * 25, self.throwing_points[self.throwing_point][1]]
-                upright = self.vec_to_mid(point)
-                shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
-                shot.sword_velocity = 0
-                self.bullets.append(shot)
-            self.throwing_point = random.randint(0, 1)
-            for i in range(num_of_swords):
-                if i == skip or i == skip + 1:
-                    continue
-                point = [self.throwing_points_vertical[self.throwing_point][0], self.throwing_points_vertical[self.throwing_point][1] + i * 25]
-                upright = self.vec_to_mid(point)
-                shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
-                shot.sword_velocity = 0
-                self.bullets.append(shot)
+        for i in range(num_of_swords):
+            if i == skip:
+                continue
+            point = [self.throwing_points[self.throwing_point][0] + i * 25, self.throwing_points[self.throwing_point][1]]
+            upright = self.vec_to_mid(point)
+            shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
+            shot.sword_velocity = 0
+            self.bullets.append(shot)
+        self.throwing_point = random.randint(0, 1)
+        for i in range(num_of_swords):
+            if i == skip or i == skip + 1:
+                continue
+            point = [self.throwing_points_vertical[self.throwing_point][0], self.throwing_points_vertical[self.throwing_point][1] + i * 25]
+            upright = self.vec_to_mid(point)
+            shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
+            shot.sword_velocity = 0
+            self.bullets.append(shot)
 
 
     def vec_to_mid(self, point):
         return Vector(200 - point[0], 200 - point[1]).normalize()
-        
-
-    def spiral_attack(self):
-        
-        shot_1 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked * -1)
-        shot_1.shuriken_angle_start = math.atan2(self.last_looked.y * -1, self.last_looked.x * -1) + self.angle * math.pi / 180
-        
-        self.bullets.append(shot_1)
-
-        shot_2 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(-self.last_looked.y, self.last_looked.x))
-        shot_2.shuriken_angle_start = math.atan2(self.last_looked.x, -self.last_looked.y) + self.angle * math.pi / 180
-        
-        self.bullets.append(shot_2)
-
-        shot_3 = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-        shot_3.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-        
-        self.bullets.append(shot_3)
-
-        shot_4 = Shuriken([self.center.x, self.center.y], 16, 16, blue, Vector(self.last_looked.y, -self.last_looked.x))
-        shot_4.shuriken_angle_start = math.atan2(-self.last_looked.x, self.last_looked.y) + self.angle * math.pi / 180
-        
-        self.bullets.append(shot_4)
-
-
-
         
     def attack_two(self):
         self.charge_towards = self.locked.center - self.center
@@ -315,7 +336,7 @@ class SwordShot(Hitbox):
         
         self.images = swordshot_image.convert_alpha()
         self.sword_velocity = 10
-        self.sword_velocity_og = 10
+        self.sword_velocity_og = 2
         self.sword_angle = math.atan2(looking.y, looking.x) # gets the direction facing and rotates sword to point that direction
 
         self.sword_angle_start = sword_angle_start
@@ -327,6 +348,20 @@ class SwordShot(Hitbox):
         self.rotation_angle = 0
         self.spin_speed_degrees = 4
         self.spin_speed = self.spin_speed_degrees * math.pi / 180
+
+
+
+        self.particles = []
+
+
+    def add_particles(self, loc):
+        for i in range(2):
+            v_x = random.randint(-100, 400) / 500 * self.direction.x * -2 * 2
+            v_y = random.randint(0, 400) / 500 * self.direction.y * -1 * 2
+            p = particles.Particle([loc[0], loc[1] + 4], [v_x, v_y], random.randint(3, 5), "dust")
+            p.gravity = -.02
+            p.shrink_rate = .08
+            self.particles.append(p)
 
     def set_angle(self, angle):
         for i in range(len(self.vertices)):
@@ -346,8 +381,6 @@ class SwordShot(Hitbox):
     def handle_rotation_sword(self, rotation_input):
         if not rotation_input["reset"]: # have to do this because it interferes with the sword rotation (might have to do it with everything else to make it cleaner)
             self.handle_rotation(rotation_input)
-
-
 
         if rotation_input["reset"]:
             # print(self.sword_angle, self.sword_angle_start)
@@ -374,9 +407,13 @@ class SwordShot(Hitbox):
         self.move(direction * -1 * self.velocity) # have to multiply player velocity as well???
         self.translate(Vector(math.cos(self.sword_angle), math.sin(self.sword_angle)) * self.sword_velocity * self.dt) # if i want to simulate shooting swords, remove this * self.sword_velocity and then put it into translate instead
         self.handle_rotation_sword(rotation_input)
+        # self.add_particles([self.center.x, self.center.y])
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = -self.sword_angle * 180 / math.pi
 
+    def update_particles(self, display):
+        for particle in self.particles:
+            particle.all(display)
 
 
 

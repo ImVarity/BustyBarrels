@@ -21,7 +21,7 @@ class Butterfly(Hitbox):
 
         self.num_images = len(self.images[0])
 
-        self.attack_damage = 50
+        self.attack_damage = 50 
 
         self.spread = 1.3
         self.to_render = Render(self.images, center, self.angle, self.spread)
@@ -77,7 +77,7 @@ class Butterfly(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.activate = 100 # activates after breaking this many barrels
+        self.activate = 5 # activates after breaking this many barrels
 
 
         self.closest_to_player = False

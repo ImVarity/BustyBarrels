@@ -39,6 +39,9 @@ class Particle:
 
         self.time = self.size / self.shrink_rate
 
+        self.angle = 0
+        self.dt = 1
+
         if type == "explosion":
             self.start_color = colors_start_red[(random.randint(0, len(colors_start_red) - 1))].copy()
             self.end_color = colors_end[(random.randint(0, len(colors_end) - 1))].copy()
@@ -100,6 +103,27 @@ class Particle:
         if self.lighting:
             surface.blit(square_surf(self.size * 2, self.size * 2, (20, 20, 20)), (self.loc[0] - self.size / 2, self.loc[1] - self.size / 2), special_flags=pygame.BLEND_RGB_ADD)
 
+    # def draw(self, surface):
+
+        # rotated_img = pygame.transform.rotate(self.images, self.angle)
+        # surf.blit(rotated_img, (self.loc[0] - rotated_img.get_width() // 2 , self.loc[1] - rotated_img.get_height() // 2))
+
+
+        # color = (int(self.start_color[0]), int(self.start_color[1]), int(self.start_color[2]))
+        # pygame.draw.rect(surface, color, pygame.Rect(self.loc[0], self.loc[1], self.size, self.size))
+        # particle_surf = square_surf(self.size * 2, self.size * 2, (20, 20, 20))
+        # rotated_particle_surf = pygame.transform.rotate(particle_surf, self.angle)
+        # if self.lighting:
+        #     surface.blit(rotated_particle_surf, (self.loc[0] - self.size * 2 // 2, self.loc[1] - self.size * 2 // 2), special_flags=pygame.BLEND_RGB_ADD)
+
+
+    # def draw(self, surface):
+    #     color = (int(self.start_color[0]), int(self.start_color[1]), int(self.start_color[2]))
+    #     particle_surf = square_surf(self.size, self.size, color)
+    #     if self.lighting:
+    #         particle_surf = square_surf(self.size * 2, self.size * 2, (20, 20, 20))
+    #     rotated_surf = pygame.transform.rotate(particle_surf, self.rotation_angle)
+    #     surface.blit(rotated_surf, (self.loc[0] - rotated_surf.get_width() / 2, self.loc[1] - rotated_surf.get_height() / 2), special_flags=pygame.BLEND_RGB_ADD)
 
     def dead(self):
         if self.size <= 0:
@@ -107,8 +131,6 @@ class Particle:
         return False
 
     def all(self, surface):
-
-
         self.shrink()
         self.move()
         self.color()

@@ -50,11 +50,12 @@ def convert_to_imgs_numbers(directory, beginning):
 
 
 
-
+# Cards
+a_o_d_img = pygame.image.load('imgs/diamonds/ace.png')
 
 
 # Icons
-watermelon_img = pygame.image.load('imgs/icons/melon_c.png')
+watermelon_img = pygame.image.load('imgs/icons/watermelon_icon_3.png')
 barrel_img = pygame.image.load('imgs/icons/barrel_icon.png')
 
 
@@ -92,7 +93,11 @@ barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
 watermelon_images = convert_to_imgs('imgs/watermelon')
+banana_images = convert_to_imgs_numbers('imgs/banana', 'banana')
 bomb_images = convert_to_imgs('imgs/bomb')
+
+# Currency
+coin_img = pygame.image.load('imgs/currency/coin.png')
 
 
 # bridge
@@ -115,7 +120,8 @@ for i in range(len(bomb_images)):
 
 images = {
     "Arrows" : arrow_images,
-    "Barrels" : barrel_images
+    "Barrels" : barrel_images,
+    "Bananas" : banana_images
 }
 
 # arrow keys
@@ -195,7 +201,7 @@ class Render:
 
 
 
-
+# returns true if they are out of range
 def limit_render(object, render_radius):
     mid_x, mid_y = 200, 200
     if object.center.x > mid_x + render_radius or object.center.x < mid_x - render_radius:

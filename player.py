@@ -39,6 +39,10 @@ class Player(Hitbox):
         self.knock_start = 0
         self.knock_end = 6
         self.knock_increment = 1
+
+
+        self.dexterity = 1
+        self.dex_counter = 0
         
 
         self.dash_speed = 1
@@ -49,9 +53,12 @@ class Player(Hitbox):
 
         self.tracking = True
 
+
+        self.coins = 0
         self.inventory = {
             "Arrows" : [],
-            "Watermelons": [],
+            "Watermelons" : [],
+            "Bananas" : [],
             "Powerups" : []
         }
 
@@ -87,7 +94,6 @@ class Player(Hitbox):
 
         self.in_water = False
 
-        self.shot = False
 
 
 
@@ -97,8 +103,10 @@ class Player(Hitbox):
 
     def player_death(self):
         self.health_bar.set_health(self.original_health)
+        # lose half their items upon death
         self.inventory["Arrows"] = self.inventory["Arrows"][:len(self.inventory["Arrows"])//2]
         self.inventory["Watermelons"] = self.inventory["Watermelons"][:len(self.inventory["Watermelons"])//2]
+        self.inventory["Bananas"] = self.inventory["Bananas"][:len(self.inventory["Bananas"])//2]
 
         # probably reset their stats or something
         # keep barrels busted the same
@@ -190,7 +198,20 @@ class Player(Hitbox):
             self.damage_flash = False
             self.damage_flash_counter = 0
 
+    def dexterity_counter(self, dt):
+        self.dex_counter += dt
+        if self.dex_counter > self.dexterity:
+            self.dex_counter = 0
+            return True
+
+    def dexterity_check(self, dt):
+        self.dex_counter += dt
         
+    def can_shoot(self):
+        if self.dex_counter > self.dexterity:
+            self.dex_counter = 0
+            return True
+
 
     def shoot(self, arrows):
         pass

@@ -6,6 +6,7 @@ import math
 class Collectable(Hitbox):
     def __init__(self, center, width, height, color, images):
         super().__init__(center, width, height, color)
+
         self.images = [img.convert_alpha() for img in images]
         self.spread = .4
 
@@ -35,9 +36,10 @@ class Collectable(Hitbox):
 
     def render(self, surface):
         for i, img in enumerate(self.images):
-            img.convert_alpha()
             rotated_img = pygame.transform.rotate(img, self.item_angle)
             surface.blit(rotated_img, (self.center.x - rotated_img.get_width() // 2 , self.center.y - self.start_y - rotated_img.get_height() // 2 - i * self.spread))
+
+
 
     def self_spin(self):
         self.item_angle -= self.spin_speed * 180 / math.pi
