@@ -54,7 +54,7 @@ class TextBubble:
         self.reset()
 
     def key_input(self, input):
-        print(input)
+        # print(input)
         if self.current_dialogue >= 2 and len(self.quests) > 0:
             if input["down"]:
                 if self.hovering < 3:

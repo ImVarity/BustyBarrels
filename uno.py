@@ -30,7 +30,7 @@ class Uno(Hitbox):
         self.delete_radius = 200
 
         
-        self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
+        self.summon_rise = 3 # layer appears every 15 frames (4 layers every second)
 
         self.summoning = False
         self.summon_start = 0
@@ -70,7 +70,7 @@ class Uno(Hitbox):
         self.attack_start = 0
         self.attack_end = 8
 
-        self.activate = 2
+        self.activate = 100
 
 
         self.closest_to_player = False
@@ -164,7 +164,8 @@ class Uno(Hitbox):
         if self.attack_start >= self.attack_end:
             self.attack_start = 0
             if self.summoned and not self.dead:
-                self.spiral_attack()
+                # self.spiral_attack()
+                self.directional_attack()
         
         if self.summoned and not self.dead and self.health_bar.health < self.health_bar.maxhealth // 2:
             self.attack_two()
@@ -225,12 +226,12 @@ class Uno(Hitbox):
         if self.charging:
             self.charge_start += self.dt
 
-            self.move(self.locked * -1 * .8 * self.dt)
+            self.move(self.locked * -1 * .2 * self.dt)
 
-            shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
-            shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
-            shot.shuriken_velocity = 4
-            self.bullets.append(shot)
+            # shot = Shuriken([self.center.x, self.center.y], 16, 16, blue, self.last_looked)
+            # shot.shuriken_angle_start = math.atan2(self.last_looked.y, self.last_looked.x) + self.angle * math.pi / 180
+            # shot.shuriken_velocity = 4
+            # self.bullets.append(shot)
 
 
 

@@ -115,11 +115,14 @@ class Slime(Hitbox):
 
         if self.can_jump:
             if self.locked == False:
-                print('locking')
+                # print('locking')
                 self.lock = self.track_player(player_center)
                 self.locked = True
+
+            # print(self.lock.point)
             self.jump()
             self.move(self.lock * -1 * self.velocity) # have to multiply player velocity as well???
+
         else:
             self.pause += self.pause_inc
 
@@ -129,7 +132,7 @@ class Slime(Hitbox):
             self.pause = 0
             
 
-        self.translate(Vector((math.cos(self.slime_angle), math.sin(self.slime_angle))) * self.slime_velocity)
+        self.translate(Vector(math.cos(self.slime_angle), math.sin(self.slime_angle)) * self.slime_velocity)
         self.move(direction * -1 * self.velocity)
         self.handle_rotation_slime(rotation_input)
         self.to_render.loc = [self.center.x, self.center.y]

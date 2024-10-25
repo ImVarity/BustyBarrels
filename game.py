@@ -25,9 +25,8 @@ from z_enemies.butterfly import Butterfly
 from bridge import BridgePart
 from car import Alpha
 from gambler import Gambler
+from kingv2 import Kingv2
 import time
-
-
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
@@ -60,9 +59,10 @@ class GameLoop:
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple, "Tifanie")
         self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue, "Sylvia")
         self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue, "Crystal")
-        self.King = King([mid_x, mid_y - 50], 32, 32, black, "King", health=1000)
+        self.King = King([mid_x, mid_y - 50], 32, 32, black, Vector(1, 0), "King", health=1000)
+        self.BKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King")
 
-        self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.King]
+        self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.King, self.BKing]
 
         # Car
         self.Alpha = Alpha([100, 100], 56, 48, red, health=100)
@@ -75,8 +75,8 @@ class GameLoop:
 
         # Enemies
         self.Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(self.player.center.x, self.player.center.y))
-        self.random_slime_count = 120
-        self.slimes = [self.Bob]
+        self.random_slime_count = 0
+        self.slimes = []
 
 
         # Camera
@@ -274,6 +274,16 @@ class GameLoop:
         self.arrows_and_all()
         self.bombs_and_barrels()
 
+        # temp ------------------------------------
+
+
+        while len(self.slimes) < self.random_slime_count:
+            self.slimes.append(Slime([random.randint(-40, 40), random.randint(-40, 40)], 12, 12, black, Vector(1, 0), Vector(self.player.center.x, self.player.center.y)))
+
+        self.update_slimes()
+
+        # temp ------------------------------------
+
 
         # Deletion
         self.delete_objects()
@@ -446,9 +456,11 @@ class GameLoop:
             limit_collision(shuriken, self.player, self.player.collision_radius, self.collidables[bullet])
 
     def add_collectables(self, item, MAX):
-        if len(self.collectables[item]) < MAX:
-            self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 12, 12, black, images[item]))
-
+        if not self.BKing.summoned:
+            if len(self.collectables[item]) < MAX:
+                self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 12, 12, black, images[item]))
+        else: # If the king is alive then remove all collectables on the screen 
+            self.collectables[item] = []
 
     def add_barrels(self, MAX):
         if len(self.barrels) < MAX:
@@ -468,6 +480,20 @@ class GameLoop:
                 arrow.update(self.inputs["Rotation"], self.direction)
 
             self.to_render.append(arrow)
+
+    # temporary ------------------------------------------------
+
+    def update_slimes(self):
+        for slime in self.slimes:
+            if not self.paused:
+                slime.set_delta_time(self.dt)
+                slime.update(self.inputs["Rotation"], self.direction, self.player.center)
+
+                if limit_render(slime, self.player.render_radius):
+                    continue
+
+            self.to_render.append(slime)
+    # temporary ------------------------------------------------
 
     
     def update_barrels(self):
@@ -506,23 +532,30 @@ class GameLoop:
         for b in self.bosses:
             if not self.paused:
                 b.set_delta_time(self.dt)
-
+                if isinstance(b, Kingv2):
+                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
                 # checks what attacks to attack with
                 if isinstance(b, King):
                     b.attacks(dt, self.particles)
+                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
                 else:
                     b.attacks(dt)
+
+
+                
 
                 # obvious
                 if not b.summoned:
                     # checks if just summoned
-                    if b.check_if_summon() and isinstance(b, King):
+                    if b.check_if_summon() and isinstance(b, Kingv2):
                         self.entering_blank = True
 
                 # updates the bullets that the boss shoots
                 self.update_boss_bullets(b, display)
 
-                b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
+                if not isinstance(b, King) and not isinstance(b, Kingv2):
+                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
+
                 b.follow_player(self.player.center)
                 if b.summoned and not b.dead:
                     added = False
@@ -685,8 +718,18 @@ class GameLoop:
                 if object.summoned and not object.dead:
                     object.render(display)
                     object.draw_healthbar(display)
+                    object.draw_hitbox(display)
                 if object.dead:
                     object.draw_hitbox(display)
+            
+            elif isinstance(object, Kingv2):
+                if object.summoning:
+                    object.render(display)
+                if object.summoned and not object.dead:
+                    object.render(display)
+                    object.draw_healthbar(display)
+                    object.draw_hitbox(display)
+
             
             elif isinstance(object, Butterfly):
 
@@ -697,6 +740,9 @@ class GameLoop:
                     object.draw_healthbar(display)
                 if object.dead:
                     object.draw_hitbox(display)
+
+            elif isinstance(object, Slime):
+                object.render(display)
 
             elif isinstance(object, Bomb):
                 object.render(display)

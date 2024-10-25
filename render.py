@@ -23,6 +23,7 @@ display_width, display_height = 400, 400
 mid_x = 200
 mid_y = 200
 
+
 def render_stack(surf, images, pos, rotation, spread):
     for i, img in enumerate(images):
         rotated_img = pygame.transform.rotate(img, rotation)
@@ -79,6 +80,7 @@ slime_images = convert_to_imgs('imgs/slime')
 
 # King
 swordshot_image = pygame.image.load('imgs/swordshot/swordshot.png')
+barrelking_images = convert_to_imgs_numbers('imgs/barrelking', 'BarrelKingDesign')
 
 # NPC
 dialogue_box = pygame.image.load('imgs/npc/dialogue_box.png')

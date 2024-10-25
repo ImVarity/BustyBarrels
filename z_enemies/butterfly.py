@@ -77,7 +77,7 @@ class Butterfly(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.activate = 5 # activates after breaking this many barrels
+        self.activate = 100 # activates after breaking this many barrels
 
 
         self.closest_to_player = False
