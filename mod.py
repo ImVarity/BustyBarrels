@@ -37,7 +37,7 @@ class Boss(Hitbox):
         self.delete_radius = 200
 
         
-        self.summon_rise = 3 # layer appears every 15 frames (4 layers every second)
+        self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
 
         self.summoning = False
         self.summon_start = 0
@@ -130,6 +130,11 @@ class Boss(Hitbox):
             
         self.health_bar.draw(surface, self.center, self.height)
 
+    def delete_bullets(self, bullet_to_delete):
+        for i in range(len(self.bullets)):
+            if self.bullets[i] == bullet_to_delete:
+                del self.bullets[i]
+                return
 
     # def update(self, rotation_input, input, direction):
     #     self.get_direction(input)
@@ -145,7 +150,12 @@ class Boss(Hitbox):
         else:
             self.health_bar.damage(dmg)
 
-
+    def temp_death(self):
+        self.health_bar.set_health(self.health)
+        self.summoned = False
+        self.summon_start = 0
+        self.summon_index = self.num_images
+        self.barrels_busted = 0
 
     # def directional_attack(self):
     #     self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))

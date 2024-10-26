@@ -487,7 +487,6 @@ class King(Hitbox):
 
 
 
-            
 
 
     def delete_shuriken(self, shuriken_to_delete):

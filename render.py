@@ -225,7 +225,7 @@ def limit_collision_T(object, collision_center, collision_radius, collidables):
     if object.center.y <= collision_center.center.y + collision_radius and object.center.y >= collision_center.center.y - collision_radius:
         collidables.append(object)
 
-def render_text(loc, word, surface, color="black"):
+def render_text(loc, word, surface, color="black", scale=1):
     col = loc[0]
     row = loc[1]
 
@@ -235,15 +235,14 @@ def render_text(loc, word, surface, color="black"):
         if letter == " ":
             divider += 1
             continue
-        if color == "white":
-            surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
-        elif color == "black":
-            surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
-        elif color == "red":
-            surface.blit(abc_red[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        
+        char = abc[letter.capitalize()][color]
+        char = pygame.transform.scale(char, (char.get_width() * scale, char.get_height() * scale))
+        surface.blit(char.convert_alpha(), (col + divider * 7, row))
+
         divider += 1
 
-def render_text_centered(loc, word, surface, color="black"):
+def render_text_centered(loc, word, surface, color="black", scale=1):
 
 
     col = loc[0] - len(word) * 7 / 2
@@ -255,12 +254,11 @@ def render_text_centered(loc, word, surface, color="black"):
         if letter == " ":
             divider += 1
             continue
-        if color == "white":
-            surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
-        elif color == "black":
-            surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
-        elif color == "red":
-            surface.blit(abc_red[letter.capitalize()].convert_alpha(), (col + divider * 7, row))
+        
+        char = abc[letter.capitalize()][color]
+        char = pygame.transform.scale(char, (char.get_width() * scale, char.get_height() * scale))
+        surface.blit(char.convert_alpha(), (col + divider * 7, row))
+
         divider += 1
 
 
@@ -272,200 +270,44 @@ def raise_player(player):
     player.to_render.images = player.images
 
 
+black_text_folder = 'imgs/a_2/'
+white_text_folder = 'imgs/a_3/'
+red_text_folder = 'imgs/a_4/'
+
+abc = {}
+
+for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+    abc[letter] = {
+        "black": pygame.image.load(f'{black_text_folder}{letter}.png'),
+        "white": pygame.image.load(f'{white_text_folder}{letter}.png'),
+        "red": pygame.image.load(f'{red_text_folder}{letter}.png')
+    }
 
 
+for number in "0123456789":
+    abc[number] = {
+        "black": pygame.image.load(f'{black_text_folder}{number}.png'),
+        "white": pygame.image.load(f'{white_text_folder}{number}.png'),
+        "red": pygame.image.load(f'{red_text_folder}{number}.png')
+    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-A_img = pygame.image.load('imgs/a_2/A.png')
-B_img = pygame.image.load('imgs/a_2/B.png')
-C_img = pygame.image.load('imgs/a_2/C.png')
-D_img = pygame.image.load('imgs/a_2/D.png')
-E_img = pygame.image.load('imgs/a_2/E.png')
-F_img = pygame.image.load('imgs/a_2/F.png')
-G_img = pygame.image.load('imgs/a_2/G.png')
-H_img = pygame.image.load('imgs/a_2/H.png')
-I_img = pygame.image.load('imgs/a_2/I.png')
-J_img = pygame.image.load('imgs/a_2/J.png')
-K_img = pygame.image.load('imgs/a_2/K.png')
-L_img = pygame.image.load('imgs/a_2/L.png')
-M_img = pygame.image.load('imgs/a_2/M.png')
-N_img = pygame.image.load('imgs/a_2/N.png')
-O_img = pygame.image.load('imgs/a_2/O.png')
-P_img = pygame.image.load('imgs/a_2/P.png')
-Q_img = pygame.image.load('imgs/a_2/Q.png')
-R_img = pygame.image.load('imgs/a_2/R.png')
-S_img = pygame.image.load('imgs/a_2/S.png')
-T_img = pygame.image.load('imgs/a_2/T.png')
-U_img = pygame.image.load('imgs/a_2/U.png')
-V_img = pygame.image.load('imgs/a_2/V.png')
-W_img = pygame.image.load('imgs/a_2/W.png')
-X_img = pygame.image.load('imgs/a_2/X.png')
-Y_img = pygame.image.load('imgs/a_2/Y.png')
-Z_img = pygame.image.load('imgs/a_2/Z.png')
-ZERO_img = pygame.image.load('imgs/a_2/0.png')
-ONE_img = pygame.image.load('imgs/a_2/1.png')
-TWO_img = pygame.image.load('imgs/a_2/2.png')
-THREE_img = pygame.image.load('imgs/a_2/3.png')
-FOUR_img = pygame.image.load('imgs/a_2/4.png')
-FIVE_img = pygame.image.load('imgs/a_2/5.png')
-SIX_img = pygame.image.load('imgs/a_2/6.png')
-SEVEN_img = pygame.image.load('imgs/a_2/7.png')
-EIGHT_img = pygame.image.load('imgs/a_2/8.png')
-NINE_img = pygame.image.load('imgs/a_2/9.png')
-COLON_img = pygame.image.load('imgs/a_2/colon.png')
-SLASH_img = pygame.image.load('imgs/a_2/slash.png')
-
-abc = {
-    "A": A_img,
-    "B": B_img,
-    "C": C_img,
-    "D": D_img,
-    "E": E_img,
-    "F": F_img,
-    "G": G_img,
-    "H": H_img,
-    "I": I_img,
-    "J": J_img,
-    "K": K_img,
-    "L": L_img,
-    "M": M_img,
-    "N": N_img,
-    "O": O_img,
-    "P": P_img,
-    "Q": Q_img,
-    "R": R_img,
-    "S": S_img,
-    "T": T_img,
-    "U": U_img,
-    "V": V_img,
-    "W": W_img,
-    "X": X_img,
-    "Y": Y_img,
-    "Z": Z_img,
-    "0": ZERO_img,
-    "1": ONE_img,
-    "2": TWO_img,
-    "3": THREE_img,
-    "4": FOUR_img,
-    "5": FIVE_img,
-    "6": SIX_img,
-    "7": SEVEN_img,
-    "8": EIGHT_img,
-    "9": NINE_img,
-    ":": COLON_img,
-    "^": up_arrow,
-    "`": down_arrow,
-    "<": left_arrow,
-    ">": right_arrow,
-    "/": SLASH_img
+abc[":"] = {
+    "black": pygame.image.load(f'{black_text_folder}colon.png'),
+    "white": pygame.image.load(f'{white_text_folder}colon.png'),
+    "red": pygame.image.load(f'{red_text_folder}colon.png')
 }
-A_img_white = pygame.image.load('imgs/a_3/A.png')
-B_img_white = pygame.image.load('imgs/a_3/B.png')
-C_img_white = pygame.image.load('imgs/a_3/C.png')
-D_img_white = pygame.image.load('imgs/a_3/D.png')
-E_img_white = pygame.image.load('imgs/a_3/E.png')
-F_img_white = pygame.image.load('imgs/a_3/F.png')
-G_img_white = pygame.image.load('imgs/a_3/G.png')
-H_img_white = pygame.image.load('imgs/a_3/H.png')
-I_img_white = pygame.image.load('imgs/a_3/I.png')
-J_img_white = pygame.image.load('imgs/a_3/J.png')
-K_img_white = pygame.image.load('imgs/a_3/K.png')
-L_img_white = pygame.image.load('imgs/a_3/L.png')
-M_img_white = pygame.image.load('imgs/a_3/M.png')
-N_img_white = pygame.image.load('imgs/a_3/N.png')
-O_img_white = pygame.image.load('imgs/a_3/O.png')
-P_img_white = pygame.image.load('imgs/a_3/P.png')
-Q_img_white = pygame.image.load('imgs/a_3/Q.png')
-R_img_white = pygame.image.load('imgs/a_3/R.png')
-S_img_white = pygame.image.load('imgs/a_3/S.png')
-T_img_white = pygame.image.load('imgs/a_3/T.png')
-U_img_white = pygame.image.load('imgs/a_3/U.png')
-V_img_white = pygame.image.load('imgs/a_3/V.png')
-W_img_white = pygame.image.load('imgs/a_3/W.png')
-X_img_white = pygame.image.load('imgs/a_3/X.png')
-Y_img_white = pygame.image.load('imgs/a_3/Y.png')
-Z_img_white = pygame.image.load('imgs/a_3/Z.png')
-ZERO_img_white = pygame.image.load('imgs/a_3/0.png')
-ONE_img_white = pygame.image.load('imgs/a_3/1.png')
-TWO_img_white = pygame.image.load('imgs/a_3/2.png')
-THREE_img_white = pygame.image.load('imgs/a_3/3.png')
-FOUR_img_white = pygame.image.load('imgs/a_3/4.png')
-FIVE_img_white = pygame.image.load('imgs/a_3/5.png')
-SIX_img_white = pygame.image.load('imgs/a_3/6.png')
-SEVEN_img_white = pygame.image.load('imgs/a_3/7.png')
-EIGHT_img_white = pygame.image.load('imgs/a_3/8.png')
-NINE_img_white = pygame.image.load('imgs/a_3/9.png')
-COLON_img_white = pygame.image.load('imgs/a_3/colon.png')
-SLASH_img_white = pygame.image.load('imgs/a_3/slash.png')
 
-abc_white = {
-    "A": A_img_white,
-    "B": B_img_white,
-    "C": C_img_white,
-    "D": D_img_white,
-    "E": E_img_white,
-    "F": F_img_white,
-    "G": G_img_white,
-    "H": H_img_white,
-    "I": I_img_white,
-    "J": J_img_white,
-    "K": K_img_white,
-    "L": L_img_white,
-    "M": M_img_white,
-    "N": N_img_white,
-    "O": O_img_white,
-    "P": P_img_white,
-    "Q": Q_img_white,
-    "R": R_img_white,
-    "S": S_img_white,
-    "T": T_img_white,
-    "U": U_img_white,
-    "V": V_img_white,
-    "W": W_img_white,
-    "X": X_img_white,
-    "Y": Y_img_white,
-    "Z": Z_img_white,
-    "0": ZERO_img_white,
-    "1": ONE_img_white,
-    "2": TWO_img_white,
-    "3": THREE_img_white,
-    "4": FOUR_img_white,
-    "5": FIVE_img_white,
-    "6": SIX_img_white,
-    "7": SEVEN_img_white,
-    "8": EIGHT_img_white,
-    "9": NINE_img_white,
-    ":": COLON_img_white,
-    "/": SLASH_img_white
+abc["/"] = {
+    "black": pygame.image.load(f'{black_text_folder}slash.png'),
+    "white": pygame.image.load(f'{white_text_folder}slash.png')
 }
+
+abc["^"] = {"black" : up_arrow}
+abc["`"] = {"black" : down_arrow}
+abc["<"] = {"black" : left_arrow}
+abc[">"] = {"black" : right_arrow}
+
 
 
 def convert_to_imgs_t(directory):
@@ -480,83 +322,3 @@ def convert_to_imgs_t(directory):
 flat_water_imgs = convert_to_imgs_t('imgs/water/flat')
 split_water_imgs = convert_to_imgs_t('imgs/water/split')
 hole_water_imgs = convert_to_imgs_t('imgs/water/hole')
-
-
-A_img_red = pygame.image.load('imgs/a_4/A.png')
-B_img_red = pygame.image.load('imgs/a_4/B.png')
-C_img_red = pygame.image.load('imgs/a_4/C.png')
-D_img_red = pygame.image.load('imgs/a_4/D.png')
-E_img_red = pygame.image.load('imgs/a_4/E.png')
-F_img_red = pygame.image.load('imgs/a_4/F.png')
-G_img_red = pygame.image.load('imgs/a_4/G.png')
-H_img_red = pygame.image.load('imgs/a_4/H.png')
-I_img_red = pygame.image.load('imgs/a_4/I.png')
-J_img_red = pygame.image.load('imgs/a_4/J.png')
-K_img_red = pygame.image.load('imgs/a_4/K.png')
-L_img_red = pygame.image.load('imgs/a_4/L.png')
-M_img_red = pygame.image.load('imgs/a_4/M.png')
-N_img_red = pygame.image.load('imgs/a_4/N.png')
-O_img_red = pygame.image.load('imgs/a_4/O.png')
-P_img_red = pygame.image.load('imgs/a_4/P.png')
-Q_img_red = pygame.image.load('imgs/a_4/Q.png')
-R_img_red = pygame.image.load('imgs/a_4/R.png')
-S_img_red = pygame.image.load('imgs/a_4/S.png')
-T_img_red = pygame.image.load('imgs/a_4/T.png')
-U_img_red = pygame.image.load('imgs/a_4/U.png')
-V_img_red = pygame.image.load('imgs/a_4/V.png')
-W_img_red = pygame.image.load('imgs/a_4/W.png')
-X_img_red = pygame.image.load('imgs/a_4/X.png')
-Y_img_red = pygame.image.load('imgs/a_4/Y.png')
-Z_img_red = pygame.image.load('imgs/a_4/Z.png')
-ZERO_img_red = pygame.image.load('imgs/a_4/0.png')
-ONE_img_red = pygame.image.load('imgs/a_4/1.png')
-TWO_img_red = pygame.image.load('imgs/a_4/2.png')
-THREE_img_red = pygame.image.load('imgs/a_4/3.png')
-FOUR_img_red = pygame.image.load('imgs/a_4/4.png')
-FIVE_img_red = pygame.image.load('imgs/a_4/5.png')
-SIX_img_red = pygame.image.load('imgs/a_4/6.png')
-SEVEN_img_red = pygame.image.load('imgs/a_4/7.png')
-EIGHT_img_red = pygame.image.load('imgs/a_4/8.png')
-NINE_img_red = pygame.image.load('imgs/a_4/9.png')
-COLON_img_red = pygame.image.load('imgs/a_4/colon.png')
-
-
-abc_red = {
-    "A": A_img_red,
-    "B": B_img_red,
-    "C": C_img_red,
-    "D": D_img_red,
-    "E": E_img_red,
-    "F": F_img_red,
-    "G": G_img_red,
-    "H": H_img_red,
-    "I": I_img_red,
-    "J": J_img_red,
-    "K": K_img_red,
-    "L": L_img_red,
-    "M": M_img_red,
-    "N": N_img_red,
-    "O": O_img_red,
-    "P": P_img_red,
-    "Q": Q_img_red,
-    "R": R_img_red,
-    "S": S_img_red,
-    "T": T_img_red,
-    "U": U_img_red,
-    "V": V_img_red,
-    "W": W_img_red,
-    "X": X_img_red,
-    "Y": Y_img_red,
-    "Z": Z_img_red,
-    "0": ZERO_img_red,
-    "1": ONE_img_red,
-    "2": TWO_img_red,
-    "3": THREE_img_red,
-    "4": FOUR_img_red,
-    "5": FIVE_img_red,
-    "6": SIX_img_red,
-    "7": SEVEN_img_red,
-    "8": EIGHT_img_red,
-    "9": NINE_img_red,
-    ":": COLON_img_red
-}

@@ -59,10 +59,10 @@ class GameLoop:
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple, "Tifanie")
         self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue, "Sylvia")
         self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue, "Crystal")
-        self.King = King([mid_x, mid_y - 50], 32, 32, black, Vector(1, 0), "King", health=1000)
-        self.BKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King")
+        # self.King = King([mid_x, mid_y - 50], 32, 32, black, Vector(1, 0), "King", health=1000)
+        self.BarrelKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King")
 
-        self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.King, self.BKing]
+        self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.BarrelKing]
 
         # Car
         self.Alpha = Alpha([100, 100], 56, 48, red, health=100)
@@ -179,6 +179,9 @@ class GameLoop:
         self.entering_blank = False
 
 
+        self.death_timer = 0 # when the player dies, this is the period after death before being able to play again
+
+
 
     def enter_blank(self, display):
         if self.reached:
@@ -202,6 +205,18 @@ class GameLoop:
             self.end = display_width
             self.reached = False
             self.stage = "blank"
+
+
+    def death_screen(self, display):
+        death_color = (255, 0, 0, 100)
+        death_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
+        death_surface.fill(death_color)
+        render_text_centered((mid_x, mid_y), f"{self.death_timer // 60 + 1}", death_surface, "black", scale=2)
+        display.blit(death_surface, (0, 0))
+        self.death_timer -= 1
+
+
+
 
 
 
@@ -449,14 +464,14 @@ class GameLoop:
                 bullet = "Shurikens"
             elif boss == self.Sylvia or boss == self.Crystal:
                 bullet = "Leaves"
-            elif boss == self.King:
+            elif boss == self.BarrelKing:
                 bullet = "Swordshots"
             else:
                 bullet = "Shurikens"
             limit_collision(shuriken, self.player, self.player.collision_radius, self.collidables[bullet])
 
     def add_collectables(self, item, MAX):
-        if not self.BKing.summoned:
+        if not self.BarrelKing.summoned:
             if len(self.collectables[item]) < MAX:
                 self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 12, 12, black, images[item]))
         else: # If the king is alive then remove all collectables on the screen 
@@ -529,20 +544,19 @@ class GameLoop:
 
     def update_bosses(self, dt, display):
 
+
         for b in self.bosses:
             if not self.paused:
                 b.set_delta_time(self.dt)
                 if isinstance(b, Kingv2):
-                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
+                    self.update_barrelking(b)
                 # checks what attacks to attack with
-                if isinstance(b, King):
-                    b.attacks(dt, self.particles)
-                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
-                else:
-                    b.attacks(dt)
+                elif isinstance(b, Uno):
+                    self.update_uno(b)
+                elif isinstance(b, Butterfly):
+                    self.update_butterfly(b)
 
-
-                
+                b.attacks(dt)
 
                 # obvious
                 if not b.summoned:
@@ -552,9 +566,6 @@ class GameLoop:
 
                 # updates the bullets that the boss shoots
                 self.update_boss_bullets(b, display)
-
-                if not isinstance(b, King) and not isinstance(b, Kingv2):
-                    b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
 
                 b.follow_player(self.player.center)
                 if b.summoned and not b.dead:
@@ -577,6 +588,21 @@ class GameLoop:
                     
 
             self.to_render.append(b)
+
+
+    def update_uno(self, b):
+        b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
+
+    def update_butterfly(self, b):
+        b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
+
+    def update_barrelking(self, b):
+        if not self.paused:
+            b.set_delta_time(self.dt)
+            b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
+            if b.check_if_land(): # when the boss lands it shakes the screen
+                self.screen_shake = 12
+                self.shake_magnitude = 12
     
     def handle_npc_inputs(self):
         if self.inputs["HUD"]["next"]:
@@ -778,7 +804,9 @@ class GameLoop:
 
         if self.entering_blank:
             self.enter_blank(display)
-
+            
+        if self.death_timer > 0:
+            self.death_screen(display)
         # if self.paused:
         #     self.paused_screen(display)
 
@@ -852,8 +880,8 @@ class GameLoop:
             self.camera_follow = self.Sylvia.location
         elif self.Crystal.tracking:
             self.camera_follow = self.Crystal.location
-        elif self.King.tracking:
-            self.camera_follow = self.King.location
+        elif self.BarrelKing.tracking:
+            self.camera_follow = self.BarrelKing.location
         else:
             self.camera_follow = self.player.location
 
@@ -904,6 +932,7 @@ class GameLoop:
                     self.Tifanie.move_distance(t_v * -1, t_x_distance)
                     self.Tifanie.temp_death()
                     self.player.player_death()
+                    self.death_timer = 60
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
@@ -916,19 +945,20 @@ class GameLoop:
 
             if collided:
                 self.player.damage(bodyB.damage, display)
-                self.King.delete_shuriken(bodyB)
+                self.BarrelKing.delete_bullets(bodyB)
                 del self.collidables["Swordshots"][i]
                 if self.player.health_bar.health <= 0:
                     x_distance = math.sqrt((self.player.center.x - self.spawnpoint.center.x) ** 2 + (self.player.center.y - self.spawnpoint.center.y) ** 2)
                     v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
                     v.normalize()
                     self.player.move_distance(v * -1, x_distance)
-                    t_x_distance = math.sqrt((self.King.center.x- self.tif_spawnpoint.center.x) ** 2 + (self.King.center.y - self.tif_spawnpoint.center.y) ** 2)
-                    t_v = Vector((self.King.center.x - self.tif_spawnpoint.center.x), (self.King.center.y - self.tif_spawnpoint.center.y))
+                    t_x_distance = math.sqrt((self.BarrelKing.center.x- self.tif_spawnpoint.center.x) ** 2 + (self.BarrelKing.center.y - self.tif_spawnpoint.center.y) ** 2)
+                    t_v = Vector((self.BarrelKing.center.x - self.tif_spawnpoint.center.x), (self.BarrelKing.center.y - self.tif_spawnpoint.center.y))
                     t_v.normalize()
-                    self.King.move_distance(t_v * -1, t_x_distance)
-                    self.King.temp_death()
+                    self.BarrelKing.move_distance(t_v * -1, t_x_distance)
+                    self.BarrelKing.temp_death()
                     self.player.player_death()
+                    self.death_timer = 180
                     self.stage = "grasslands"
                     break
                 # self.player.move(normal * .05)
@@ -963,6 +993,7 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
+                    self.death_timer = 60
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
@@ -993,6 +1024,7 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
+                    self.death_timer = 60
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
