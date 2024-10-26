@@ -25,9 +25,6 @@ class Timer:
 
 
 
-
-
-
     @property
     def alarm(self):
         return self.start >= self.end

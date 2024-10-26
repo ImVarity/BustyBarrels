@@ -30,7 +30,7 @@ import time
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
-MAX_BARREL_COUNT_COLLECTABLES = 10
+MAX_BARREL_COUNT_COLLECTABLES = 30
 
 
 class GameLoop:
@@ -59,8 +59,7 @@ class GameLoop:
         self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple, "Tifanie")
         self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue, "Sylvia")
         self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue, "Crystal")
-        # self.King = King([mid_x, mid_y - 50], 32, 32, black, Vector(1, 0), "King", health=1000)
-        self.BarrelKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King")
+        self.BarrelKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King", health=1000)
 
         self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.BarrelKing]
 
@@ -153,7 +152,8 @@ class GameLoop:
             "Bombs" : [],
             "Bosses" : {
                 "Butterflies" : [],
-                "Bunny" : []
+                "Bunny" : [],
+                "King" : []
             },
             "Water" : [],
             "Boundary": []
@@ -179,14 +179,16 @@ class GameLoop:
         self.entering_blank = False
 
 
+        self.death_length = 300 # how many frames the player is dead for
         self.death_timer = 0 # when the player dies, this is the period after death before being able to play again
+        self.dead = False
 
 
 
     def enter_blank(self, display):
         if self.reached:
-            self.size += 25
-        self.end -= 40
+            self.size += 25 * self.dt
+        self.end -= 40 * self.dt
 
         if self.end <= -1000:
             self.reached = True
@@ -208,27 +210,40 @@ class GameLoop:
 
 
     def death_screen(self, display):
-        death_color = (255, 0, 0, 100)
-        death_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
-        death_surface.fill(death_color)
-        render_text_centered((mid_x, mid_y), f"{self.death_timer // 60 + 1}", death_surface, "black", scale=2)
-        display.blit(death_surface, (0, 0))
-        self.death_timer -= 1
+        if self.death_timer > 0:
+            death_color = (0, 0, 0, int((self.death_timer / self.death_length) * 255))
+            death_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
+            death_surface.fill(death_color)
+            render_text_centered((mid_x, mid_y), f"{self.death_timer // 60 + 1}", death_surface, "white", scale=2)
+            render_text_centered((mid_x, mid_y - mid_y // 2), "you died", death_surface, "white", scale=2)
+            render_text_centered((mid_x, mid_y - mid_y // 2 + 20), "hahaha", death_surface, "white", scale=2)
 
-
+            display.blit(death_surface, (0, 0))
+            self.dead = True
+            self.death_timer -= 1
+        else:
+            self.dead = False
 
 
 
 
     # Gets the direction that the player is moving
     def initialize_direction(self):
+        if self.dead:
+            self.inputs["Movements"]["up"] = False
+            self.inputs["Movements"]["down"] = False
+            self.inputs["Movements"]["left"] = False
+            self.inputs["Movements"]["right"] = False
+
+
         self.direction = self.player.get_direction(self.inputs["Movements"]) * self.dt
         self.player.direction = self.direction
+
     
     def main(self, dt, display): # -> dict[str]:
         self.set_delta_time(dt)
         self.initialize_direction()
-        
+
         if not self.paused:
             self.update_player()
             self.camera_tracking()
@@ -316,7 +331,8 @@ class GameLoop:
             "Bombs" : [],
             "Bosses" : {
                 "Butterflies" : [],
-                "Bunny" : []
+                "Bunny" : [],
+                "King" : []
             },
             "Water" : [],
             "Boundary": []
@@ -548,9 +564,9 @@ class GameLoop:
         for b in self.bosses:
             if not self.paused:
                 b.set_delta_time(self.dt)
+
                 if isinstance(b, Kingv2):
                     self.update_barrelking(b)
-                # checks what attacks to attack with
                 elif isinstance(b, Uno):
                     self.update_uno(b)
                 elif isinstance(b, Butterfly):
@@ -570,20 +586,28 @@ class GameLoop:
                 b.follow_player(self.player.center)
                 if b.summoned and not b.dead:
                     added = False
-                    for arrow in self.arrows:
+
+                    for arrow in self.arrows: # if arrows get close to the boss we add the boss to collidables
                         if abs(b.center.x - arrow.center.x) <= b.width / 2 and abs(b.center.y - arrow.center.y) <= b.height / 2:
                             self.collidables["Arrows"].append(arrow)
                             if isinstance(b, Butterfly):
                                 self.collidables["Bosses"]["Butterflies"].append(b)
                             elif isinstance(b, Uno):
                                 self.collidables["Bosses"]["Bunny"].append(b)
+                            elif isinstance(b, Kingv2):
+                                self.collidables["Bosses"]["King"].append(b)
                             added = True
-                    if not added:
+
+
+                    if not added: # checks if the boss is close enough to the player to check collision if it wasnt added in the check above
                         if abs(b.center.x - self.player.center.x) <= b.width / 2 and abs(b.center.y - self.player.center.y) <= b.height / 2:
                             if isinstance(b, Butterfly):
                                 self.collidables["Bosses"]["Butterflies"].append(b)
                             elif isinstance(b, Uno):
                                 self.collidables["Bosses"]["Bunny"].append(b)
+                            elif isinstance(b, Kingv2):
+                                self.collidables["Bosses"]["King"].append(b)
+
                         
                     
 
@@ -804,9 +828,10 @@ class GameLoop:
 
         if self.entering_blank:
             self.enter_blank(display)
-            
-        if self.death_timer > 0:
-            self.death_screen(display)
+        
+        # only really activates when dead
+        self.death_screen(display)
+
         # if self.paused:
         #     self.paused_screen(display)
 
@@ -932,7 +957,7 @@ class GameLoop:
                     self.Tifanie.move_distance(t_v * -1, t_x_distance)
                     self.Tifanie.temp_death()
                     self.player.player_death()
-                    self.death_timer = 60
+                    self.death_timer = self.death_length
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
@@ -958,7 +983,7 @@ class GameLoop:
                     self.BarrelKing.move_distance(t_v * -1, t_x_distance)
                     self.BarrelKing.temp_death()
                     self.player.player_death()
-                    self.death_timer = 180
+                    self.death_timer = self.death_length
                     self.stage = "grasslands"
                     break
                 # self.player.move(normal * .05)
@@ -993,7 +1018,7 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
-                    self.death_timer = 60
+                    self.death_timer = self.death_length
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
@@ -1024,10 +1049,11 @@ class GameLoop:
                     self.Crystal.temp_death()
 
                     self.player.player_death()
-                    self.death_timer = 60
+                    self.death_timer = self.death_length
                     self.stage = "grasslands"
                     break
                 self.player.move(normal * .05)
+    
         
 
     def arrows_and_all(self):
@@ -1092,12 +1118,37 @@ class GameLoop:
                         if not self.Tifanie.dead:
                             self.screen_shake = 30
                             self.shake_magnitude = 12
-                            p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
+                            # p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
+                            # p.powerup = True
+                            # self.player.bomber = True
+                            # self.collectables["Powerups"].append(p)
+                        self.Tifanie.death()
+                    break
+
+
+            # King colliding with arrows
+            if hit == False and len(self.collidables["Bosses"]["King"]) > 0 and not self.BarrelKing.check_in_air(): # can attack the boss only if he is on the ground
+                bodyB = self.BarrelKing
+                collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
+                if collided:
+                    bodyB.health_bar.damage(bodyA.damage)
+                    self.delete_arrow(bodyA)
+                    self.sounds.damage.play()
+                    del self.collidables["Arrows"][i]
+                    if bodyB.health_bar.health <= 0:
+                        if not self.BarrelKing.dead:
+                            self.screen_shake = 30
+                            self.shake_magnitude = 12
+                            # Powerup after killing the boss -------
+                            p = Collectable((self.BarrelKing.center.x, self.BarrelKing.center.y), 8, 8, black, bomb_images)
                             p.powerup = True
                             self.player.bomber = True
                             self.collectables["Powerups"].append(p)
-                        self.Tifanie.death()
+                            # --------
+                        self.BarrelKing.death()
+                        self.stage = "grasslands"
                     break
+            
 
     def bombs_and_barrels(self):
         # Bombs colliding with Barrels

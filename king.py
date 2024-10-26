@@ -350,7 +350,6 @@ class King(Hitbox):
             self.eight_shot = False
 
     def landing_attack(self, dt):
-        print(self.pause)
 
         if self.pause > 50:
             radius = 100 # distance sword is thrown from player

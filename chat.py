@@ -189,10 +189,7 @@ class TextBubble:
                 row += 8
                 divider = 0
                 continue
-            if color == "white":
-                surface.blit(abc_white[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
-            if color == "black":
-                surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
+            surface.blit(abc[letter.capitalize()][color].convert_alpha(), (col + divider * 8, row))
 
     def show_continue_text(self, surface):
         col = self.location.x - self.width / 2 + 120 + 15
@@ -208,7 +205,7 @@ class TextBubble:
                 row += 8
                 divider = 0
                 continue
-            surface.blit(abc[letter.capitalize()].convert_alpha(), (col + divider * 8, row))
+            surface.blit(abc[letter.capitalize()]["black"].convert_alpha(), (col + divider * 8, row))
 
 
     def add_dialogue(self, text):

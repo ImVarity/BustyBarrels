@@ -34,7 +34,7 @@ class Boss(Hitbox):
 
         self.turn_angle_degrees = 1
 
-        self.delete_radius = 200
+        self.delete_radius = 500
 
         
         self.summon_rise = 15 # layer appears every 15 frames (4 layers every second)
@@ -156,6 +156,7 @@ class Boss(Hitbox):
         self.summon_start = 0
         self.summon_index = self.num_images
         self.barrels_busted = 0
+        self.bullets = []
 
     # def directional_attack(self):
     #     self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))

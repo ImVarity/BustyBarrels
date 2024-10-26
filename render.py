@@ -1,6 +1,8 @@
 import pygame
 import os
 
+from vector import Vector
+
 green = (0, 161, 82)
 heather = (210, 145, 255)
 indigo = (75, 0, 130)
@@ -238,14 +240,14 @@ def render_text(loc, word, surface, color="black", scale=1):
         
         char = abc[letter.capitalize()][color]
         char = pygame.transform.scale(char, (char.get_width() * scale, char.get_height() * scale))
-        surface.blit(char.convert_alpha(), (col + divider * 7, row))
+        surface.blit(char.convert_alpha(), (col + divider * (7 * scale), row))
 
         divider += 1
 
 def render_text_centered(loc, word, surface, color="black", scale=1):
 
 
-    col = loc[0] - len(word) * 7 / 2
+    col = loc[0] - len(word) * (7 * scale) / 2
     row = loc[1]
 
     divider = 0
@@ -257,10 +259,14 @@ def render_text_centered(loc, word, surface, color="black", scale=1):
         
         char = abc[letter.capitalize()][color]
         char = pygame.transform.scale(char, (char.get_width() * scale, char.get_height() * scale))
-        surface.blit(char.convert_alpha(), (col + divider * 7, row))
+        surface.blit(char.convert_alpha(), (col + divider * (7 * scale), row))
 
         divider += 1
 
+
+# Returns vector to mid from given vector
+def vec_to_mid(point):
+    return Vector(200 - point[0], 200 - point[1]).normalize()
 
 
 def lower_player(player):
