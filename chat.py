@@ -3,11 +3,8 @@ from render import *
 
 pygame.init()
 
-menu_click = pygame.mixer.Sound('sfx/menuclick.wav')
-
 
 linen = (250, 240, 230)
-
 mid_x, mid_y = 200, 200
 
 
@@ -59,14 +56,14 @@ class TextBubble:
             if input["down"]:
                 if self.hovering < 3:
                     if self.hovering != len(self.quests) - 1:
-                        menu_click.play()
+                        self.sounds.menu_click.play()
                         self.hovering += 1
             elif input["up"]:
                 if self.hovering != 0:
-                    menu_click.play()
+                    self.sounds.menu_click.play()
                     self.hovering -= 1
             elif input["confirm"]:
-                menu_click.play()
+                self.sounds.menu_click.play()
                 return self.current_quest
 
         return ""
@@ -89,6 +86,9 @@ class TextBubble:
         # shows each letter and the continue text if reaching the last letter of the dialogue
         self.show_text(surface, self.show_dialogue, [self.location.x - self.width / 2 - 10, self.location.y - self.height / 2 + 20], "black")
         if self.c_l == len(self.dialogue[self.current_dialogue]):
+            back_surface = pygame.Surface((160, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            surface.blit(back_surface, (194, 130))
             self.show_continue_text(surface)
             if self.current_dialogue > 1:
                 self.show_quests(surface)

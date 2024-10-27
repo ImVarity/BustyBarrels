@@ -86,7 +86,8 @@ inputs = {
         "autofire": False,
         "dash": False,
         "throw" : False,
-        "interact" : False
+        "interact" : False,
+        "heal" : False
     },
     "Admin" : {
         "hitboxes" : False
@@ -113,12 +114,7 @@ random_slime_count = 120
 
 
 
-bounding_boxes = [
-    Hitbox((-24, -624), 624 * 2, 40, red),
-    Hitbox((590, -24), 40, 624 * 2, red),
-    Hitbox((-24, 590), 624 * 2, 40, red),
-    Hitbox((-624, -24), 40, 624 * 2, red)
-]
+
 
 
 
@@ -152,10 +148,13 @@ while running:
 
     pre_time = time.perf_counter()
 
-
+    # screen is the 800 x 800
+    # display is the 400 x 400
     screen.fill(background_color)
-    if Game.stage == "grasslands":
-        display.fill(background_color)
+    display.fill(background_color)
+
+
+
     keys = pygame.key.get_pressed()
     mousePos = pygame.mouse.get_pos()
 
@@ -167,6 +166,7 @@ while running:
     inputs["Action"]["shoot"] = False
     inputs["Action"]["throw"] = False
     inputs["Action"]["interact"] = False
+    inputs["Action"]["heal"] = False
     inputs["Tests"]["click"] = False
 
     npc_input = { # in main loop so that it only registers once per click
@@ -197,6 +197,8 @@ while running:
                 npc_input["confirm"] = True
             if event.key == pygame.K_SPACE:
                 inputs["Action"]["throw"] = True
+            if event.key == pygame.K_h:
+                inputs["Action"]["heal"] = True
             if event.key == pygame.K_0:
                 inputs["Tests"]["click"] = True
             
@@ -227,6 +229,8 @@ while running:
     inputs["Movements"]["lock"] = keys[pygame.K_l]
     inputs["Movements"]["stats"] = keys[pygame.K_TAB]
 
+
+
     
     if inputs["Action"]["autofire"]:
         inputs["Action"]["shoot"] = True
@@ -254,13 +258,18 @@ while running:
         background_color = grass_green
         Game.render_tiles(display)
     elif Game.stage == "blank":
+        background_color = white
+        screen.fill(black)
+    elif Game.stage == "blink":
         background_color = black
+        screen.fill(white)
 
     
     Game.render_all(display)
 
 
     render_text((12, 12), FPS_text, display)
+    render_text((12, 380), f"{int(Game.player.center.x - Game.spawnpoint.center.x)} {int(Game.player.center.y - Game.spawnpoint.center.y)}", display)
 
     if paused:
         display.blit(npc_surface, (0, 0))
@@ -297,7 +306,7 @@ while running:
         display.blit(black_overlay_surface, (0, 0))
 
     if saving_game:
-        print(inputs["Rotation"]["reset"])
+        # print(inputs["Rotation"]["reset"])
         running = False
     screen.blit(pygame.transform.scale(display, screen.get_size()), render_offset)
     pygame.display.flip()

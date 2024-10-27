@@ -77,7 +77,7 @@ class Butterfly(Hitbox):
         self.s = Vector(math.cos(self.s_x), math.sin(self.s_y))
 
 
-        self.activate = 100 # activates after breaking this many barrels
+        self.activate = 5 # activates after breaking this many barrels
 
 
         self.closest_to_player = False
@@ -87,7 +87,7 @@ class Butterfly(Hitbox):
 
 
     def check_if_summon(self):
-        if self.barrels_busted >= self.activate and not self.summoned:
+        if self.barrels_busted >= self.activate and not self.summoned and not self.dead:
             self.summoning = True
             self.tracking = True
 

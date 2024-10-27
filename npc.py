@@ -14,6 +14,7 @@ class NPC(Hitbox):
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.health_bar = HealthBar(health, color)
 
+        self.sounds = None
         self.interacting = False
 
         self.text = TextBubble(Vector(200, 85), 300, 75)
@@ -87,8 +88,6 @@ class NPC(Hitbox):
     def talk(self, surface, input, player, display):
 
         self.active_quest = self.text.display_text_bubble(surface, input)
-        
-
         transaction = False
 
         if len(self.active_quest) > 0: # just pressed enter to confirm a quest
@@ -196,6 +195,8 @@ class NPC(Hitbox):
 
     def next(self):
         self.text.next()
+        self.sounds.menu_click.play()
+
 
     def update(self, rotation_input, direction):
         self.handle_rotation(rotation_input)

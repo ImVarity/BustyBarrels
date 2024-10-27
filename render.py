@@ -82,6 +82,7 @@ slime_images = convert_to_imgs('imgs/slime')
 
 # King
 swordshot_image = pygame.image.load('imgs/swordshot/swordshot.png')
+swordshot_image_black = pygame.image.load('imgs/swordshot/swordshot_black.png')
 barrelking_images = convert_to_imgs_numbers('imgs/barrelking', 'BarrelKingDesign')
 
 # NPC
@@ -308,6 +309,9 @@ abc["/"] = {
     "black": pygame.image.load(f'{black_text_folder}slash.png'),
     "white": pygame.image.load(f'{white_text_folder}slash.png')
 }
+
+abc["-"] = {"black" : pygame.image.load(f'{black_text_folder}dash.png')}
+
 
 abc["^"] = {"black" : up_arrow}
 abc["`"] = {"black" : down_arrow}

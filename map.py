@@ -1,25 +1,48 @@
 from render import *
+from Square import Hitbox
 import random
-from tile import Tile
+
+
+class Tile(Hitbox):
+    def __init__(self, center, width, height, color, images, type="land"):
+        super().__init__(center, width, height, color)
+        self.type = type
+        if type == "water":
+            self.images = [img.convert_alpha() for img in images]
+        else:
+            self.images = images.convert_alpha()
+        self.to_render = Render(self.images, center, self.angle)
+
+    def render(self, surf):
+        self.to_render.render_single(surf)
+
+
+    def update(self, rotation_input, direction):
+        self.handle_rotation(rotation_input)
+        self.move(direction * -1)
+        self.to_render.loc = [self.center.x, self.center.y]
+        self.to_render.angle = self.angle
+
+
 
 class Tilemap:
 
 
     map_br = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
     map_bl = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
@@ -67,7 +90,11 @@ class Tilemap:
     ]
 
     def __init__(self) -> None:
-        
+        '''
+        1 is land
+        0 is water
+        '''
+
         self.tiles = []
 
         for i in range(len(self.map_tl)):
@@ -99,4 +126,3 @@ class Tilemap:
                 else:
                     self.tiles.append(Tile((j * 48, i * 48), 48, 48, blue, flat_water_imgs if random.randint(0, 1) == 1 else split_water_imgs, type="water"))
 
-    

@@ -2,7 +2,6 @@ from render import *
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
-from uno import Shuriken
 import math
 
 mid_x = 200
@@ -84,7 +83,7 @@ class Boss(Hitbox):
 
 
     def check_if_summon(self):
-        if not self.summoned and not self.summoning:
+        if not self.summoned and not self.summoning and not self.dead:
             if self.barrels_busted >= self.activate and not self.summoned:
                 self.summoning = True
                 self.tracking = True

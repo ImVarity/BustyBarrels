@@ -18,6 +18,8 @@ class Player(Hitbox):
         self.render_radius = 200
         self.collision_radius = 33
 
+        self.sounds = None
+
 
         self.original_health = health
         self.health = health
@@ -84,7 +86,7 @@ class Player(Hitbox):
 
         self.stats = {
             'M' : 1000,
-            'R' : 1000
+            'R' : 300
         }
 
         # self.arrow_multiplier = 1
@@ -96,10 +98,17 @@ class Player(Hitbox):
 
 
 
-
+        # Damage ------
         self.damage_taken = []
         self.damage_flash = False
         self.damage_flash_counter = 0
+
+
+        # Heal --------
+        self.heal_taken = []
+        self.banana_heal_amount = 20
+
+
 
     def player_death(self):
         self.health_bar.set_health(self.original_health)
@@ -119,11 +128,26 @@ class Player(Hitbox):
     def draw_healthbar(self, surface):
         self.health_bar.draw(surface, self.center, self.height)
 
+    def heal(self, healed):
+        if healed and self.health_bar.health < (self.health_bar.maxhealth - self.banana_heal_amount) and len(self.inventory["Bananas"]) > 0:
+            self.inventory["Bananas"].pop()
+            self.health_bar.set_health(self.health_bar.health + self.banana_heal_amount)
+            self.heal_taken.append(DamageNumber(self.banana_heal_amount, [self.center.x, self.center.y]))
+            self.sounds.heal.play()
+
+
+    def draw_heal(self, display):
+        for i in range(len(self.heal_taken) -1, -1, -1):
+            self.heal_taken[i].draw(display)
+            if self.heal_taken[i].height >= self.heal_taken[i].disappear_counter:
+                del self.damage_taken[i]   
+
     def update(self, rotation_input, action_input, direction): # order matters here so images dont move first
         self.handle_rotation(rotation_input, player=True)
         self.handle_dash(action_input, direction)
         self.collectables_follow(rotation_input, direction)
         self.handle_damage()
+        self.handle_heal()
         self.update_actions(action_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
@@ -134,6 +158,7 @@ class Player(Hitbox):
         self.handle_dash(action_input, direction)
         self.collectables_follow(rotation_input, direction)
         self.handle_damage()
+        self.handle_heal()
         self.update_actions(action_input)
         self.to_render.loc = [self.center.x, self.center.y]
         self.to_render.angle = self.angle
@@ -142,6 +167,10 @@ class Player(Hitbox):
     def update_spawnpoint(self, rotation_input, direction):
         self.spawnpoint.handle_rotation(rotation_input)
         self.spawnpoint.move(direction * -1)
+
+    def handle_heal(self):
+        for heal in self.heal_taken:
+            heal.update([self.center.x, self.center.y])
 
     def handle_damage(self):
         for damage in self.damage_taken:
@@ -181,6 +210,7 @@ class Player(Hitbox):
         self.health -= damage
         self.health_bar.damage(damage)
         self.damage_flash = True
+        self.sounds.player_take_damage.play()
 
     
     def draw_damage(self, surface):
@@ -197,6 +227,14 @@ class Player(Hitbox):
         if self.damage_flash_counter > 5:
             self.damage_flash = False
             self.damage_flash_counter = 0
+
+
+    def draw_heal(self, display):
+        for i in range(len(self.heal_taken) -1, -1, -1):
+            self.heal_taken[i].draw_heal(display)
+            if self.heal_taken[i].height >= self.heal_taken[i].disappear_counter:
+                del self.heal_taken[i]
+
 
     def dexterity_counter(self, dt):
         self.dex_counter += dt
@@ -250,6 +288,8 @@ class Player(Hitbox):
 
 
 
+
+
 class DamageNumber:
     def __init__(self, damage, loc) -> None:
 
@@ -257,9 +297,9 @@ class DamageNumber:
         self.number = damage
 
         # how how above player numer starts
-        self.height = 5
+        self.height = 9
         self.width = 0
-        self.disappear_counter = 13
+        self.disappear_counter = 20
         self.rise_speed = .5
 
     def update(self, loc):
@@ -270,6 +310,10 @@ class DamageNumber:
 
     def draw(self, surface):
         render_text_centered((self.loc[0] + self.width, self.loc[1] - self.height), str(self.number), surface, "red")
+    
+    def draw_heal(self, display):
+        render_text_centered((self.loc[0] + self.width, self.loc[1] - self.height), str(self.number), display, "white")
+
 
 
 class PlayerArrow(Hitbox):

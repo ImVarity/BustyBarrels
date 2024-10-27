@@ -16,7 +16,7 @@ class Arrow(Hitbox):
         self.arrow_angle_start = arrow_angle_start
         self.set_angle(self.arrow_angle) # sets the direction of all the vertices to face the right way
         self.spread = 1
-        self.damage = 5
+        self.damage = 50
         self.to_render = Render(self.images, center, self.arrow_angle, self.spread)
         # self.direction = Vector((1, 0))
 

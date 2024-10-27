@@ -16,6 +16,12 @@ class SFX:
         self.throw = pygame.mixer.Sound('sfx/throw.wav')
         self.stick = pygame.mixer.Sound('sfx/stick.wav')
 
+        self.heal = pygame.mixer.Sound('sfx/heal.wav')
+        self.heal.set_volume(.4)
+
+        self.player_take_damage = pygame.mixer.Sound('sfx/player_damage.wav')
+        self.player_take_damage.set_volume(.45)
+
         self.explosion_sound.set_volume(.2)
         
 

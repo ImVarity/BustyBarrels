@@ -9,16 +9,14 @@ from Square import Hitbox
 from vector import Vector
 from z_throwables.arrow import Arrow
 from barrel import Barrel
-from player import Player
-from player import PlayerArrow
+from player import Player, PlayerArrow
 from collectable import Collectable
 from npc import NPC
 from uno import Uno
 from particles import Particle, dust, explode, celebrate
 from z_enemies.slime import Slime
 from z_throwables.bomb import Bomb
-from king import King, SwordShot
-from tile import Tile
+from bullets import Shuriken, SwordShot
 from map import Tilemap
 from render import *
 from z_enemies.butterfly import Butterfly
@@ -30,7 +28,8 @@ import time
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
-MAX_BARREL_COUNT_COLLECTABLES = 30
+MAX_BANANA_COUNT_COLLECTABLES = 10
+MAX_BARRELS = 30
 
 
 class GameLoop:
@@ -41,8 +40,8 @@ class GameLoop:
         self.Map = Tilemap()
 
         self.dt = 1
-
         self.sounds = None
+        self.first_pass = False # does everything that needs to happen in the first loop
 
         self.direction = Vector(0, 0)
         self.paused = False
@@ -92,6 +91,7 @@ class GameLoop:
             BridgePart([0, -500], 99, 48, 0, red),
             BridgePart([90, -500], 99, 48, 180, red)
         ]
+        self.boundaries = [Hitbox((-24, -624), 624 * 2, 40, red), Hitbox((590, -24), 40, 624 * 2, red), Hitbox((-24, 590), 624 * 2, 40, red), Hitbox((-624, -24), 40, 624 * 2, red)]
 
 
         self.barrels = [
@@ -124,7 +124,8 @@ class GameLoop:
                 "autofire": False,
                 "dash": False,
                 "throw" : False,
-                "interact" : False
+                "interact" : False,
+                "heal" : False
             },
             "Admin" : {
                 "hitboxes" : False
@@ -168,7 +169,7 @@ class GameLoop:
 
 
         self.stages = {
-            "grasslands", "blank"
+            "grasslands", "blank", "blink"
         }
         self.stage = "grasslands"
 
@@ -182,6 +183,9 @@ class GameLoop:
         self.death_length = 300 # how many frames the player is dead for
         self.death_timer = 0 # when the player dies, this is the period after death before being able to play again
         self.dead = False
+
+
+        self.max_barrel_count = 30
 
 
 
@@ -215,8 +219,7 @@ class GameLoop:
             death_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
             death_surface.fill(death_color)
             render_text_centered((mid_x, mid_y), f"{self.death_timer // 60 + 1}", death_surface, "white", scale=2)
-            render_text_centered((mid_x, mid_y - mid_y // 2), "you died", death_surface, "white", scale=2)
-            render_text_centered((mid_x, mid_y - mid_y // 2 + 20), "hahaha", death_surface, "white", scale=2)
+            render_text_centered((mid_x, mid_y - mid_y // 2), "BUSTED", death_surface, "white", scale=2)
 
             display.blit(death_surface, (0, 0))
             self.dead = True
@@ -238,9 +241,17 @@ class GameLoop:
 
         self.direction = self.player.get_direction(self.inputs["Movements"]) * self.dt
         self.player.direction = self.direction
+    
+    def FIRSTPASS(self):
+        if not self.first_pass:
+            self.first_pass = True
+            self.player.sounds = self.sounds
+            self.Mikhail.sounds = self.sounds
+            self.Mikhail.text.sounds = self.sounds
 
     
     def main(self, dt, display): # -> dict[str]:
+        self.FIRSTPASS()
         self.set_delta_time(dt)
         self.initialize_direction()
 
@@ -258,6 +269,9 @@ class GameLoop:
         # Update spawnpoints
         self.update_spawnpoints()
 
+        # Update boundaries
+        self.update_boundaries()
+
         # self.update_bridge()
 
 
@@ -273,11 +287,11 @@ class GameLoop:
 
 
         # Spawn barrels
-        self.add_barrels(MAX_BARREL_COUNT_COLLECTABLES)
+        self.add_barrels(self.max_barrel_count)
 
         # Spawning collectables
         self.add_collectables("Arrows", MAX_ARROW_COUNT_COLLECTABLES)
-        self.add_collectables("Bananas", MAX_ARROW_COUNT_COLLECTABLES)
+        self.add_collectables("Bananas", MAX_BANANA_COUNT_COLLECTABLES)
         self.update_collectables()
 
         # Bombs
@@ -286,16 +300,18 @@ class GameLoop:
 
         # NPC
         self.update_npc()
-        self.update_gambler()
+        # self.update_gambler()
 
 
         # Boss
         self.update_bosses(dt, display)
         self.find_closest_boss() # checks which healthbar to show up top
-
+        
 
        
         # Collision
+        self.player_and_boundary()
+        self.player_and_water()
         self.player_and_barrels()
         self.player_and_shurikens(display)
         self.player_and_leaves(display)
@@ -386,6 +402,14 @@ class GameLoop:
             if part.center.x >= -32 and part.center.x <= display_width + 32 and part.center.y >= -32 and part.center.y <= display_height + 32:
                 self.to_render.append(part)
 
+    def update_boundaries(self):
+        for boundary in self.boundaries:
+            if not self.paused:
+                boundary.set_delta_time(self.dt)
+                boundary.update(self.inputs["Rotation"], self.direction)
+            self.collidables["Boundary"].append(boundary)
+            self.to_render.append(boundary)
+
 
     def update_spawnpoints(self):
         for spawnpoint in self.spawnpoints:
@@ -406,14 +430,17 @@ class GameLoop:
 
     def update_player(self):
         self.player.set_delta_time(self.dt)
+        self.player.heal(self.inputs["Action"]["heal"])
         
         # just update away the whole time because the player is moving away from the middle of the screen constantly
         self.player.update_away(self.inputs["Rotation"], self.inputs["Action"], self.direction) # apparently i had handle rotation for a player and objects, so i can just do this so that the player doesnt rotate around the camera when tracking something else. i am such a genius
 
+        
+        
 
         if self.player.in_water:
             lower_player(self.player)
-            self.player.move(Vector((0, 1)) * .1 * self.dt)
+            self.player.move(Vector(0, 1) * .1 * self.dt)
             self.player.move(self.direction * -.5 * self.dt)
         else:
             raise_player(self.player)
@@ -436,6 +463,7 @@ class GameLoop:
                     tile.draw_hitbox(display)
 
                 if tile.type == "water":
+                    limit_collision(tile, self.player, self.player.collision_radius, self.collidables["Water"])
                     tile.to_render.animate(display, self.dt)
                     continue
                 tile.render(display)
@@ -455,7 +483,8 @@ class GameLoop:
             else:
                 # self.player.inventory["Arrows"].pop()
                 self.player.arrow_counter = 0
-    
+        
+
     def throw_bomb(self):
         if self.inputs["Action"]["throw"] and self.player.bomber:
             bomb = Bomb((self.player.center.x, self.player.center.y), 16, 16, black, self.player.looking)
@@ -466,7 +495,7 @@ class GameLoop:
             self.bombs.append(bomb)
 
     def update_boss_bullets(self, boss, display):
-        # dont need to fix z position of shurikens because always on top
+        # dont need to fix z position of shurikens because always on top)
         for i, shuriken in enumerate(boss.bullets):
             shuriken.set_delta_time(self.dt)
             shuriken.update(self.inputs["Rotation"], self.direction)
@@ -496,6 +525,8 @@ class GameLoop:
     def add_barrels(self, MAX):
         if len(self.barrels) < MAX:
             self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 16, 16, pink, health=25))
+        elif len(self.barrels) > MAX:
+            self.barrels = self.barrels[:MAX]
 
         
     def load_barrels(self, loc, health):
@@ -509,7 +540,6 @@ class GameLoop:
             if not self.paused:
                 arrow.set_delta_time(self.dt)
                 arrow.update(self.inputs["Rotation"], self.direction)
-
             self.to_render.append(arrow)
 
     # temporary ------------------------------------------------
@@ -613,6 +643,23 @@ class GameLoop:
 
             self.to_render.append(b)
 
+    def next_boss_warning(self, display):
+        for boss in self.bosses:
+            if boss.dead:
+                self.bosses.pop(0)
+            if not boss.dead:
+                if (boss.activate - boss.barrels_busted) <= 0:
+                    return
+                print(f'Tifanie needs | {self.Tifanie.activate - self.Tifanie.barrels_busted}, \n Sylvia need | {self.Sylvia.activate - self.Sylvia.barrels_busted}, \n Crystal needs | {self.Crystal.activate - self.Crystal.barrels_busted}, Barrel King needs | {self.BarrelKing.activate - self.BarrelKing.barrels_busted}')
+                back_surface = pygame.Surface((250, 12), pygame.SRCALPHA).convert_alpha()
+                back_surface.fill((47,79,79, 100))
+                display.blit(back_surface, (75, 382))
+                render_text_centered((mid_x, 385), f'Break {boss.activate - boss.barrels_busted} barrels for next boss', display, "white")
+                return
+
+
+        
+
 
     def update_uno(self, b):
         b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction)
@@ -624,7 +671,10 @@ class GameLoop:
         if not self.paused:
             b.set_delta_time(self.dt)
             b.update(self.inputs["Rotation"], self.inputs["Movements"], self.direction, self.player.center)
-            if b.check_if_land(): # when the boss lands it shakes the screen
+            if b.check_if_land(): # when the boss lands it does different stuff
+                self.max_barrel_count += 5
+                self.stage = "blink" if self.stage == "blank" else "blank"
+                self.BarrelKing.sword_color = "white" if self.BarrelKing.sword_color == "black" else "black"
                 self.screen_shake = 12
                 self.shake_magnitude = 12
     
@@ -652,6 +702,7 @@ class GameLoop:
                     continue
                 if self.player.center.x >= npc.center.x - npc.width / 2 and self.player.center.x <= npc.center.x + npc.width / 2 and self.player.center.y >= npc.center.y - npc.width / 2 and self.player.center.y <= npc.center.y + npc.width / 2:
                     if self.inputs["Action"]["interact"]:
+                        self.sounds.menu_click.play()
                         npc.interacting = True
                 else:
                     npc.interacting = False
@@ -720,7 +771,6 @@ class GameLoop:
 
         # sorting all the things to render by y value
         self.to_render = sorted(self.to_render, key=lambda x : x.center.y)
-
         # arrow comes below everything else
         self.player_arrow.render(display)
 
@@ -728,7 +778,7 @@ class GameLoop:
         self.render_player_inventory(display)
 
         # every item including player
-        for object in self.to_render:            
+        for object in self.to_render:   
             if isinstance(object, Player):
                 object.render(display)
                 # object.draw_hitbox(display)
@@ -759,16 +809,6 @@ class GameLoop:
                 if object.summoned and not object.dead:
                     object.render(display)
                     object.draw_healthbar(display)
-                if object.dead:
-                    object.draw_hitbox(display)
-
-            elif isinstance(object, King):
-                if object.summoning:
-                    object.render(display)
-                if object.summoned and not object.dead:
-                    object.render(display)
-                    object.draw_healthbar(display)
-                    object.draw_hitbox(display)
                 if object.dead:
                     object.draw_hitbox(display)
             
@@ -804,6 +844,8 @@ class GameLoop:
             if self.inputs["Admin"]["hitboxes"]:
                 for s in self.spawnpoints:
                     s.draw_hitbox(display)
+                for b in self.boundaries:
+                    b.draw_hitbox(display)
                 object.draw_hitbox(display)
 
         # things that need to drawn on top of everything
@@ -817,11 +859,17 @@ class GameLoop:
         self.draw_particles(display)
 
         self.player.draw_damage(display)
+        self.player.draw_heal(display)
+
+        # how to summon next boss
+        self.next_boss_warning(display)
 
         # when talking to mikhail
         self.render_npc_hud(display)
         self.completion_text(display)
         self.draw_HUD(display)
+
+
 
         # when talking to jack
         self.render_gambler_hud(display)
@@ -897,7 +945,6 @@ class GameLoop:
 
 
 
-
     def camera_tracking(self):
         if self.Tifanie.tracking:
             self.camera_follow = self.Tifanie.location
@@ -917,6 +964,26 @@ class GameLoop:
         difference_vec = Vector(mid_x - self.camera_follow[0], mid_y - self.camera_follow[1])
         self.player.move(difference_vec * self.player.scroll_speed * self.dt)
         self.direction -= difference_vec * self.player.scroll_speed * self.dt
+
+
+    def player_and_water(self):
+        in_water = False
+        for i in range(len(self.collidables["Water"]) - 1, -1, -1):
+            bodyB = self.collidables["Water"][i]
+            collided, depth, normal = self.player.handle_collision(bodyB.normals(), self.player.normals(), bodyB)
+            if collided:
+                in_water = True
+                break
+        self.player.in_water = in_water
+
+    def player_and_boundary(self):
+        # Player colliding with Shurikens
+        for i in range(len(self.collidables["Boundary"]) - 1, -1, -1):
+            bodyB = self.collidables["Boundary"][i]
+            collided, depth, normal = self.player.handle_collision(bodyB.normals(), self.player.normals(), bodyB)
+            if collided:
+                self.player.move(normal * depth * self.dt)
+
 
 
     def player_and_barrels(self):
@@ -982,6 +1049,7 @@ class GameLoop:
                     t_v.normalize()
                     self.BarrelKing.move_distance(t_v * -1, t_x_distance)
                     self.BarrelKing.temp_death()
+                    self.max_barrel_count = MAX_BARRELS
                     self.player.player_death()
                     self.death_timer = self.death_length
                     self.stage = "grasslands"
@@ -1144,8 +1212,9 @@ class GameLoop:
                             p.powerup = True
                             self.player.bomber = True
                             self.collectables["Powerups"].append(p)
-                            # --------
+                            # --------------------------------------
                         self.BarrelKing.death()
+                        self.max_barrel_count = MAX_BARRELS
                         self.stage = "grasslands"
                     break
             
@@ -1180,7 +1249,13 @@ class GameLoop:
     def delete_barrel(self, barrel_to_delete): # (barrels, barrel_to_delete, watermelons, Tifanie, player):
         try:
             for boss in self.bosses:
-                boss.barrels_busted += 1
+                if not boss.dead: # this is so that other bosses dont get activated
+                    if isinstance(boss, Butterfly):
+                        self.Sylvia.barrels_busted += 1
+                        self.Crystal.barrels_busted += 1
+                        break
+                    boss.barrels_busted += 1
+                    break
 
             self.player.barrels_busted += 1
             if self.player.inQuest:
@@ -1221,9 +1296,10 @@ class GameLoop:
 
 
         if not self.Mikhail.interacting:
-            coin_count = self.player.coins
+            # coin_count = self.player.coins
+            banana_count = str(len(self.player.inventory["Bananas"]))
             display.blit(coin_img.convert_alpha(), (310 - (coin_img.get_width() / 2 + 3), (coin_img.get_height() / 2) + 3))
-            render_text((320, 16), str(coin_count), display)
+            render_text((320, 16), str(banana_count), display)
 
             arrow_count = str(len(self.player.inventory["Arrows"]))
             icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
@@ -1237,6 +1313,9 @@ class GameLoop:
             display.blit(barrel_img.convert_alpha(), (310 - (barrel_img.get_width() / 2 + 3), 30 - (barrel_img.get_height() / 2) + 37))
             render_text((320, 64), str(self.player.barrels_busted), display)
         else:
+            back_surface = pygame.Surface((300, 30), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (50, 340))
             arrow_count = str(len(self.player.inventory["Arrows"]))
             icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
             display.blit(icon_arrow.convert_alpha(), (100, 350 - (icon_arrow.get_height() / 2) + 3))

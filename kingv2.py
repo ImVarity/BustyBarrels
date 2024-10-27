@@ -2,8 +2,7 @@ from mod import Boss
 from Square import Hitbox
 from vector import Vector
 from health import HealthBar
-from uno import Shuriken
-from king import SwordShot
+from bullets import SwordShot
 from timer import Timer
 from render import *
 import random
@@ -21,7 +20,8 @@ class Kingv2(Boss):
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.summon_rise = 12
         self.summon_end = self.num_images * self.summon_rise
-        self.activate = 1
+        self.activate = 100
+        self.spread = 1.6
 
 
         self.king_height = 0
@@ -33,9 +33,10 @@ class Kingv2(Boss):
 
         self.king_velocity_max = 0.01
         self.king_velocity = self.king_velocity_max
+        self.og_max_height = 1.7
         self.speed = 2.2
         self.gravity = 0.1
-        self.king_jump_velocity = 4
+        self.king_jump_velocity = 6
 
 
 
@@ -48,7 +49,7 @@ class Kingv2(Boss):
 
         self.eight_shot = False
         self.number_of_eight_shots = 0
-        self.landed = False
+        self.landed = True
         self.just_landed = False
         self.in_air = False
 
@@ -56,13 +57,19 @@ class Kingv2(Boss):
 
         # Half square attack stuff ------------
         self.sword_show_timer = Timer(75) # 75
-        self.sword_attack_timer = Timer(120) # 120
+        self.sword_attack_timer = Timer(100) # 120
 
         self.throwing_point = 0
         self.throwing_points = [[mid_x - 150, mid_y + 150],
                                 [mid_x - 150, mid_y - 150]]
         self.throwing_points_vertical = [[mid_x + 150, mid_y - 150],
                                         [mid_x - 150, mid_y - 150]]
+        
+
+
+        # Sword color
+        self.sword_color = "black"
+        self.sword_damage = 30
 
     def update(self, rotation_input, input, direction, player_center):
         self.jump(player_center)
@@ -90,7 +97,7 @@ class Kingv2(Boss):
                     self.landing = True
                     self.can_jump = False
                     self.king_height = 0
-                    self.speed = 2.2
+                    self.speed = self.og_max_height
                     self.locked = False
                 else:
                     self.landing = False
@@ -136,8 +143,10 @@ class Kingv2(Boss):
 
     def attacks(self, dt):
         if self.summoned and not self.dead:
+            if self.health_bar.health < self.health_bar.maxhealth // 1.75:
+                self.half_square_attack(dt)
+                self.pause_end = 30 # this is so that his jumps occur more often
             self.directional_attack()
-            self.half_square_attack(dt)
     
     
     def follow_player(self, player_center):
@@ -172,12 +181,13 @@ class Kingv2(Boss):
                 shot_5.sword_angle_start = math.atan2(self.s.y, self.s.x) + self.angle * math.pi / 180
                 shot_5.sword_velocity = 1
 
-                
                 self.boss_angle_degrees += self.boss_angle_degrees_increment
                 self.number_of_eight_shots += 1
 
                 self.s_x, self.s_y = self.boss_angle_degrees * math.pi / 180, self.boss_angle_degrees * math.pi / 180
-                shot_5.damage = 5
+                shot_5.damage = self.sword_damage
+                shot_5.change_images(self.current_sword_images())
+
                 self.bullets.append(shot_5)
 
             self.boss_angle_degrees %= 360
@@ -202,7 +212,7 @@ class Kingv2(Boss):
         self.throwing_point = random.randint(0, 1)
         num_of_swords = 11 # how many swords per side are summoned
         skip = random.randint(1, num_of_swords - 2) # creates a gap that players can pass through
-        half_sword_damage = 5
+        half_sword_damage = 30
 
         for i in range(num_of_swords):
             if i == skip:
@@ -212,6 +222,8 @@ class Kingv2(Boss):
             shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
             shot.sword_velocity = 0
             shot.damage = half_sword_damage
+
+            shot.change_images(self.current_sword_images())
             self.bullets.append(shot)
         self.throwing_point = random.randint(0, 1)
         for i in range(num_of_swords):
@@ -222,6 +234,7 @@ class Kingv2(Boss):
             shot = SwordShot(point, 24, 11, black, upright, math.atan2(upright.y, upright.x) + self.angle * math.pi / 180)
             shot.damage = half_sword_damage
             shot.sword_velocity = 0
+            shot.change_images(self.current_sword_images())
             self.bullets.append(shot)
 
         
@@ -242,10 +255,17 @@ class Kingv2(Boss):
             sword.sword_velocity = sword.sword_velocity_og
 
     def get_jump_distance(self):
-        initial_vertical_velocity = 2.2
+        initial_vertical_velocity = self.og_max_height
         horizontal_velocity = self.king_jump_velocity
         gravity = 0.1
         time_up = initial_vertical_velocity / gravity
         total_air_time = 2 * time_up
         horizontal_distance = horizontal_velocity * total_air_time
         return horizontal_distance
+    
+
+    def current_sword_images(self):
+        if self.sword_color == "white":
+            return swordshot_image
+        else:
+            return swordshot_image_black
