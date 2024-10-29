@@ -1,6 +1,6 @@
-from render import *
-from Square import Hitbox
-from vector import Vector
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
+from z_extensions.vector import Vector
 import particles as particles
 import random
 import math

@@ -1,7 +1,7 @@
-from render import *
-from Square import Hitbox
-from vector import Vector
-from health import HealthBar
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
+from z_extensions.vector import Vector
+from z_health.health import HealthBar
 import math
 
 
@@ -76,7 +76,7 @@ class Player(Hitbox):
         self.quest_complete_text_speed = 2
         self.quest_complete_text_friction = .05
 
-        self.bomber = True # can throw bombs
+        self.bomber = False # can throw bombs
  
         self.power_up = False
         self.power_up_text_start = 0

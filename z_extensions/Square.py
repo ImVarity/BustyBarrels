@@ -1,6 +1,6 @@
 import pygame
 import math
-from vector import Vector
+from z_extensions.vector import Vector
 
 heather = (210, 145, 255)
 indigo = (75, 0, 130)

@@ -1,5 +1,5 @@
 import pygame
-from render import *
+from z_extensions.render import *
 
 pygame.init()
 

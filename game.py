@@ -1,28 +1,28 @@
 import pygame
-from render import *
+from z_extensions.render import *
 from pygame.locals import *
 import pygame
 import math
 import bisect
 import random
-from Square import Hitbox
-from vector import Vector
+from z_extensions.Square import Hitbox
+from z_extensions.vector import Vector
 from z_throwables.arrow import Arrow
 from barrel import Barrel
 from player import Player, PlayerArrow
 from collectable import Collectable
-from npc import NPC
-from uno import Uno
+from z_npc.npc import NPC
+from z_enemies.uno import Uno
 from particles import Particle, dust, explode, celebrate
 from z_enemies.slime import Slime
 from z_throwables.bomb import Bomb
-from bullets import Shuriken, SwordShot
-from map import Tilemap
-from render import *
+from z_throwables.bullets import Shuriken, SwordShot
+from z_map.map import Tilemap
+from z_extensions.render import *
 from z_enemies.butterfly import Butterfly
-from bridge import BridgePart
-from car import Alpha
-from kingv2 import Kingv2
+from z_later.bridge import BridgePart
+from z_later.car import Alpha
+from z_enemies.kingv2 import Kingv2
 import time
 
 

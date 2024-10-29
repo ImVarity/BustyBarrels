@@ -1,7 +1,7 @@
-from render import *
-from Square import Hitbox
-from vector import Vector
-from health import HealthBar
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
+from z_extensions.vector import Vector
+from z_health.health import HealthBar
 import math
 
 mid_x = 200

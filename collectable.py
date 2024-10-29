@@ -1,5 +1,5 @@
-from render import *
-from Square import Hitbox
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
 import random
 import math
 

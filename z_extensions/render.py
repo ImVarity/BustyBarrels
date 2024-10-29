@@ -1,7 +1,7 @@
 import pygame
 import os
 
-from vector import Vector
+from z_extensions.vector import Vector
 
 green = (0, 161, 82)
 heather = (210, 145, 255)

@@ -1,8 +1,8 @@
-from render import *
-from Square import Hitbox
-from health import HealthBar
-from vector import Vector
-from health import HealthBar
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
+from z_health.health import HealthBar
+from z_extensions.vector import Vector
+from z_health.health import HealthBar
 import math
 
 class Slime(Hitbox):

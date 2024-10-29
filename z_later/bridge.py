@@ -1,8 +1,8 @@
 
 
-from render import *
-from Square import Hitbox
-from health import HealthBar
+from z_extensions.render import *
+from z_extensions.Square import Hitbox
+from z_health.health import HealthBar
 
 class BridgePart(Hitbox):
     def __init__(self, center, width, height, angle, color, health=5):

@@ -1,12 +1,12 @@
 from pygame.locals import *
 import pygame
 import random
-from Square import Hitbox
-from render import *
+from z_extensions.Square import Hitbox
+from z_extensions.render import *
 import time
 from game import GameLoop
-from sounds import SFX
-from vector import Vector
+from sfx.sounds import SFX
+from z_extensions.vector import Vector
 
 import json
 

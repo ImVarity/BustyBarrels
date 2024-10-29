@@ -1,10 +1,10 @@
-from mod import Boss
-from Square import Hitbox
-from vector import Vector
-from health import HealthBar
-from bullets import SwordShot
-from timer import Timer
-from render import *
+from z_enemies.mod import Boss
+from z_extensions.Square import Hitbox
+from z_extensions.vector import Vector
+from z_health.health import HealthBar
+from z_throwables.bullets import SwordShot
+from z_extensions.timer import Timer
+from z_extensions.render import *
 import random
 import math
 
