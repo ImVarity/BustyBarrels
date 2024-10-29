@@ -77,6 +77,7 @@ class Boss(Hitbox):
         self.attack_end = 8
 
         self.activate = 100
+        self.name_color = "black"
 
 
         self.closest_to_player = False
@@ -123,11 +124,9 @@ class Boss(Hitbox):
             margin_top_bottom = 2
             margin_left_right = 2
 
-            render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
-            pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
-            pygame.draw.rect(surface, purple, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
-            
-        self.health_bar.draw(surface, self.center, self.height)
+            render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface, color=self.name_color)
+            pygame.draw.rect(surface, black if self.name_color == "white" else white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
+            pygame.draw.rect(surface, black if self.name_color == "black" else white, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
 
     def delete_bullets(self, bullet_to_delete):
         for i in range(len(self.bullets)):

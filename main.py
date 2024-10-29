@@ -127,6 +127,7 @@ last_time = time.time()
 
 running = True
 paused = False
+intro_paused_timer = 0
 Game = GameLoop()
 Game.sounds = sounds
 # Game.load_data(data)
@@ -252,6 +253,7 @@ while running:
     direction = Game.direction
 
 
+
     Game.update_tiles()
 
     if Game.stage == "grasslands":
@@ -266,28 +268,49 @@ while running:
 
     
     Game.render_all(display)
+    if Game.intro_paused_timer > 0:
+        intro_paused_timer = Game.intro_paused_timer + 60
+        if intro_paused_timer == 1:
+            paused = False
+            intro_paused_timer = -1
+
+        Game.intro_paused_timer = 0
+
+    if intro_paused_timer:
+        intro_paused_timer -= 1 * dt
+        if intro_paused_timer < 60:
+            intro_paused_timer = -1
+        paused = True
+        
+    if intro_paused_timer < 0:
+        paused = False
+        intro_paused_timer = 0
 
 
-    render_text((12, 12), FPS_text, display)
-    render_text((12, 380), f"{int(Game.player.center.x - Game.spawnpoint.center.x)} {int(Game.player.center.y - Game.spawnpoint.center.y)}", display)
+
+
+    render_text((350, 12), FPS_text, display)
+    # render_text((12, 380), f"{int(Game.player.center.x - Game.spawnpoint.center.x)} {int(Game.player.center.y - Game.spawnpoint.center.y)}", display)
 
     if paused:
-        display.blit(npc_surface, (0, 0))
-        display.blit(paused_img.convert_alpha(), (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2 - 150))
+        if not intro_paused_timer:
+            display.blit(npc_surface, (0, 0))
+            display.blit(paused_img.convert_alpha(), (mid_x - paused_img.get_width() // 2, mid_y - paused_img.get_height() // 2 - 150))
 
-        start = -30
-        render_text((mid_x - len("controls") * 7 / 2, mid_y + start - 100), "controls", display)
-        render_text((mid_x - len("WASD to move") * 7 / 2, mid_y + start - 70), "WASD to move", display, "white")
-        render_text((mid_x - len("Q and E to rotate") * 7 / 2, mid_y + start - 50), "Q and E to rotate", display, "white")
-        render_text((mid_x - len("T to interact") * 7 / 2, mid_y + start - 30), "T to interact", display, "white")
-        render_text((mid_x - len("J to shoot") * 7 / 2, mid_y + start - 10), "J to shoot", display, "white")
-        render_text((mid_x - len("K to dash") * 7 / 2, mid_y + start + 10), "K to dash", display, "white")
-        render_text((mid_x - len("L to lock look direction") * 7 / 2, mid_y + start + 30), "L to lock look direction", display, "white")
-        render_text((mid_x - len("I to autoshoot") * 7 / 2, mid_y + start + 50), "I to autoshoot", display, "white")
-        render_text((mid_x - len("Arrow keys to navigate") * 7 / 2, mid_y + start + 70), "Arrow keys to navigate", display, "white")
-        render_text((mid_x - len("Enter to confirm") * 7 / 2, mid_y + start + 90), "Enter to confirm", display, "white")
-        render_text((mid_x - len("Tab for stats") * 7 / 2, mid_y + start + 110), "Tab for stats", display, "white")
-        render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
+            start = -30
+            render_text((mid_x - len("controls") * 7 / 2, mid_y + start - 100), "controls", display)
+            render_text((mid_x - len("WASD to move") * 7 / 2, mid_y + start - 70), "WASD to move", display, "white")
+            render_text((mid_x - len("Q and E to rotate") * 7 / 2, mid_y + start - 50), "Q and E to rotate", display, "white")
+            render_text((mid_x - len("T to interact") * 7 / 2, mid_y + start - 30), "T to interact", display, "white")
+            render_text((mid_x - len("J to shoot") * 7 / 2, mid_y + start - 10), "J to shoot", display, "white")
+            render_text((mid_x - len("K to dash") * 7 / 2, mid_y + start + 10), "K to dash", display, "white")
+            render_text((mid_x - len("L to lock look direction") * 7 / 2, mid_y + start + 30), "L to lock look direction", display, "white")
+            render_text((mid_x - len("I to autoshoot") * 7 / 2, mid_y + start + 50), "I to autoshoot", display, "white")
+            render_text((mid_x - len("Arrow keys to navigate") * 7 / 2, mid_y + start + 70), "Arrow keys to navigate", display, "white")
+            render_text((mid_x - len("Enter to confirm") * 7 / 2, mid_y + start + 90), "Enter to confirm", display, "white")
+            render_text((mid_x - len("Tab for stats") * 7 / 2, mid_y + start + 110), "Tab for stats", display, "white")
+            render_text((mid_x - len("Escape to pause") * 7 / 2, mid_y + start + 130), "Escape to pause", display, "white")
+
 
     screen_shake = Game.screen_shake
 
@@ -302,8 +325,8 @@ while running:
     Game.screen_shake = screen_shake
         
     
-    if not paused:
-        display.blit(black_overlay_surface, (0, 0))
+
+        
 
     if saving_game:
         # print(inputs["Rotation"]["reset"])

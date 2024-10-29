@@ -49,7 +49,7 @@ class Uno(Hitbox):
         self.charge_start = 0
         self.charge_end = 45
         self.charge_inc = 1
-        self.charge_speed = 1.25
+        self.charge_speed = 1
 
         self.bullets = []
 
@@ -72,7 +72,7 @@ class Uno(Hitbox):
         self.attack_start = 0
         self.attack_end = 8
 
-        self.activate = 1
+        self.activate = 10 # 10
 
 
         self.closest_to_player = False
@@ -140,7 +140,7 @@ class Uno(Hitbox):
             margin_top_bottom = 2
             margin_left_right = 2
 
-            render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface)
+            render_text((center.x - len(self.name) * 7 / 2, 10), self.name, surface, "white")
             pygame.draw.rect(surface, white, pygame.Rect(center.x - (white_bar_width / 2 + margin_left_right), center.y - (white_bar_height / 2), white_bar_width + margin_left_right * 2, white_bar_height))
             pygame.draw.rect(surface, purple, pygame.Rect(center.x - (white_bar_width / 2), center.y - (white_bar_height / 2 - margin_top_bottom), width, white_bar_height - margin_top_bottom * 2))
             

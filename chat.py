@@ -205,7 +205,7 @@ class TextBubble:
                 row += 8
                 divider = 0
                 continue
-            surface.blit(abc[letter.capitalize()]["black"].convert_alpha(), (col + divider * 8, row))
+            surface.blit(abc[letter.capitalize()]["white"].convert_alpha(), (col + divider * 8, row))
 
 
     def add_dialogue(self, text):

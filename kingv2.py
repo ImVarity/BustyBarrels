@@ -20,7 +20,7 @@ class Kingv2(Boss):
         self.to_render = Render(self.images, self.center, self.angle, self.spread)
         self.summon_rise = 12
         self.summon_end = self.num_images * self.summon_rise
-        self.activate = 100
+        self.activate = 75 # 75
         self.spread = 1.6
 
 

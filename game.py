@@ -22,14 +22,13 @@ from render import *
 from z_enemies.butterfly import Butterfly
 from bridge import BridgePart
 from car import Alpha
-from gambler import Gambler
 from kingv2 import Kingv2
 import time
 
 
 MAX_ARROW_COUNT_COLLECTABLES = 75
-MAX_BANANA_COUNT_COLLECTABLES = 10
-MAX_BARRELS = 30
+MAX_BANANA_COUNT_COLLECTABLES = 20
+MAX_BARRELS = 60
 
 
 class GameLoop:
@@ -45,31 +44,34 @@ class GameLoop:
 
         self.direction = Vector(0, 0)
         self.paused = False
+        self.intro_paused_timer = 0
+        self.intro_paused = False
+
 
         self.player = Player([0, 0], 8, 8, blue, health=500)
         self.player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
         self.spawnpoint = Barrel((0, 0), 8, 8, black)
-        self.tif_spawnpoint = Barrel([mid_x + 16, mid_y + 16], 8, 8, black)
-        self.syl_spawnpoint = Barrel([-mid_x - 16, -mid_y - 16], 8, 8, black)
-        self.cry_spawnpoint = Barrel([mid_x + 16, -mid_y - 16], 8, 8, blue)
+        self.tif_spawnpoint = Barrel([-405, 325], 8, 8, black)
+        self.syl_spawnpoint = Barrel([-400, -400], 8, 8, black)
+        self.cry_spawnpoint = Barrel([400, 400], 8, 8, blue)
+        self.bk_spawnpoint = Barrel([400, -400], 8, 8, blue)
         self.powerup = Collectable((mid_x, mid_x), 16, 16, black, [img.convert_alpha() for img in bigger_bomb_images])
+        self.powerup.to_render.spread = 1.2
 
         # Bosses
-        self.Tifanie = Uno([mid_x + 16, mid_y + 16], 32, 32, purple, "Tifanie")
-        self.Sylvia = Butterfly([-mid_x - 16, -mid_y - 16], 32, 32, blue, "Sylvia")
-        self.Crystal = Butterfly([mid_x + 16, -mid_y - 16], 32, 32, blue, "Crystal")
-        self.BarrelKing = Kingv2([mid_x, mid_y - 50], 32, 32, black, "King", health=1000)
+        self.Tifanie = Uno([-405, 325], 32, 32, purple, "Tifanie", health=500)
+        self.Sylvia = Butterfly([-400, -400], 32, 32, blue, "Sylvia", health=400)
+        self.Crystal = Butterfly([400, 400], 32, 32, blue, "Crystal", health=400)
+        self.BarrelKing = Kingv2([400, -400], 32, 32, black, "King", health=1000)
 
         self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.BarrelKing]
 
         # Car
-        self.Alpha = Alpha([100, 100], 56, 48, red, health=100)
+        self.Alpha = Alpha([-35, -20], 56, 48, red, health=100)
 
         # NPCS
         self.Mikhail = NPC([0, -40], 64, 64, red, rock_images)
         self.npcs = [self.Mikhail]
-
-        self.Jack = Gambler([0, 60], 64, 64, red, player_images)
 
         # Enemies
         self.Bob = Slime([-40, -40], 12, 12, black, Vector(1, 0), Vector(self.player.center.x, self.player.center.y))
@@ -86,7 +88,7 @@ class GameLoop:
         self.boxes = []
         self.arrows = []
         self.bombs = []
-        self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint, self.cry_spawnpoint]
+        self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint, self.cry_spawnpoint, self.bk_spawnpoint]
         self.bridge = [
             BridgePart([0, -500], 99, 48, 0, red),
             BridgePart([90, -500], 99, 48, 180, red)
@@ -185,7 +187,43 @@ class GameLoop:
         self.dead = False
 
 
-        self.max_barrel_count = 30
+        self.max_barrel_count = MAX_BARRELS
+
+
+
+
+        # Introductions ---------------
+
+        # WASD
+        self.wasd_timer = 300
+
+        # QE
+        self.qe_timer = 300
+
+        # K
+        self.k_timer = 300
+
+        # L
+        self.l_timer = 300
+
+
+        # Heal intro --------
+        self.heal_intro = False
+        self.heal_intro_timer = 300 # 5 second introduction
+
+        # Shoot intro -----
+        self.shoot_intro = False
+        self.shoot_intro_timer = 300
+
+
+        # Rotate intro ----
+        self.rotate_intro = False
+        self.rotate_intro_timer = 300
+
+        # Dash intro ----
+        self.dash_intro = False
+        self.dash_intro_timer = 300
+
 
 
 
@@ -300,7 +338,6 @@ class GameLoop:
 
         # NPC
         self.update_npc()
-        # self.update_gambler()
 
 
         # Boss
@@ -318,7 +355,7 @@ class GameLoop:
         self.player_and_butterflies(display)
         self.player_and_swordshots(display)
         self.arrows_and_all()
-        self.bombs_and_barrels()
+        self.bombs_and_all()
 
         # temp ------------------------------------
 
@@ -481,7 +518,7 @@ class GameLoop:
                     self.arrows.append(shot)
                     self.player.arrow_counter += 1
             else:
-                # self.player.inventory["Arrows"].pop()
+                self.player.inventory["Arrows"].pop()
                 self.player.arrow_counter = 0
         
 
@@ -518,13 +555,13 @@ class GameLoop:
     def add_collectables(self, item, MAX):
         if not self.BarrelKing.summoned:
             if len(self.collectables[item]) < MAX:
-                self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 12, 12, black, images[item]))
+                self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 12, 12, black, images[item]))
         else: # If the king is alive then remove all collectables on the screen 
             self.collectables[item] = []
 
     def add_barrels(self, MAX):
         if len(self.barrels) < MAX:
-            self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 400), int(self.spawnpoint.center.x + 400)), random.randrange(int(self.spawnpoint.center.y - 400), int(self.spawnpoint.center.y + 400))], 16, 16, pink, health=25))
+            self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 16, 16, pink, health=25))
         elif len(self.barrels) > MAX:
             self.barrels = self.barrels[:MAX]
 
@@ -589,8 +626,6 @@ class GameLoop:
             self.to_render.append(barrel)
 
     def update_bosses(self, dt, display):
-
-
         for b in self.bosses:
             if not self.paused:
                 b.set_delta_time(self.dt)
@@ -638,8 +673,16 @@ class GameLoop:
                             elif isinstance(b, Kingv2):
                                 self.collidables["Bosses"]["King"].append(b)
 
-                        
-                    
+                    for bomb in self.bombs:
+                        if bomb.landing:
+                            if abs(self.BarrelKing.center.x - bomb.center.x) <= self.BarrelKing.width / 2 + bomb.width / 2 and abs(self.BarrelKing.center.y - bomb.center.y) <= self.BarrelKing.height / 2 + bomb.height / 2:
+                                self.collidables["Bombs"].append(bomb)
+                                if not added:
+                                    self.collidables["Bosses"]["King"].append(self.BarrelKing)
+
+
+
+                                
 
             self.to_render.append(b)
 
@@ -650,15 +693,11 @@ class GameLoop:
             if not boss.dead:
                 if (boss.activate - boss.barrels_busted) <= 0:
                     return
-                print(f'Tifanie needs | {self.Tifanie.activate - self.Tifanie.barrels_busted}, \n Sylvia need | {self.Sylvia.activate - self.Sylvia.barrels_busted}, \n Crystal needs | {self.Crystal.activate - self.Crystal.barrels_busted}, Barrel King needs | {self.BarrelKing.activate - self.BarrelKing.barrels_busted}')
                 back_surface = pygame.Surface((250, 12), pygame.SRCALPHA).convert_alpha()
                 back_surface.fill((47,79,79, 100))
                 display.blit(back_surface, (75, 382))
-                render_text_centered((mid_x, 385), f'Break {boss.activate - boss.barrels_busted} barrels for next boss', display, "white")
+                render_text_centered((mid_x, 385), f'Break {boss.activate - boss.barrels_busted} barrels for ???', display, "white")
                 return
-
-
-        
 
 
     def update_uno(self, b):
@@ -675,15 +714,16 @@ class GameLoop:
                 self.max_barrel_count += 5
                 self.stage = "blink" if self.stage == "blank" else "blank"
                 self.BarrelKing.sword_color = "white" if self.BarrelKing.sword_color == "black" else "black"
+                self.BarrelKing.name_color = "white" if self.BarrelKing.name_color == "black" else "black"
+                self.BarrelKing.color = white if self.BarrelKing.color == black else black
                 self.screen_shake = 12
                 self.shake_magnitude = 12
-    
+
+        
     def handle_npc_inputs(self):
         if self.inputs["HUD"]["next"]:
             if self.Mikhail.interacting:
                 self.Mikhail.next()
-            if self.Jack.interacting:
-                self.Jack.next()
         self.inputs["HUD"]["next"] = False
 
         self.npc_input = {
@@ -708,19 +748,7 @@ class GameLoop:
                     npc.interacting = False
 
             self.to_render.append(npc)
-    
-    def update_gambler(self):
-        if not self.paused:
-            self.Jack.set_delta_time(self.dt)
-            self.Jack.update(self.inputs["Rotation"], self.direction)
-            if limit_render(self.Jack, self.player.render_radius):
-                return
-            if self.player.center.x >= self.Jack.center.x - self.Jack.width / 2 and self.player.center.x <= self.Jack.center.x + self.Jack.width / 2 and self.player.center.y >= self.Jack.center.y - self.Jack.width / 2 and self.player.center.y <= self.Jack.center.y + self.Jack.width / 2:
-                if self.inputs["Action"]["interact"]:
-                    self.Jack.interacting = True
-            else:
-                self.Jack.interacting = False
-        self.to_render.append(self.Jack)
+
 
 
     def update_enemies(self):
@@ -745,7 +773,7 @@ class GameLoop:
                     if abs(holder[i].center.x - self.player.center.x) < 8 and abs(holder[i].center.y - self.player.center.y) < 8:
                         if holder[i].powerup:
                             self.player.power_up = True
-                            # celebrate(particles)
+                            celebrate(self.particles)
                             del holder[i]
                             break
                         holder[i].follow_player = True
@@ -761,13 +789,11 @@ class GameLoop:
                             continue
                     
                     holder[i].update(self.inputs["Rotation"], self.direction)
-
                 self.to_render.append(self.collectables[items][i])
     
 
     
     def render_all(self, display):
-
 
         # sorting all the things to render by y value
         self.to_render = sorted(self.to_render, key=lambda x : x.center.y)
@@ -795,12 +821,10 @@ class GameLoop:
                 object.render(display)
             
             elif isinstance(object, Alpha):
-                object.render(display)
-
+                if self.BarrelKing.dead:
+                    object.render(display)
 
             elif isinstance(object, NPC):
-                object.render(display)
-            elif isinstance(object, Gambler):
                 object.render(display)
 
             elif isinstance(object, Uno):
@@ -816,13 +840,14 @@ class GameLoop:
                 if object.summoning:
                     object.render(display)
                 if object.summoned and not object.dead:
+                    object.draw_hitbox(display)
                     object.render(display)
                     object.draw_healthbar(display)
+                if object.dead:
                     object.draw_hitbox(display)
 
             
             elif isinstance(object, Butterfly):
-
                 if object.summoning:
                     object.render(display)
                 if object.summoned and not object.dead:
@@ -838,8 +863,6 @@ class GameLoop:
                 object.render(display)
                 object.draw_hitbox(display)
 
-            elif isinstance(object, BridgePart):
-                object.render(display)
 
             if self.inputs["Admin"]["hitboxes"]:
                 for s in self.spawnpoints:
@@ -864,15 +887,14 @@ class GameLoop:
         # how to summon next boss
         self.next_boss_warning(display)
 
+        # intros
+        self.introductions(display)
+
         # when talking to mikhail
         self.render_npc_hud(display)
         self.completion_text(display)
         self.draw_HUD(display)
 
-
-
-        # when talking to jack
-        self.render_gambler_hud(display)
 
         if self.entering_blank:
             self.enter_blank(display)
@@ -883,6 +905,174 @@ class GameLoop:
         # if self.paused:
         #     self.paused_screen(display)
 
+
+    def introductions(self, display):
+        
+        # Intro shoot -----
+        if self.shoot_intro and self.shoot_intro_timer > 0:
+            self.intro_paused_timer = self.introduce_shoot(display, self.inputs["Action"]["shoot"]) # checks if they pressed the key to prove they learned from the introduction
+
+        if not self.shoot_intro_timer:
+            self.intro_paused = False
+
+        # Condition to start introduction
+        if not self.shoot_intro and len(self.player.inventory["Arrows"]) > 0:
+            self.intro_paused = True
+            self.shoot_intro = True
+            self.intro_paused_timer = self.shoot_intro_timer
+
+        # Intro heal ------
+        if self.heal_intro and self.heal_intro_timer > 0:
+            self.intro_paused_timer = self.introduce_heal(display, self.inputs["Action"]["heal"])
+
+        if not self.heal_intro_timer:
+            self.intro_paused = False
+
+        # Condition to start introduction
+        if not self.heal_intro and len(self.player.inventory["Bananas"]) > 0 and self.player.health_bar.health < self.player.health_bar.maxhealth:
+            self.heal_intro = True
+            self.player.intro_active = True
+            self.intro_paused_timer = self.heal_intro_timer
+
+
+        # Intro rotate ------
+        if self.rotate_intro and self.rotate_intro_timer > 0:
+            self.intro_paused_timer = self.introduce_rotate(display, self.inputs["Rotation"]["clockwise"] or self.inputs["Rotation"]["counterclockwise"])
+        
+        if not self.rotate_intro_timer:
+            self.intro_paused = False
+        
+        # Condition to start introduction
+        if not self.rotate_intro and self.Tifanie.summoned:
+            self.intro_paused = True
+            self.rotate_intro = True
+            self.intro_paused_timer = self.rotate_intro_timer
+
+
+        # Intro dash -------
+        if self.dash_intro and self.dash_intro_timer > 0:
+            self.intro_paused_timer = self.introduce_dash(display, self.inputs["Action"]["dash"])
+        
+        if not self.dash_intro_timer:
+            self.intro_paused = False
+        
+        # Condition to start introduction
+        if not self.dash_intro and self.Tifanie.charging:
+            self.intro_paused = True
+            self.dash_intro = True
+            self.intro_paused_timer = self.dash_intro_timer
+
+
+
+    
+        
+
+    def introduce_heal(self, display, learned):
+        if self.heal_intro_timer > 0:
+            self.heal_intro_timer -= 1 * self.dt
+            back_surface = pygame.Surface((7 * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (mid_x - ((7 * 8 + 10) // 2), mid_y - 60 - 2))
+
+
+            b_s_2 = pygame.Surface((int(len("TO EAT A BANANA")) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_2.fill((47,79,79, 100))
+            display.blit(b_s_2, (mid_x - ((int(len("TO EAT A BANANA")) * 8 + 10) // 2), mid_y - 50 - 2))
+
+            b_s_3 = pygame.Surface((int(len(f'HEALS {self.player.banana_heal_amount} HEALTH')) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_3.fill((47,79,79, 100))
+            display.blit(b_s_3, (mid_x - ((int(len(f'HEALS {self.player.banana_heal_amount} HEALTH')) * 8 + 10) // 2), mid_y - 40 - 2))
+
+
+            render_text_centered((mid_x, mid_y - 60), "PRESS H", display, "white")
+            render_text_centered((mid_x, mid_y - 50), "TO EAT A BANANA", display, "white")
+            render_text_centered((mid_x, mid_y - 40), f'HEALS {self.player.banana_heal_amount} HEALTH', display, "white")
+
+
+        if learned:
+            self.heal_intro_timer = 0
+            return 1
+        return 0
+
+    def introduce_shoot(self, display, learned):
+        if self.shoot_intro_timer > 0:
+            self.shoot_intro_timer -= 1 * self.dt
+            back_surface = pygame.Surface((7 * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (mid_x - ((7 * 8 + 10) // 2), mid_y - 60 - 2))
+
+            b_s_2 = pygame.Surface((int(len("TO SHOOT AN ARROW")) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_2.fill((47,79,79, 100))
+            display.blit(b_s_2, (mid_x - ((int(len("TO SHOOT AN ARROW")) * 8 + 10) // 2), mid_y - 50 - 2))
+
+            b_s_3 = pygame.Surface((int(len("DEALS 10 DAMAGE")) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_3.fill((47,79,79, 100))
+            display.blit(b_s_3, (mid_x - ((int(len("DEALS 10 DAMAGE")) * 8 + 10) // 2), mid_y - 40 - 2))
+
+
+            render_text_centered((mid_x, mid_y - 60), "PRESS J", display, "white")
+            render_text_centered((mid_x, mid_y - 50), "TO SHOOT AN ARROW", display, "white")
+            render_text_centered((mid_x, mid_y - 40), f'DEALS 10 DAMAGE', display, "white")
+
+        if learned:
+            self.shoot_intro_timer = 0
+            return 1
+
+        return 0
+    
+
+    def introduce_rotate(self, display, learned):
+        if self.rotate_intro_timer > 0:
+            self.rotate_intro_timer -= 1 * self.dt
+            textone = "PRESS Q AND E"
+            texttwo = "TO ROTATE"
+
+            back_surface = pygame.Surface((len(textone) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (mid_x - ((len(textone) * 8 + 10) // 2), mid_y - 60 - 2))
+
+            b_s_2 = pygame.Surface((len(texttwo) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_2.fill((47,79,79, 100))
+            display.blit(b_s_2, (mid_x - ((len(texttwo) * 8 + 10) // 2), mid_y - 50 - 2))
+
+
+            render_text_centered((mid_x, mid_y - 60), textone, display, "white")
+            render_text_centered((mid_x, mid_y - 50), texttwo, display, "white")
+
+        if learned:
+            self.rotate_intro_timer = 0
+            return 1
+
+        return 0
+
+    def introduce_dash(self, display, learned):
+        if self.dash_intro_timer > 0:
+            self.dash_intro_timer -= 1
+            textone = "PRESS K"
+            texttwo = "TO DASH"
+
+            back_surface = pygame.Surface((len(textone) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (mid_x - ((len(textone) * 8 + 10) // 2), mid_y - 60 - 2))
+
+            b_s_2 = pygame.Surface((len(texttwo) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_2.fill((47,79,79, 100))
+            display.blit(b_s_2, (mid_x - ((len(texttwo) * 8 + 10) // 2), mid_y - 50 - 2))
+
+
+            render_text_centered((mid_x, mid_y - 60), textone, display, "white")
+            render_text_centered((mid_x, mid_y - 50), texttwo, display, "white")
+
+        if learned:
+            self.dash_intro_timer = 0
+            return 1
+
+        return 0
+
+
+        
+
+        
 
     def render_npc_hud(self, display):
         for npc in self.npcs:
@@ -906,17 +1096,6 @@ class GameLoop:
                     render_text_centered((self.player.center.x, self.player.center.y - 40), "T to talk to Mikhail", display, "white")
                 npc.reset_talk()
         self.handle_npc_inputs()
-    
-    def render_gambler_hud(self, display):
-        if self.Jack.interacting:
-            npc_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
-            npc_surface.fill(npc_color)
-            display.blit(npc_surface, (0, 0))
-            
-            if not self.Jack.talk(self.player, self.npc_input, display):
-                self.inputs["Action"]["interact"] = False
-        else:
-            self.Jack.reset_talk()
 
 
     def render_player_inventory(self, display):
@@ -1044,8 +1223,8 @@ class GameLoop:
                     v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
                     v.normalize()
                     self.player.move_distance(v * -1, x_distance)
-                    t_x_distance = math.sqrt((self.BarrelKing.center.x- self.tif_spawnpoint.center.x) ** 2 + (self.BarrelKing.center.y - self.tif_spawnpoint.center.y) ** 2)
-                    t_v = Vector((self.BarrelKing.center.x - self.tif_spawnpoint.center.x), (self.BarrelKing.center.y - self.tif_spawnpoint.center.y))
+                    t_x_distance = math.sqrt((self.BarrelKing.center.x- self.bk_spawnpoint.center.x) ** 2 + (self.BarrelKing.center.y - self.bk_spawnpoint.center.y) ** 2)
+                    t_v = Vector((self.BarrelKing.center.x - self.bk_spawnpoint.center.x), (self.BarrelKing.center.y - self.bk_spawnpoint.center.y))
                     t_v.normalize()
                     self.BarrelKing.move_distance(t_v * -1, t_x_distance)
                     self.BarrelKing.temp_death()
@@ -1097,7 +1276,8 @@ class GameLoop:
             collided, depth, normal = self.player.handle_collision(bodyB.normals(), self.player.normals(), bodyB)
 
             if collided:
-                self.player.damage(bodyB.attack_damage, display)
+                if bodyB.attack_damage > 0:
+                    self.player.damage(bodyB.attack_damage, display)
                 if self.player.health_bar.health <= 0:
                     x_distance = math.sqrt((self.player.center.x - self.spawnpoint.center.x) ** 2 + (self.player.center.y - self.spawnpoint.center.y) ** 2)
                     v = Vector((self.player.center.x - self.spawnpoint.center.x), (self.player.center.y - self.spawnpoint.center.y))
@@ -1165,12 +1345,16 @@ class GameLoop:
                     if bodyB.health_bar.health <= 0:
                         self.screen_shake = 10
                         self.shake_magnitude = 12
-                        # if not self.b.dead:
-                        #     p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
-                        #     p.powerup = True
-                        #     self.player.bomber = True
-                        #     self.collectables["Powerups"].append(p)
+                        # Powerup after killing the boss -------
+                        if self.Sylvia.dead or self.Crystal.dead:
+                            p = Collectable((bodyB.center.x, bodyB.center.y), 8, 8, black, bomb_images)
+                            p.powerup = True
+                            self.player.bomber = True
+                            self.collectables["Powerups"].append(p)
+                        # --------------------------------------
+
                         bodyB.death()
+
                     break  # okay to break because the arrow already hit something and it wont hit anything else
 
             # Boss colliding with Arrows (only have one boss for now will have to split into another for loop probably)
@@ -1186,10 +1370,6 @@ class GameLoop:
                         if not self.Tifanie.dead:
                             self.screen_shake = 30
                             self.shake_magnitude = 12
-                            # p = Collectable((self.Tifanie.center.x, self.Tifanie.center.y), 8, 8, black, bomb_images)
-                            # p.powerup = True
-                            # self.player.bomber = True
-                            # self.collectables["Powerups"].append(p)
                         self.Tifanie.death()
                     break
 
@@ -1207,17 +1387,40 @@ class GameLoop:
                         if not self.BarrelKing.dead:
                             self.screen_shake = 30
                             self.shake_magnitude = 12
-                            # Powerup after killing the boss -------
-                            p = Collectable((self.BarrelKing.center.x, self.BarrelKing.center.y), 8, 8, black, bomb_images)
-                            p.powerup = True
-                            self.player.bomber = True
-                            self.collectables["Powerups"].append(p)
-                            # --------------------------------------
+
+                        self.Alpha.center = self.BarrelKing.center # spawns car where king dies
                         self.BarrelKing.death()
                         self.max_barrel_count = MAX_BARRELS
                         self.stage = "grasslands"
                     break
-            
+    
+    def bombs_and_all(self):
+        self.bombs_and_barrels()
+        self.bombs_and_barrelking()
+
+
+    def bombs_and_barrelking(self):
+        # Bombs colliding with Barrel King
+        for i in range(len(self.collidables["Bombs"]) - 1, -1, -1):
+            bodyA = self.collidables["Bombs"][i]
+
+            bodyB = self.BarrelKing
+            collided, depth, normal = bodyA.handle_collision(bodyB.normals(), bodyA.normals(), bodyB)
+
+            if collided:
+                bodyB.health_bar.damage(bodyA.damage)
+                del self.collidables["Bombs"][i]
+                if bodyB.health_bar.health <= 0:
+                    if not self.BarrelKing.dead:
+                        self.screen_shake = 30
+                        self.shake_magnitude = 12
+
+                    self.Alpha.center = self.BarrelKing.center # spawns car where king dies
+                    self.BarrelKing.death()
+                    self.max_barrel_count = MAX_BARRELS
+                    self.stage = "grasslands"
+                break  # okay to break because the arrow already hit something and it wont hit anything else
+    
 
     def bombs_and_barrels(self):
         # Bombs colliding with Barrels
@@ -1292,26 +1495,32 @@ class GameLoop:
         margin = 0
         start_x = 320
         start_y = 20
-
-
+        inc = 20
 
         if not self.Mikhail.interacting:
-            # coin_count = self.player.coins
-            banana_count = str(len(self.player.inventory["Bananas"]))
-            display.blit(coin_img.convert_alpha(), (310 - (coin_img.get_width() / 2 + 3), (coin_img.get_height() / 2) + 3))
-            render_text((320, 16), str(banana_count), display)
-
             arrow_count = str(len(self.player.inventory["Arrows"]))
             icon_arrow = pygame.transform.rotate(arrow_images[len(arrow_images) // 2 - 1], 90)
-            display.blit(icon_arrow.convert_alpha(), (310 - (icon_arrow.get_width() / 2 + 3), 30 - (icon_arrow.get_height() / 2) + 3))
-            render_text((320, 30), arrow_count, display)
-            render_text((320 + len(arrow_count) * 8 + 4, 30), "x" + str(self.player.stats["M"]), display)
+            display.blit(icon_arrow.convert_alpha(), (12, 12))
+            arrow_ry = 12 + icon_arrow.get_width()
 
-            display.blit(watermelon_img.convert_alpha(), (310 - (watermelon_img.get_width() / 2 + 3), 30 - (watermelon_img.get_height() / 2) + 20))
-            render_text((320, 47),str(len(self.player.inventory["Watermelons"])), display)
+            banana_count = str(len(self.player.inventory["Bananas"]))
+            display.blit(banana_img.convert_alpha(), (12, 12 + inc))
+            banana_ry = 12 + banana_img.get_width()
 
-            display.blit(barrel_img.convert_alpha(), (310 - (barrel_img.get_width() / 2 + 3), 30 - (barrel_img.get_height() / 2) + 37))
-            render_text((320, 64), str(self.player.barrels_busted), display)
+            display.blit(watermelon_img.convert_alpha(), (12, 12 + inc * 2))
+            watermelon_ry = 12 + watermelon_img.get_width()
+
+            display.blit(barrel_img.convert_alpha(), (12 - 1, 12 + inc * 3))
+            barrel_ry = 12 + barrel_img.get_width() - 1
+
+            biggest = max([banana_ry, arrow_ry, watermelon_ry, barrel_ry])
+
+
+            render_text((biggest + 5, 12 + (15 - 6) // 2), arrow_count, display)
+            render_text((len(str(arrow_count)) * 8 + (biggest + 5) , 12 + (15 - 6) // 2), "x" + str(self.player.stats["M"]), display)
+            render_text((biggest + 5, 12 + inc + (15 - 6) // 2), str(banana_count), display)
+            render_text((biggest + 5, 12 + (inc * 2) + (15 - 6) // 2), str(len(self.player.inventory["Watermelons"])), display)
+            render_text((biggest + 5, 12 + (inc * 3) + (15 - 6) // 2), str(self.player.barrels_busted), display)
         else:
             back_surface = pygame.Surface((300, 30), pygame.SRCALPHA).convert_alpha()
             back_surface.fill((47,79,79, 100))
@@ -1364,8 +1573,6 @@ class GameLoop:
         self.dt = dt
 
     
-
-
 
     def load_data(self, data):
         self.player.center.x, self.player.center.y = data["player_location"][0], data["player_location"][1]

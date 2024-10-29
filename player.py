@@ -43,7 +43,7 @@ class Player(Hitbox):
         self.knock_increment = 1
 
 
-        self.dexterity = 1
+        self.dexterity = 3
         self.dex_counter = 0
         
 
@@ -85,8 +85,8 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 1000,
-            'R' : 300
+            'M' : 1,
+            'R' : 10
         }
 
         # self.arrow_multiplier = 1
@@ -104,9 +104,14 @@ class Player(Hitbox):
         self.damage_flash_counter = 0
 
 
+        self.intro_active = False
+
         # Heal --------
         self.heal_taken = []
         self.banana_heal_amount = 20
+
+
+
 
 
 
@@ -129,10 +134,12 @@ class Player(Hitbox):
         self.health_bar.draw(surface, self.center, self.height)
 
     def heal(self, healed):
-        if healed and self.health_bar.health < (self.health_bar.maxhealth - self.banana_heal_amount) and len(self.inventory["Bananas"]) > 0:
+        if healed and self.health_bar.health < self.health_bar.maxhealth and len(self.inventory["Bananas"]) > 0:
             self.inventory["Bananas"].pop()
             self.health_bar.set_health(self.health_bar.health + self.banana_heal_amount)
             self.heal_taken.append(DamageNumber(self.banana_heal_amount, [self.center.x, self.center.y]))
+            if self.health_bar.health > self.health_bar.maxhealth:
+                self.health_bar.set_health(self.health_bar.maxhealth)
             self.sounds.heal.play()
 
 
@@ -274,7 +281,8 @@ class Player(Hitbox):
 
     def powerup_collected(self, surface, powerup):
         if self.power_up:
-            powerup.render(surface)
+            powerup.to_render.render_stack(surface)
+            powerup.to_render.angle += 1
             npc_surface = pygame.Surface((mid_x * 2, mid_y * 2), pygame.SRCALPHA).convert_alpha()
             npc_surface.fill(npc_color)
             surface.blit(npc_surface, (0, 0))

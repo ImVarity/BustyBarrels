@@ -60,6 +60,7 @@ a_o_d_img = pygame.image.load('imgs/diamonds/ace.png')
 # Icons
 watermelon_img = pygame.image.load('imgs/icons/watermelon_icon_3.png')
 barrel_img = pygame.image.load('imgs/icons/barrel_icon.png')
+banana_img = pygame.image.load('imgs/icons/banana_icon.png')
 
 
 # Terrain
@@ -311,7 +312,9 @@ abc["/"] = {
 }
 
 abc["-"] = {"black" : pygame.image.load(f'{black_text_folder}dash.png')}
+abc["?"] = {"black" : pygame.image.load(f'{black_text_folder}question-mark.png')}
 
+abc["?"] = {"white" : pygame.image.load(f'{white_text_folder}question-mark.png')}
 
 abc["^"] = {"black" : up_arrow}
 abc["`"] = {"black" : down_arrow}
