@@ -113,6 +113,7 @@ class GameLoop:
                 "down" : False,
                 "left" : False,
                 "right" : False,
+                "lock" : False
             },
             "Rotation" : {
                 "reset" : False,
@@ -194,19 +195,6 @@ class GameLoop:
 
         # Introductions ---------------
 
-        # WASD
-        self.wasd_timer = 300
-
-        # QE
-        self.qe_timer = 300
-
-        # K
-        self.k_timer = 300
-
-        # L
-        self.l_timer = 300
-
-
         # Heal intro --------
         self.heal_intro = False
         self.heal_intro_timer = 300 # 5 second introduction
@@ -225,7 +213,12 @@ class GameLoop:
         self.dash_intro_timer = 300
 
 
+        # Lock intro -----
+        self.lock_intro = False
+        self.lock_intro_timer = 300
 
+
+        self.barrels_busted_final_score = 0
 
     def enter_blank(self, display):
         if self.reached:
@@ -277,8 +270,15 @@ class GameLoop:
             self.inputs["Movements"]["right"] = False
 
 
+
         self.direction = self.player.get_direction(self.inputs["Movements"]) * self.dt
         self.player.direction = self.direction
+
+
+    def final_score(self, display):
+        render_text_centered((mid_x, mid_y - 150), f'GAME COMPLETE', display, "white")
+        render_text_centered((mid_x, mid_y - 130), f'BUSTED {self.barrels_busted_final_score} BARRELS', display, "white")
+        
     
     def FIRSTPASS(self):
         if not self.first_pass:
@@ -898,6 +898,9 @@ class GameLoop:
 
         if self.entering_blank:
             self.enter_blank(display)
+
+        if self.BarrelKing.dead:
+            self.final_score(display)
         
         # only really activates when dead
         self.death_screen(display)
@@ -907,8 +910,9 @@ class GameLoop:
 
 
     def introductions(self, display):
+        # print(self.inputs["Action"]["lock"])
         
-        # Intro shoot -----
+        # Intro shoot -----------------------------------------------------
         if self.shoot_intro and self.shoot_intro_timer > 0:
             self.intro_paused_timer = self.introduce_shoot(display, self.inputs["Action"]["shoot"]) # checks if they pressed the key to prove they learned from the introduction
 
@@ -921,7 +925,7 @@ class GameLoop:
             self.shoot_intro = True
             self.intro_paused_timer = self.shoot_intro_timer
 
-        # Intro heal ------
+        # Intro heal ------------------------------------------------------
         if self.heal_intro and self.heal_intro_timer > 0:
             self.intro_paused_timer = self.introduce_heal(display, self.inputs["Action"]["heal"])
 
@@ -935,7 +939,7 @@ class GameLoop:
             self.intro_paused_timer = self.heal_intro_timer
 
 
-        # Intro rotate ------
+        # Intro rotate ------------------------------------------------------
         if self.rotate_intro and self.rotate_intro_timer > 0:
             self.intro_paused_timer = self.introduce_rotate(display, self.inputs["Rotation"]["clockwise"] or self.inputs["Rotation"]["counterclockwise"])
         
@@ -949,7 +953,7 @@ class GameLoop:
             self.intro_paused_timer = self.rotate_intro_timer
 
 
-        # Intro dash -------
+        # Intro dash --------------------------------------------------------
         if self.dash_intro and self.dash_intro_timer > 0:
             self.intro_paused_timer = self.introduce_dash(display, self.inputs["Action"]["dash"])
         
@@ -962,9 +966,46 @@ class GameLoop:
             self.dash_intro = True
             self.intro_paused_timer = self.dash_intro_timer
 
+        
+        # Intro lock ------------------------------------------------------------
+        if self.lock_intro and self.lock_intro_timer > 0:
+            self.intro_paused_timer = self.introduce_lock(display, self.inputs["Movements"]["lock"])
+        
+        if not self.lock_intro_timer:
+            self.intro_paused = False
+        
+        # Condition to start introduction
+        if not self.lock_intro and self.Sylvia.summoned:
+            self.intro_paused = True
+            self.lock_intro = True
+            self.intro_paused_timer = self.lock_intro_timer
 
 
-    
+
+    def introduce_lock(self, display, learned):
+        if self.lock_intro_timer > 0:
+            self.lock_intro_timer -= 1 * self.dt
+            textone = "HOLD L"
+            texttwo = "TO LOCK SHOOTING DIRECTION"
+
+            back_surface = pygame.Surface((len(textone) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            back_surface.fill((47,79,79, 100))
+            display.blit(back_surface, (mid_x - ((len(textone) * 8 + 10) // 2), mid_y - 60 - 2))
+
+            b_s_2 = pygame.Surface((len(texttwo) * 8 + 10, 10), pygame.SRCALPHA).convert_alpha()
+            b_s_2.fill((47,79,79, 100))
+            display.blit(b_s_2, (mid_x - ((len(texttwo) * 8 + 10) // 2), mid_y - 50 - 2))
+
+
+            render_text_centered((mid_x, mid_y - 60), textone, display, "white")
+            render_text_centered((mid_x, mid_y - 50), texttwo, display, "white")
+
+        if learned:
+            self.lock_intro_timer = 0
+            return 1
+
+        return 0
+
         
 
     def introduce_heal(self, display, learned):
@@ -1390,6 +1431,7 @@ class GameLoop:
 
                         self.Alpha.center = self.BarrelKing.center # spawns car where king dies
                         self.BarrelKing.death()
+                        self.barrels_busted_final_score = self.player.barrels_busted
                         self.max_barrel_count = MAX_BARRELS
                         self.stage = "grasslands"
                     break
@@ -1417,6 +1459,7 @@ class GameLoop:
 
                     self.Alpha.center = self.BarrelKing.center # spawns car where king dies
                     self.BarrelKing.death()
+                    self.barrels_busted_final_score = self.player.barrels_busted
                     self.max_barrel_count = MAX_BARRELS
                     self.stage = "grasslands"
                 break  # okay to break because the arrow already hit something and it wont hit anything else
