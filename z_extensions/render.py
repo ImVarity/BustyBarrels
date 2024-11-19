@@ -1,6 +1,5 @@
 import pygame
 import os
-
 from z_extensions.vector import Vector
 
 green = (0, 161, 82)
@@ -14,6 +13,7 @@ linen = (250, 240, 230)
 slate_grey = (174, 198, 224)
 lime_green = (50, 205, 50)
 grass_green = (142, 200, 64)
+snow_white = (232, 232, 239)
 red = (220, 20, 60)
 purple = (112, 41, 99)
 npc_color = (47,79,79, 100)
@@ -51,10 +51,19 @@ def convert_to_imgs_numbers(directory, beginning):
     return images
 
 
+# Main Menu 
+main_menu_title = pygame.image.load('imgs/main_menu/MainMenuTitle.png')
+main_menu_play = pygame.image.load('imgs/main_menu/MainMenuPlay.png')
+main_menu_saved_files = pygame.image.load('imgs/main_menu/MainMenuSavedFiles.png')
 
+main_menu_titles = convert_to_imgs_numbers("imgs/main_menu/title", "Title")
+for idx, frame in enumerate(main_menu_titles):
+    main_menu_titles[idx] = pygame.transform.scale(frame, (frame.get_width() * 2, frame.get_height() * 2))
 
-# Cards
-a_o_d_img = pygame.image.load('imgs/diamonds/ace.png')
+# Keyboard Art
+C_key = convert_to_imgs_numbers("imgs/main_menu/key", "KeyboardC")
+Enter_key = pygame.image.load("imgs/main_menu/Enter.png")
+Enter_key = pygame.transform.scale(Enter_key, (Enter_key.get_width() * 1.5, Enter_key.get_height() * 1.5))
 
 
 # Icons
@@ -65,7 +74,10 @@ banana_img = pygame.image.load('imgs/icons/banana_icon.png')
 
 # Terrain
 grass_img = pygame.image.load('imgs/terrain/grass_patch.png')
+snow_patch = pygame.image.load('imgs/terrain/snow_patch.png')
+grass_patch = pygame.image.load('imgs/terrain/grass_revamp.png')
 rock_images = convert_to_imgs('imgs/rock')
+grass_parts = convert_to_imgs_numbers('z_map/grass', "leaf")
 
 # Car
 alpha_images = convert_to_imgs_numbers('imgs/car', "car")
@@ -91,10 +103,11 @@ dialogue_box = pygame.image.load('imgs/npc/dialogue_box.png')
 dialogue_box = pygame.transform.scale(dialogue_box, (350, dialogue_box.get_height()))
 quest_box = pygame.image.load('imgs/npc/quest_box.png')
 quest_box_o = pygame.image.load('imgs/npc/quest_box_o.png')
+mikhail_images = convert_to_imgs('imgs/npc/mikhail/box')
 
 # shuriken_img = pygame.transform.scale(shuriken_img, (3, 3)) # can use these for leave or soemthing
 
-arrow_img = pygame.image.load('imgs/player/arrow/arrow_white.png')
+player_arrow = pygame.image.load('imgs/player/arrow/arrow_redesign.png')
 barrel_images = convert_to_imgs('imgs/barrel')
 player_images = convert_to_imgs('imgs/box')
 arrow_images = convert_to_imgs('imgs/arrow')
@@ -105,9 +118,6 @@ bomb_images = convert_to_imgs('imgs/bomb')
 # Currency
 coin_img = pygame.image.load('imgs/currency/coin.png')
 
-
-# bridge
-# bridge_part_0_images = convert_to_imgs_bridge('imgs/bridge/part_0')
 
 # Butterfly
 butterfly_images_stack = [convert_to_imgs('imgs/butterfly_stack/butterfly'),
@@ -182,12 +192,6 @@ class Render:
             # if self.current_frame == self.frames - 1:
             #     self.images = self.images[::-1]
             self.current_frame = (self.current_frame + self.reversing) % self.frames
-
-
-                
-        
-
-
 
         if type == "single":
             self.render_single_animation(surface)

@@ -20,7 +20,6 @@ from z_throwables.bullets import Shuriken, SwordShot
 from z_map.map import Tilemap
 from z_extensions.render import *
 from z_enemies.butterfly import Butterfly
-from z_later.bridge import BridgePart
 from z_later.car import Alpha
 from z_enemies.kingv2 import Kingv2
 import time
@@ -37,6 +36,7 @@ class GameLoop:
         self.save_files = {}
 
         self.Map = Tilemap()
+        self.GameStart = False
 
         self.dt = 1
         self.sounds = None
@@ -47,8 +47,9 @@ class GameLoop:
         self.intro_paused_timer = 0
         self.intro_paused = False
 
+        self.song = "bgm.mp3"
 
-        self.player = Player([0, 0], 8, 8, blue, health=500)
+        self.player = Player([-24, 0], 8, 8, blue, health=500)
         self.player_arrow = PlayerArrow([mid_x + 12, mid_y], 16, 16, blue)
         self.spawnpoint = Barrel((0, 0), 8, 8, black)
         self.tif_spawnpoint = Barrel([-405, 325], 8, 8, black)
@@ -64,13 +65,15 @@ class GameLoop:
         self.Crystal = Butterfly([400, 400], 32, 32, blue, "Crystal", health=400)
         self.BarrelKing = Kingv2([400, -400], 32, 32, black, "King", health=1000)
 
+        self.TOTALNUMBEROFBOSSES = 4
+        self.boss_pointer = 0 # instead of popping when a boss dies, just move the pointer
         self.bosses = [self.Tifanie, self.Sylvia, self.Crystal, self.BarrelKing]
 
         # Car
         self.Alpha = Alpha([-35, -20], 56, 48, red, health=100)
 
         # NPCS
-        self.Mikhail = NPC([0, -40], 64, 64, red, rock_images)
+        self.Mikhail = NPC([80, 0], 64, 64, red, rock_images)
         self.npcs = [self.Mikhail]
 
         # Enemies
@@ -89,10 +92,6 @@ class GameLoop:
         self.arrows = []
         self.bombs = []
         self.spawnpoints = [self.spawnpoint, self.tif_spawnpoint, self.syl_spawnpoint, self.cry_spawnpoint, self.bk_spawnpoint]
-        self.bridge = [
-            BridgePart([0, -500], 99, 48, 0, red),
-            BridgePart([90, -500], 99, 48, 180, red)
-        ]
         self.boundaries = [Hitbox((-24, -624), 624 * 2, 40, red), Hitbox((590, -24), 40, 624 * 2, red), Hitbox((-24, 590), 624 * 2, 40, red), Hitbox((-624, -24), 40, 624 * 2, red)]
 
 
@@ -218,7 +217,18 @@ class GameLoop:
         self.lock_intro_timer = 300
 
 
+
+
+        # Grass ------
+
+
+
         self.barrels_busted_final_score = 0
+
+
+
+
+
 
     def enter_blank(self, display):
         if self.reached:
@@ -289,9 +299,13 @@ class GameLoop:
 
     
     def main(self, dt, display): # -> dict[str]:
+
         self.FIRSTPASS()
         self.set_delta_time(dt)
         self.initialize_direction()
+        if not self.GameStart:
+            self.player.move(self.direction * -1 * self.dt)
+
 
         if not self.paused:
             self.update_player()
@@ -310,7 +324,6 @@ class GameLoop:
         # Update boundaries
         self.update_boundaries()
 
-        # self.update_bridge()
 
 
         # checks if player shoots the arrow
@@ -371,8 +384,8 @@ class GameLoop:
         # Deletion
         self.delete_objects()
 
-        if self.inputs["Tests"]["click"]:
-            self.entering_blank = True
+        # if self.inputs["Tests"]["click"]:
+        #     self.entering_blank = True
 
 
         self.collidables = { # in here so collidables get emptied every loop
@@ -428,16 +441,6 @@ class GameLoop:
 
             return [centroid_x, centroid_y]
         
-    
-
-
-    def update_bridge(self):
-        for part in self.bridge:
-            part.set_delta_time(self.dt)
-            part.update(self.inputs["Rotation"], self.direction)
-
-            if part.center.x >= -32 and part.center.x <= display_width + 32 and part.center.y >= -32 and part.center.y <= display_height + 32:
-                self.to_render.append(part)
 
     def update_boundaries(self):
         for boundary in self.boundaries:
@@ -455,7 +458,7 @@ class GameLoop:
                 spawnpoint.update(self.inputs["Rotation"], self.direction)
 
     def dash_effects(self):
-        if not self.paused:
+        if not self.paused and self.player.can_dash:
             if self.inputs["Action"]["dash"] and self.player.dash_start <= self.dt:
                 self.sounds.dash_sound.play()
                 dust(self.particles, self.player.location, self.direction)
@@ -490,7 +493,14 @@ class GameLoop:
             tile.set_delta_time(self.dt)
             if not self.paused:
                 tile.update(self.inputs["Rotation"], self.direction)
+                
 
+    def update_grass(self):
+        for grass in self.Map.grass:
+            grass.set_delta_time(self.dt)
+            if not self.paused:
+                grass.update(self.inputs["Rotation"], self.direction)
+                # grass.updates(None, [self.player.center.x, self.player.center.y])
         
     def render_tiles(self, display):
         # render tiles first
@@ -504,6 +514,16 @@ class GameLoop:
                     tile.to_render.animate(display, self.dt)
                     continue
                 tile.render(display)
+        
+
+    def render_grass(self, display):
+        for grass in self.Map.grass:
+            if grass.center.x >= -32 and grass.center.x <= display_width + 32 and grass.center.y >= -32 and grass.center.y <= display_height + 32:
+                if self.inputs["Admin"]["hitboxes"]:
+                    grass.draw_hitbox(display)
+
+                grass.updates(display, [self.player.center.x, self.player.center.y])
+                # grass.render(display)
 
 
 
@@ -518,7 +538,7 @@ class GameLoop:
                     self.arrows.append(shot)
                     self.player.arrow_counter += 1
             else:
-                self.player.inventory["Arrows"].pop()
+                # self.player.inventory["Arrows"].pop()
                 self.player.arrow_counter = 0
         
 
@@ -553,17 +573,19 @@ class GameLoop:
             limit_collision(shuriken, self.player, self.player.collision_radius, self.collidables[bullet])
 
     def add_collectables(self, item, MAX):
-        if not self.BarrelKing.summoned:
-            if len(self.collectables[item]) < MAX:
-                self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 12, 12, black, images[item]))
-        else: # If the king is alive then remove all collectables on the screen 
-            self.collectables[item] = []
+        if self.GameStart: # add collectables when the game starts
+            if not self.BarrelKing.summoned:
+                if len(self.collectables[item]) < MAX:
+                    self.collectables[item].append(Collectable([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 12, 12, black, images[item]))
+            else: # If the king is alive then remove all collectables on the screen 
+                self.collectables[item] = []
 
     def add_barrels(self, MAX):
-        if len(self.barrels) < MAX:
-            self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 16, 16, pink, health=25))
-        elif len(self.barrels) > MAX:
-            self.barrels = self.barrels[:MAX]
+        if self.GameStart: # add barrels when the game starts
+            if len(self.barrels) < MAX:
+                self.barrels.append(Barrel([random.randrange(int(self.spawnpoint.center.x - 525), int(self.spawnpoint.center.x + 525)), random.randrange(int(self.spawnpoint.center.y - 575), int(self.spawnpoint.center.y + 575))], 16, 16, pink, health=25))
+            elif len(self.barrels) > MAX:
+                self.barrels = self.barrels[:MAX]
 
         
     def load_barrels(self, loc, health):
@@ -644,6 +666,7 @@ class GameLoop:
                     # checks if just summoned
                     if b.check_if_summon() and isinstance(b, Kingv2):
                         self.entering_blank = True
+                        self.song = "jester.wav"
 
                 # updates the bullets that the boss shoots
                 self.update_boss_bullets(b, display)
@@ -798,7 +821,8 @@ class GameLoop:
         # sorting all the things to render by y value
         self.to_render = sorted(self.to_render, key=lambda x : x.center.y)
         # arrow comes below everything else
-        self.player_arrow.render(display)
+        if self.GameStart:
+            self.player_arrow.render(display)
 
         # whatever the player is holding on to
         self.render_player_inventory(display)
@@ -885,7 +909,8 @@ class GameLoop:
         self.player.draw_heal(display)
 
         # how to summon next boss
-        self.next_boss_warning(display)
+        if self.GameStart:
+            self.next_boss_warning(display)
 
         # intros
         self.introductions(display)
@@ -893,7 +918,8 @@ class GameLoop:
         # when talking to mikhail
         self.render_npc_hud(display)
         self.completion_text(display)
-        self.draw_HUD(display)
+        if self.GameStart:
+            self.draw_HUD(display)
 
 
         if self.entering_blank:
@@ -907,6 +933,7 @@ class GameLoop:
 
         # if self.paused:
         #     self.paused_screen(display)
+
 
 
     def introductions(self, display):
@@ -1178,8 +1205,8 @@ class GameLoop:
             self.camera_follow = self.player.location
 
          # follows middle of player and 2 butterflies
-        if not self.Sylvia.dead and self.Sylvia.summoned and not self.Crystal.dead and self.Crystal.summoned:
-            self.camera_follow = self.calc_butterfly_centroid()
+        # if not self.Sylvia.dead and self.Sylvia.summoned and not self.Crystal.dead and self.Crystal.summoned:
+        #     self.camera_follow = self.calc_butterfly_centroid()
 
         difference_vec = Vector(mid_x - self.camera_follow[0], mid_y - self.camera_follow[1])
         self.player.move(difference_vec * self.player.scroll_speed * self.dt)
@@ -1618,18 +1645,47 @@ class GameLoop:
     
 
     def load_data(self, data):
-        self.player.center.x, self.player.center.y = data["player_location"][0], data["player_location"][1]
+        self.player.center.x, self.player.center.y = data["player"]["location"][0], data["player"]["location"][1]
         self.player.set_vertices()
+        # -------- Load Barrels ---------
         for i in range(len(data["barrels"]["locations"])):
             self.load_barrels(data["barrels"]["locations"][i], data["barrels"]["health"][i])
+
+        # -------- Load Bosses -----------
+        self.bosses = self.bosses[data["bosses_killed"]:]
+
+        # accounting for the stupid double butterflies
+        if len(self.bosses) > 0:
+            if len(self.bosses) == 3:
+                self.bosses[1].barrels_busted = data["summon_barrels"]
+            self.bosses[0].barrels_busted = data["summon_barrels"]
+        
+        self.player.barrels_busted = data["barrels_busted"]
+
+        # player abilities
+        self.player.bomber = data["player"]["abilities"]["bomber"]
 
         data["barrels"]["locations"] = []
         data["barrels"]["health"] = []
 
+
+        print("loaded game")
+
     def save_data(self, data):
-        data["player_location"] = [self.player.center.x - self.spawnpoint.center.x, self.player.center.y - self.spawnpoint.center.y]
+        data["player"]["location"] = [self.player.center.x - self.spawnpoint.center.x, self.player.center.y - self.spawnpoint.center.y]
         for barrel in self.barrels:
             data["barrels"]["locations"].append((barrel.location[0] - self.spawnpoint.location[0], barrel.location[1] - self.spawnpoint.location[1]))
             data["barrels"]["health"].append(barrel.health_bar.health)
+        
+        data["bosses_killed"] = self.TOTALNUMBEROFBOSSES - len(self.bosses)
+
+        # How many barrels currently busted
+        data["barrels_busted"] = self.player.barrels_busted
+
+        # How many barrels busted for next boss
+        if len(self.bosses) > 0:
+            data["summon_barrels"] = self.bosses[0].barrels_busted
+        
+        print("saved game")
 
         return data

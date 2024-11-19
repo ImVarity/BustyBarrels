@@ -47,6 +47,7 @@ class Player(Hitbox):
         self.dex_counter = 0
         
 
+        self.can_dash = False
         self.dash_speed = 1
         self.dash_friction = .03
         self.dash_start = 0
@@ -85,8 +86,8 @@ class Player(Hitbox):
         
 
         self.stats = {
-            'M' : 1,
-            'R' : 10
+            'M' : 1000,
+            'R' : 1000
         }
 
         # self.arrow_multiplier = 1
@@ -184,18 +185,19 @@ class Player(Hitbox):
             damage.update([self.center.x, self.center.y])
 
     def handle_dash(self, action_input, direction):
-        if self.dash_start >= self.dash_end:
-            self.dash_start = 0
-            self.dash_speed = 1
-            action_input["dash"] = False
-            return
-        if action_input["dash"]:
-            self.dash_start += self.dt
-            self.dash_speed -= self.dash_friction
-            if direction.x == 0 and direction.y == 0:
-                direction *= self.dash_speed
-            self.move(direction)
-        
+        if self.can_dash:
+            if self.dash_start >= self.dash_end:
+                self.dash_start = 0
+                self.dash_speed = 1
+                action_input["dash"] = False
+                return
+            if action_input["dash"]:
+                self.dash_start += self.dt
+                self.dash_speed -= self.dash_friction
+                if direction.x == 0 and direction.y == 0:
+                    direction *= self.dash_speed
+                self.move(direction)
+            
 
     def update_actions(self, action_input):
         if not action_input["lock"]:
@@ -327,7 +329,7 @@ class DamageNumber:
 class PlayerArrow(Hitbox):
     def __init__(self, center, width, height, color):
         super().__init__(center, width, height, color)
-        self.image = arrow_img.convert_alpha()
+        self.image = player_arrow.convert_alpha()
         self.arrow_angle = 0
         self.arrow_difference = 0
         self.arrow_angle_degrees = 0
