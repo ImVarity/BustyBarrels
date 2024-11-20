@@ -111,14 +111,6 @@ Game.sounds = sounds
 song = "bg"
 
 
-try:
-    with open('save_files.txt') as save_file:
-        data = json.load(save_file)
-        Game.load_data(data)
-except:
-    print("no current save file")
-
-
 saving_game = False
 background_color = (0, 0, 0)
 grass_objects = []
@@ -135,8 +127,21 @@ underline_length = 0
 underline_max_length = main_menu_saved_files.get_width()
 underline_inc = 5
 
+
+
+
 main_menu_selects = ["play", "saved files"]
+file_selects = ["None", "FILE1", "FILE2"]
+file = 0
 select = 0
+
+
+
+loading_timer = 120
+loading = False
+loading_color = (255,255,255)
+loading_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA).convert_alpha()
+loading_surface.fill(loading_color)
 
 
 
@@ -177,6 +182,8 @@ while running:
     inputs["Action"]["interact"] = False
     inputs["Action"]["heal"] = False
     inputs["Tests"]["click"] = False
+
+    pressed = False
 
     npc_input = { # in main loop so that it only registers once per click
         "up" : False,
@@ -222,6 +229,9 @@ while running:
                 if inputs["Action"]["interact"]:
                     sounds.menu_click.play()
 
+        if event.type == pygame.MOUSEBUTTONUP:
+            pressed = True
+
     inputs["Rotation"]["counterclockwise"] = keys[pygame.K_e]
     inputs["Rotation"]["clockwise"] = keys[pygame.K_q]
     inputs["Rotation"]["reset"] = keys[pygame.K_z]
@@ -241,13 +251,11 @@ while running:
         inputs["Action"]["shoot"] = keys[pygame.K_j]
 
     inputs["Tests"]["hold"] = keys[pygame.K_8]
-    pressed = pygame.mouse.get_pressed()[0]
+    # pressed = pygame.mouse.get_pressed()[0]
 
 
     # ------------- Game -------------
 
-    if pressed:
-        Game.GameStart = True
 
     Game.npc_input = npc_input
     Game.inputs = inputs
@@ -259,7 +267,6 @@ while running:
     Game.main(dt, display)
     direction = Game.direction
 
-    # Game.grass_objects = grass_objects
 
 
     Game.update_tiles()
@@ -309,32 +316,97 @@ while running:
     if not Game.GameStart:
         display.blit(main_menu_titles[frame].convert_alpha(), (mid_x - main_menu_titles[frame].get_width() // 2, mid_y - main_menu_titles[frame].get_height() // 2 - 100))
 
+        margin = 9
+
+        # hovering over the play button
+        if mouse_y > 220 - margin and mouse_y < 220 + margin + main_menu_play.get_height():
+            if select != 0:
+                select = 0
+                new_underline = True
+                underline_full = False
+                sounds.menu_click.play()
+            
+
+        # hovering over the saved files button
+        if mouse_y > 250 - margin and mouse_y < 250 + margin + main_menu_saved_files.get_height():
+            if select != 1:
+                select = 1
+                new_underline = True
+                underline_full = False
+                sounds.menu_click.play()
+
+        if file_selects[file] == "None":
+            pass
+            
+        if file == 1:
+            display.blit(file1selected.convert_alpha(), (140 + main_menu_saved_files.get_width() + margin, 220))
+
+        if file == 2:
+            display.blit(file2selected.convert_alpha(), (140 + main_menu_saved_files.get_width() + margin, 220))
+
 
         if main_menu_selects[select] == "play":
-            display.blit(main_menu_play.convert_alpha(), (140, 220))
-            display.blit(main_menu_saved_files.convert_alpha(), (140, 250))
+            if pressed:
+                if file_selects[file] != "None":
+                    try:
+                        Game = GameLoop()
+                        Game.sounds = sounds
+                        song = "bg"
+                        with open(f'{file_selects[file]}.txt') as save_file:
+                            data = json.load(save_file)
+                            Game.load_data(data)
+                        loading = True
+                    except:
+                        print("no current save file")
+                Game.GameStart = True
+
 
             if new_underline:
                 new_underline = False
                 underline_length = 0
                 underline_inc = 5
 
+            
+            display.blit(main_menu_play.convert_alpha(), (140, 220))
+            display.blit(main_menu_saved_files.convert_alpha(), (140, 250))
             pygame.draw.rect(display, white,  pygame.Rect(140, 234, underline_length, 3))
 
-            display.blit(Enter_key.convert_alpha(), (260, 220))
 
         elif main_menu_selects[select] == "saved files":
+            if new_underline:
+                new_underline = False
+                underline_length = 0
+                underline_inc = 5
+
+
+            if mouse_y >= (270 + main_menu_saved_files.get_height()) - 5 and mouse_y <= (270 + main_menu_saved_files.get_height()) + file1.get_height() + 5:
+                pygame.draw.rect(display, white, pygame.Rect(180, 250 + main_menu_saved_files.get_height() + 20 + file1.get_height() + 2, file1.get_width(), 2))
+                if pressed:
+                    sounds.menu_click.play()
+                    file = 1 if file != 1 else 0
+
+            if mouse_y >= (280 + main_menu_saved_files.get_height() + margin) - 5 and mouse_y <= (280 + main_menu_saved_files.get_height() + margin) + file2.get_height() + 5:
+                pygame.draw.rect(display, white, pygame.Rect(180, 280 + main_menu_saved_files.get_height() + margin + file2.get_height() + 2, file2.get_width(), 2))
+                if pressed:
+                    sounds.menu_click.play()
+                    file = 2 if file != 2 else 0
+
             display.blit(main_menu_play.convert_alpha(), (140,220))
             display.blit(main_menu_saved_files.convert_alpha(), (140, 250))
 
-            print(new_underline)
-            if new_underline:
-                new_underline = False
-                underline_length = 0
-                underline_inc = 5
-            pygame.draw.rect(display, white,  pygame.Rect(140, 264, underline_length, 3))
-            display.blit(Enter_key.convert_alpha(), (260, 250))
+            display.blit(file1.convert_alpha(), (180, 250 + main_menu_saved_files.get_height() + 20))
+            if file == 1:
+                pygame.draw.rect(display, white, pygame.Rect(180, 250 + main_menu_saved_files.get_height() + 20 + file1.get_height() + 2, file1.get_width(), 2))
+            
 
+
+            display.blit(file2.convert_alpha(), (180, 250 + main_menu_saved_files.get_height() + 20 + margin + 10))
+            if file == 2:
+                pygame.draw.rect(display, white, pygame.Rect(180, 250 + main_menu_saved_files.get_height() + 20 + margin + 10 + file2.get_height() + 2, file2.get_width(), 2))
+
+
+
+            pygame.draw.rect(display, white,  pygame.Rect(140, 264, underline_length, 3))
 
         
         if not underline_full:
@@ -344,9 +416,6 @@ while running:
             underline_length = underline_max_length
             underline_full = True
         
-
-
-
 
 
 
@@ -375,6 +444,20 @@ while running:
     
 
 # ------------------------------------------------ Display ------------------------------------------------------------------
+
+    if loading:
+        display.blit(loading_surface, (0, 0))
+        # render_text_centered((mid_x, mid_y), "Loading", display, "black", scale=2)
+        if loading_timer <= 120:
+            display.blit(load_barrel.convert_alpha(), (mid_x - load_barrel.get_width() // 2 - 5 - load_barrel.get_width(), mid_y - load_barrel.get_height() // 2))
+        if loading_timer <= 80:
+            display.blit(load_barrel.convert_alpha(), (mid_x - load_barrel.get_width() // 2, mid_y - load_barrel.get_height() // 2))
+        if loading_timer <= 40:
+            display.blit(load_barrel.convert_alpha(), (mid_x + load_barrel.get_width() // 2 + 5, mid_y - load_barrel.get_height() // 2))
+
+        loading_timer -= 1 * dt
+    if loading_timer <= 0:
+        loading = False
 
 
     if Game.GameStart:
@@ -410,7 +493,7 @@ while running:
         render_offset[1] = random.randint(0, Game.shake_magnitude) - Game.shake_magnitude / 2
     Game.screen_shake = screen_shake
 
-
+    
         
 
     if saving_game:
@@ -428,8 +511,12 @@ while running:
 
 
 data = Game.save_data(data)
-with open('save_files.txt', 'w') as save_file:
-    json.dump(data, save_file, indent=4)
+# with open('save_files.txt', 'w') as save_file:
+#     json.dump(data, save_file, indent=4)
+if file_selects[file] != "None":
+    with open(f'{file_selects[file]}.txt', 'w') as save_file:
+        json.dump(data, save_file, indent=4)
+
 
 pygame.quit()
 

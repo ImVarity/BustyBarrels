@@ -53,8 +53,17 @@ def convert_to_imgs_numbers(directory, beginning):
 
 # Main Menu 
 main_menu_title = pygame.image.load('imgs/main_menu/MainMenuTitle.png')
-main_menu_play = pygame.image.load('imgs/main_menu/MainMenuPlay.png')
+main_menu_play = pygame.image.load('imgs/main_menu/mmp.png')
+
 main_menu_saved_files = pygame.image.load('imgs/main_menu/MainMenuSavedFiles.png')
+file1 = pygame.image.load('imgs/main_menu/File1.png')
+file1selected = pygame.image.load('imgs/main_menu/File1.png')
+file1selected = pygame.transform.scale(file1selected, (file1selected.get_width() * 1.5, file1selected.get_height() * 1.5))
+
+file2 = pygame.image.load('imgs/main_menu/File2.png')
+file2selected = pygame.image.load('imgs/main_menu/File2.png')
+file2selected = pygame.transform.scale(file2selected, (file2selected.get_width() * 1.5, file2selected.get_height() * 1.5))
+
 
 main_menu_titles = convert_to_imgs_numbers("imgs/main_menu/title", "Title")
 for idx, frame in enumerate(main_menu_titles):
@@ -63,13 +72,14 @@ for idx, frame in enumerate(main_menu_titles):
 # Keyboard Art
 C_key = convert_to_imgs_numbers("imgs/main_menu/key", "KeyboardC")
 Enter_key = pygame.image.load("imgs/main_menu/Enter.png")
-Enter_key = pygame.transform.scale(Enter_key, (Enter_key.get_width() * 1.5, Enter_key.get_height() * 1.5))
+# Enter_key = pygame.transform.scale(Enter_key, (Enter_key.get_width() * 2, Enter_key.get_height() * 2))
 
 
 # Icons
 watermelon_img = pygame.image.load('imgs/icons/watermelon_icon_3.png')
 barrel_img = pygame.image.load('imgs/icons/barrel_icon.png')
 banana_img = pygame.image.load('imgs/icons/banana_icon.png')
+load_barrel = pygame.image.load('imgs/icons/load_barrel.png')
 
 
 # Terrain
